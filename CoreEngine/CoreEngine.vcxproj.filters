@@ -1,0 +1,219 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="OpenGLUtils">
+      <UniqueIdentifier>{2089e0b6-fc3e-4be3-a011-1e9b120ebfa2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core">
+      <UniqueIdentifier>{a02e7dfe-f4b6-4b05-833a-9dace32c76c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core">
+      <UniqueIdentifier>{c366657d-0f56-4985-8471-e4a0a8e9e754}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Math">
+      <UniqueIdentifier>{ebd4b0c9-1602-4ca8-9d31-ca9cc71fe70b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Math">
+      <UniqueIdentifier>{ddd6e62b-a9a0-4b8a-b861-785f9966cc45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Math\Projection">
+      <UniqueIdentifier>{0f55c610-f480-4d13-9819-3bb7a60310da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Renderer">
+      <UniqueIdentifier>{4f5f99d5-fac2-4ecc-9741-f4a39cd68d19}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Renderer">
+      <UniqueIdentifier>{b8ba8ede-f334-4547-b29e-85d42083fa5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Math\Vertex">
+      <UniqueIdentifier>{2c13b916-e2d0-468b-8ef2-5e9499aa2889}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Math\Projection">
+      <UniqueIdentifier>{9f2edd18-d96c-4da4-8762-1c7e0e59b587}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Math\Vectors">
+      <UniqueIdentifier>{7f54fa4e-1c36-471b-ad83-363a518f5b15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Math\Vertex">
+      <UniqueIdentifier>{c2699ec0-a096-4f7a-b2ef-710423a6b172}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Math\Vectors">
+      <UniqueIdentifier>{5f82357d-6969-40d7-aa2c-089de99c2839}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Math\Matrix">
+      <UniqueIdentifier>{49862bef-adf8-4633-9662-b337d498406f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Math\Matrix">
+      <UniqueIdentifier>{9495a20f-89be-4e71-8025-879a7a804379}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lib">
+      <UniqueIdentifier>{9430b589-a49b-4f4f-894d-1f343c34560e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lib">
+      <UniqueIdentifier>{069c9b7c-2b72-4205-804c-64e38e90db78}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Math\Quaternion">
+      <UniqueIdentifier>{d8acf94c-93dc-4a45-ad07-11694774fc80}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Math\Quaternion">
+      <UniqueIdentifier>{25cdeb0c-bb83-470e-8b47-eaf9d5492e7e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Meshes">
+      <UniqueIdentifier>{d6bdac78-2e14-4872-962e-bd85f24da081}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenGLUtils\stb_image_write.c">
+      <Filter>OpenGLUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenGLUtils\glad.c">
+      <Filter>OpenGLUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenGLUtils\stb_image.c">
+      <Filter>OpenGLUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Window.c">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\CoreUtils.c">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\EngineMath.c">
+      <Filter>Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\MathUtils.c">
+      <Filter>Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Camera.c">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Shader.c">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Buffer.c">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Projection\PerspectiveProjection.c">
+      <Filter>Source Files\Math\Projection</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Projection\OrthographicProjection.c">
+      <Filter>Source Files\Math\Projection</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Vectors\Vector2.c">
+      <Filter>Source Files\Math\Vectors</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Vectors\Vector3.c">
+      <Filter>Source Files\Math\Vectors</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Vectors\Vector4.c">
+      <Filter>Source Files\Math\Vectors</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Vertex\Vertex.c">
+      <Filter>Source Files\Math\Vertex</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Matrix\Matrix4.c">
+      <Filter>Header Files\Math\Matrix</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Lib\Vector.c">
+      <Filter>Source Files\Lib</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Quaternion\Quaternion.c">
+      <Filter>Source Files\Math\Quaternion</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Renderer.c">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Input.c">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\StateManager.c">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Core\CoreUtils.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Window.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Matrix4.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\EngineMath.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\MathUtils.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Camera.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Projection\PerspectiveProjection.h">
+      <Filter>Header Files\Math\Projection</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Projection\OrthographicProjection.h">
+      <Filter>Header Files\Math\Projection</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Shader.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Buffer.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Vertex\Vertex.h">
+      <Filter>Header Files\Math\Vertex</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Vectors\Vector4.h">
+      <Filter>Header Files\Math\Vectors</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Vectors\Vector2.h">
+      <Filter>Header Files\Math\Vectors</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Vectors\Vector3.h">
+      <Filter>Header Files\Math\Vectors</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Matrix\Matrix4.h">
+      <Filter>Source Files\Math\Matrix</Filter>
+    </ClInclude>
+    <ClInclude Include="Lib\Vector.h">
+      <Filter>Header Files\Lib</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Quaternion\Quaternion.h">
+      <Filter>Header Files\Math\Quaternion</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Renderer.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Input.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\StateManager.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Meshes\LineMesh.h">
+      <Filter>Header Files\Meshes</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

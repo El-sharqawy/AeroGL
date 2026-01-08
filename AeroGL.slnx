@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="CoreEngine/CoreEngine.vcxproj" Id="b9c1d04a-d995-4138-9da8-26b05688000e" />
+</Solution>
