@@ -158,6 +158,8 @@
     <ClCompile Include="Renderer\Renderer.c" />
     <ClCompile Include="Renderer\Shader.c" />
     <ClCompile Include="Renderer\StateManager.c" />
+    <ClCompile Include="UserInterface\Interface_imgui.cpp" />
+    <ClCompile Include="UserInterface\UserInterface.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\Camera.h" />
@@ -184,6 +186,8 @@
     <ClInclude Include="Renderer\Renderer.h" />
     <ClInclude Include="Renderer\Shader.h" />
     <ClInclude Include="Renderer\StateManager.h" />
+    <ClInclude Include="UserInterface\Interface_imgui.h" />
+    <ClInclude Include="UserInterface\UserInterface.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

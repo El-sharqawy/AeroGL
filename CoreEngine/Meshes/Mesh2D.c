@@ -89,12 +89,13 @@ void Mesh2D_MakeLine3D(Mesh2D pMesh, Vector3 start, Vector3 end, Vector4 color)
 {
 	if (!pMesh)
 	{
+		pMesh = Mesh2D_Create(GL_LINES);
 		syserr("Cannot create line in NULL mesh");
-		return;
+		// return;
 	}
 
-	VectorClear(pMesh->pVertices);
-	VectorClear(pMesh->pIndices);
+	// VectorClear(pMesh->pVertices);
+	// VectorClear(pMesh->pIndices);
 
 	SVertex startVertex = { 0 };
 	startVertex.m_v3Position = start;

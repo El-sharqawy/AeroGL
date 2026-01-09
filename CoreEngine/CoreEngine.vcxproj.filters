@@ -76,6 +76,12 @@
     <Filter Include="Source Files\Meshes">
       <UniqueIdentifier>{16739125-b48d-4cfd-b425-36d3a0e347f4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\UserInterface">
+      <UniqueIdentifier>{da3e86b7-6a9e-44ec-803d-e53261faa03f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\UserInterface">
+      <UniqueIdentifier>{3e8eeeb6-3418-44dc-886b-0fa767a49d2f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.c">
@@ -156,6 +162,12 @@
     <ClCompile Include="Math\Transform.c">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
+    <ClCompile Include="UserInterface\Interface_imgui.cpp">
+      <Filter>Source Files\UserInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="UserInterface\UserInterface.c">
+      <Filter>Source Files\UserInterface</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\CoreUtils.h">
@@ -229,6 +241,12 @@
     </ClInclude>
     <ClInclude Include="Math\Transform.h">
       <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="UserInterface\Interface_imgui.h">
+      <Filter>Header Files\UserInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="UserInterface\UserInterface.h">
+      <Filter>Header Files\UserInterface</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

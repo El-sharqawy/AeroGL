@@ -18,6 +18,7 @@ Vector VectorInitSize(size_t element_size, size_t initCapcity)
 {
 	Vector vec = (Vector)tracked_malloc(sizeof(SAnubisVector));
 	vec->pData = NULL;
+
 	vec->count = 0;
 	vec->capacity = initCapcity;
 	vec->elemSize = element_size;
@@ -26,7 +27,7 @@ Vector VectorInitSize(size_t element_size, size_t initCapcity)
 
 void VectorPush(Vector vec, const void* pItem)
 {
-	if (vec->count == vec->capacity)
+	if (vec->count == vec->capacity || vec->pData == NULL)
 	{
 		size_t newCapacity = (vec->capacity == 0) ? 4 : vec->capacity * 2;
 		void* newPtr = tracked_realloc(vec->pData, newCapacity * vec->elemSize);

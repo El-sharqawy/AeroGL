@@ -12,6 +12,7 @@ typedef struct SRenderer
     GLShader pShader;
     GLBuffer pLinesBuffer;
     GLBuffer pTrianglesBuffer;
+	GLBuffer pMesh2DBuffer;
 
     // CPU Side Data (Batching)
     Vector pLineVertices;
@@ -33,6 +34,7 @@ void DestroyRenderer(Renderer* pRenderer);
 
 void InitializeTriangle(Renderer pRenderer);
 void RenderRenderer(Renderer pRenderer);
+void RenderMesh2D(Renderer pRenderer);
 void RenderRendererLines(Renderer pRenderer);
 void RenderRendererTriangles(Renderer pRenderer);
 

@@ -3,6 +3,9 @@
 #include "../Lib/Vector.h"
 #include <memory.h>
 #include "StateManager.h"
+#include "../Meshes/Mesh2D.h"
+
+Mesh2D meshes[16];
 
 bool CreateRenderer(Renderer* ppRenderer, GLCamera pCamera, const char* szRendererName)
 {
@@ -42,8 +45,7 @@ bool CreateRenderer(Renderer* ppRenderer, GLCamera pCamera, const char* szRender
 	// Validation Check
 	if (!InitializeGLBuffer(&pRenderer->pLinesBuffer))
 	{
-		syslog("Failed To Initialize Renderer Buffer");
-		DestroyProgram(&pRenderer->pShader);
+		syslog("Failed To Initialize Lines Renderer Buffer");
 		DestroyRenderer(&pRenderer);
 		return (false);
 	}
@@ -51,10 +53,15 @@ bool CreateRenderer(Renderer* ppRenderer, GLCamera pCamera, const char* szRender
 	// Validation Check
 	if (!InitializeGLBuffer(&pRenderer->pTrianglesBuffer))
 	{
-		syslog("Failed To Initialize Renderer Buffer");
-		DestroyProgram(&pRenderer->pShader);
+		syslog("Failed To Initialize Triangles Renderer Buffer");
 		DestroyRenderer(&pRenderer);
 		return (false);
+	}
+
+	if (!InitializeGLBuffer(&pRenderer->pMesh2DBuffer))
+	{
+		syslog("Failed To Initialize 2D Mesh Renderer Buffer");
+		DestroyRenderer(&pRenderer);
 	}
 
 	// Initialize Vectors
@@ -65,6 +72,14 @@ bool CreateRenderer(Renderer* ppRenderer, GLCamera pCamera, const char* szRender
 	pRenderer->pTriangleIndices = VectorInit(sizeof(GLuint));
 
 	pRenderer->v4DiffuseColor = Vector4D(1.0f, 1.0f, 1.0f, 1.0f); // Default White
+
+	for (int i = 0; i < 3; i++)
+	{
+		meshes[i] = Mesh2D_Create(GL_LINE);
+	}
+	Mesh2D_MakeLine3D(meshes[0], Vector3D(0.0f, 0.0f, 0.0f), Vector3D(100.0f, 0.0f, 0.0f), Vector4D(1.0f, 0.0f, 0.0f, 1.0f));
+	Mesh2D_MakeLine3D(meshes[1], Vector3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 100.0f, 0.0f), Vector4D(0.0f, 1.0f, 0.0f, 1.0f));
+	Mesh2D_MakeLine3D(meshes[2], Vector3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 0.0f, 100.0f), Vector4D(0.0f, 0.0f, 1.0f, 1.0f));
 
 	return (true);
 }
@@ -82,15 +97,27 @@ void DestroyRenderer(Renderer* ppRenderer)
 	{
 		tracked_free(pRenderer->szRendererName);
 	}
+
 	DestroyProgram(&pRenderer->pShader);
+
 	DestroyBuffer(&pRenderer->pLinesBuffer);
 	DestroyBuffer(&pRenderer->pTrianglesBuffer);
+
+	DestroyBuffer(&pRenderer->pMesh2DBuffer);
 
 	VectorFree(&pRenderer->pLineVertices);
 	VectorFree(&pRenderer->pLineIndices);
 
 	VectorFree(&pRenderer->pTriangleVertices);
 	VectorFree(&pRenderer->pTriangleIndices);
+
+	for (int i = 0; i < 16; i++)
+	{
+		if (meshes[i])
+		{
+			Mesh2D_Destroy(&meshes[i]);
+		}
+	}
 
 	tracked_free(pRenderer);
 	*ppRenderer = NULL;
@@ -124,8 +151,69 @@ void InitializeTriangle(Renderer pRenderer)
 
 void RenderRenderer(Renderer pRenderer)
 {
+	RenderMesh2D(pRenderer);
 	RenderRendererLines(pRenderer);
 	RenderRendererTriangles(pRenderer);
+}
+
+void RenderMesh2D(Renderer pRenderer)
+{
+	// Create temporary object
+	Vector Meshes2DVertices = VectorInit(sizeof(SVertex));
+	Vector Meshes2DIndices = VectorInit(sizeof(GLuint));
+
+	uint32_t vertexOffset = 0;
+
+	for (int i = 0; i < 3; i++)
+	{
+		if (!meshes[i] || !meshes[i]->pVertices || !meshes[i]->pVertices->count)
+		{
+			continue;
+		}
+
+		// Copy Vertices directly
+		for (size_t v = 0; v < meshes[i]->pVertices->count; v++)
+		{
+			SVertex* pVertex = (SVertex*)meshes[i]->pVertices->pData + v;
+			ANUBIS_VECTOR_PUSH(Meshes2DVertices, SVertex, *pVertex);
+		}
+
+		// Copy Indices with OFFSET
+		for (size_t index = 0; index < meshes[i]->pIndices->count; index++)
+		{
+			GLuint* pOriginalIndex = (GLuint*)meshes[i]->pIndices->pData + index;
+			GLuint offsetIndex = *pOriginalIndex + vertexOffset; // Shift the index
+			ANUBIS_VECTOR_PUSH(Meshes2DIndices, GLuint, offsetIndex);
+		}
+
+		// Increase the offset by the number of vertices we just added
+		vertexOffset += (uint32_t)meshes[i]->pVertices->count;
+	}
+
+	if (Meshes2DVertices->count > 0)
+	{
+		PushState(GetStateManager());
+		BindShader(GetStateManager(), pRenderer->pShader);
+
+		Matrix4 modelMat = S_Matrix4_Identity;
+
+		SetMat4(pRenderer->pShader, "u_matViewProjection", GetViewProjectionMatrix(pRenderer->pCamera));
+		SetMat4(pRenderer->pShader, "u_matModel", modelMat);
+
+		// One single upload to the GPU
+		UpdateBufferVertexData(pRenderer->pMesh2DBuffer,
+			(SVertex*)Meshes2DVertices->pData,
+			Meshes2DVertices->count,
+			(GLuint*)Meshes2DIndices->pData,
+			Meshes2DIndices->count);
+
+		RenderBuffer(pRenderer->pMesh2DBuffer, GL_LINES);
+		PopState(GetStateManager());
+	}
+
+
+	VectorFree(&Meshes2DVertices);
+	VectorFree(&Meshes2DIndices);
 }
 
 void RenderRendererLines(Renderer pRenderer)
@@ -138,9 +226,6 @@ void RenderRendererLines(Renderer pRenderer)
 
 	SetRendererDiffuseColor(pRenderer, 0.0f, 0.0f, 1.0f, 1.0f); // Blue - Z Axis
 	RenderLine3D(pRenderer, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 100.0f);
-
-	SetRendererDiffuseColor(pRenderer, 1.0f, 0.0f, 1.0f, 1.0f); // Idk
-	RenderLine2D(pRenderer, 0.0f, 0.0f, 50.0f, 50.0f, 0.0f);
 
 	RenderCircle2D(pRenderer, 0.0f, 0.0f, 0.0f, 1.0f, 8, false);
 	RenderCircle3D(pRenderer, 0.0f, 0.0f, 15.0f, 1.0f, 32);
@@ -160,7 +245,7 @@ void RenderRendererLines(Renderer pRenderer)
 	SetMat4(pRenderer->pShader, "u_matViewProjection", GetViewProjectionMatrix(pRenderer->pCamera));
 	SetMat4(pRenderer->pShader, "u_matModel", modelMat);
 
-	UpdateBufferVertexData(pRenderer->pLinesBuffer, (SVertex*)pRenderer->pLineVertices->pData, pRenderer->pLineVertices->count, (GLuint*)pRenderer->pLineIndices->pData, pRenderer->pLineIndices->count);
+	// UpdateBufferVertexData(pRenderer->pLinesBuffer, (SVertex*)pRenderer->pLineVertices->pData, pRenderer->pLineVertices->count, (GLuint*)pRenderer->pLineIndices->pData, pRenderer->pLineIndices->count);
 	
 	RenderBuffer(pRenderer->pLinesBuffer, GL_LINES);
 	PopState(GetStateManager());
