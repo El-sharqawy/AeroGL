@@ -13,5 +13,5 @@ typedef struct SVertex
 	Vector4 m_v4Color;			// Color
 } SVertex;
 
-#define Vertex(x, y, z) (SVertex){{x, y, z}};
+#define Vertex3D(x, y, z) (SVertex){{x, y, z}};
 #endif // __VERTEX_H__

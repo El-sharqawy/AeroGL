@@ -24,6 +24,8 @@ typedef struct SMemoryBlockHeader
     char padding[4];  // Ensure the whole struct is 32 bytes
 } SMemoryBlockHeader;
 
+_Static_assert(sizeof(SMemoryBlockHeader) % 16 == 0, "Memory header must be 16-byte aligned!");
+
 // "extern" tells other files: "The real variable exists somewhere else."
 static const size_t header_size = 16;
 extern size_t allocation_count;

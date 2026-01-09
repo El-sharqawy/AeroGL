@@ -145,10 +145,12 @@
     <ClCompile Include="Math\Projection\OrthographicProjection.c" />
     <ClCompile Include="Math\Projection\PerspectiveProjection.c" />
     <ClCompile Include="Math\Quaternion\Quaternion.c" />
+    <ClCompile Include="Math\Transform.c" />
     <ClCompile Include="Math\Vectors\Vector2.c" />
     <ClCompile Include="Math\Vectors\Vector3.c" />
     <ClCompile Include="Math\Vectors\Vector4.c" />
     <ClCompile Include="Math\Vertex\Vertex.c" />
+    <ClCompile Include="Meshes\Mesh2D.c" />
     <ClCompile Include="OpenGLUtils\glad.c" />
     <ClCompile Include="OpenGLUtils\stb_image.c" />
     <ClCompile Include="OpenGLUtils\stb_image_write.c" />
@@ -171,11 +173,13 @@
     <ClInclude Include="Math\Projection\OrthographicProjection.h" />
     <ClInclude Include="Math\Projection\PerspectiveProjection.h" />
     <ClInclude Include="Math\Quaternion\Quaternion.h" />
+    <ClInclude Include="Math\Transform.h" />
     <ClInclude Include="Math\Vectors\Vector2.h" />
     <ClInclude Include="Math\Vectors\Vector3.h" />
     <ClInclude Include="Math\Vectors\Vector4.h" />
     <ClInclude Include="Math\Vertex\Vertex.h" />
     <ClInclude Include="Meshes\LineMesh.h" />
+    <ClInclude Include="Meshes\Mesh2D.h" />
     <ClInclude Include="Renderer\Buffer.h" />
     <ClInclude Include="Renderer\Renderer.h" />
     <ClInclude Include="Renderer\Shader.h" />

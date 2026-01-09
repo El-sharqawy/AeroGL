@@ -4,9 +4,9 @@
 #include <stdint.h>
 #include <memory.h>
 
-AnubisVector VectorInit(size_t element_size)
+Vector VectorInit(size_t element_size)
 {
-	AnubisVector vec = (AnubisVector)tracked_malloc(sizeof(SAnubisVector));
+	Vector vec = (Vector)tracked_malloc(sizeof(SAnubisVector));
 	vec->pData = NULL;
 	vec->count = 0;
 	vec->capacity = 0;
@@ -14,7 +14,17 @@ AnubisVector VectorInit(size_t element_size)
 	return (vec);
 }
 
-void VectorPush(AnubisVector vec, const void* pItem)
+Vector VectorInitSize(size_t element_size, size_t initCapcity)
+{
+	Vector vec = (Vector)tracked_malloc(sizeof(SAnubisVector));
+	vec->pData = NULL;
+	vec->count = 0;
+	vec->capacity = initCapcity;
+	vec->elemSize = element_size;
+	return (vec);
+}
+
+void VectorPush(Vector vec, const void* pItem)
 {
 	if (vec->count == vec->capacity)
 	{
@@ -33,7 +43,7 @@ void VectorPush(AnubisVector vec, const void* pItem)
 	vec->count++;
 }
 
-void VectorFree(AnubisVector* ppVec)
+void VectorFree(Vector* ppVec)
 {
 	if (!ppVec || !*ppVec) 
 	{
@@ -41,7 +51,7 @@ void VectorFree(AnubisVector* ppVec)
 	}
 
 	// 2. Grab the actual AnubisVector pointer so we can work with it easily
-	AnubisVector vec = *ppVec;
+	Vector vec = *ppVec;
 
 	// 3. Free the internal array data
 	tracked_free(vec->pData);
@@ -58,7 +68,7 @@ void VectorFree(AnubisVector* ppVec)
 
 // Clear (Keep Memory): Useful if you want to reuse the buffer next frame 
 // without re-allocating (saves CPU time!)
-void VectorClear(AnubisVector vec)
+void VectorClear(Vector vec)
 {
 	if (!vec)
 	{
@@ -67,7 +77,7 @@ void VectorClear(AnubisVector vec)
 	vec->count = 0; // Just reset the count; keep the capacity and pData!
 }
 
-void* VectorGet(AnubisVector vec, size_t index)
+void* VectorGet(Vector vec, size_t index)
 {
 	if (index >= vec->count)
 	{

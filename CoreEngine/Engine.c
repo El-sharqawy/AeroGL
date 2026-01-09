@@ -15,7 +15,7 @@ bool InitializeEngine(Engine pEngine)
 		return (false);
 	}
 
-	SetWindowTitle(pEngine->window, "AnubisEngine");
+	SetWindowTitle(pEngine->window, "AeroGL");
 	SetWindowMode(pEngine->window, WINDOWED);
 	if (!InitializeWindow(pEngine->window))
 	{

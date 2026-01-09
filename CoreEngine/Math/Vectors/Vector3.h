@@ -60,6 +60,8 @@ typedef struct __declspec(align(16)) SVector3f
 
 #define Vector3F(val) ((Vector3){ .reg = _mm_setr_ps(val, val, val, 0.0f) })
 #define Vector3D(x, y, z) ((Vector3){ .reg = _mm_setr_ps(x, y, z, 0.0f) })
+#define Vector3Zero(val) ((Vector3){ .reg = _mm_setr_ps(0.0f, 0.0f, 0.0f, 0.0f) })
+#define Vector3One(val) ((Vector3){ .reg = _mm_setr_ps(1.0f, 1.0f, 1.0f, 0.0f) })
 
 // Initialization (The "In-place" pattern)
 static inline Vector3 Vector3_Fill(float fVal)

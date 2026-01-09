@@ -72,7 +72,7 @@ typedef struct SGLCamera
 	SOrthoProjInfo OrthographicProjection;
 	
 	// Accumulates all Yaw and Pitch rotations into a single quaternion.
-	Quaternion OrientationQuaternion;
+	SQuaternion OrientationQuaternion;
 
 	// Camera Matrix State Flags
 	// Set to true when position/rotation changes
@@ -309,11 +309,11 @@ void ProcessCameraMouse(GLCamera pCamera)
 		Vector3 localRight = Quaternion_Rotate(pCamera->OrientationQuaternion, s_v3WorldRight);
 
 		// Create rotation quaternions
-		Quaternion pitchQuat = Quaternion_FromAxisAngleV(localRight, fDeltaPitch, true);
-		Quaternion yawQuat = Quaternion_FromAxisAngleV(s_v3WorldUp, fDeltaYaw, true);
+		SQuaternion pitchQuat = Quaternion_FromAxisAngleV(localRight, fDeltaPitch, true);
+		SQuaternion yawQuat = Quaternion_FromAxisAngleV(s_v3WorldUp, fDeltaYaw, true);
 
 		// Accumulate orientation
-		Quaternion yawMulPitch = Quaternion_MultiplySIMD(yawQuat, pitchQuat);
+		SQuaternion yawMulPitch = Quaternion_MultiplySIMD(yawQuat, pitchQuat);
 		pCamera->OrientationQuaternion = Quaternion_MultiplySIMD(yawMulPitch, pCamera->OrientationQuaternion);
 
 		pCamera->OrientationQuaternion = Quaternion_Normalize(pCamera->OrientationQuaternion);

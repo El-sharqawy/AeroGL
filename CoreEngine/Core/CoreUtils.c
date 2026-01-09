@@ -35,6 +35,13 @@ void* tracked_malloc_internal(size_t size, const char* file, int line)
 	// (raw_ptr + 2) if raw_ptr is size_t* (8 bytes each)
 	void* user_ptr = (void*)((char*)raw_ptr + sizeof(SMemoryBlockHeader));
 
+#ifdef _DEBUG
+	if (((uintptr_t)user_ptr % 16) != 0)
+	{
+		syserr("User pointer not 16-byte aligned! Header size: %zu", sizeof(SMemoryBlockHeader));
+	}
+#endif
+
 	allocation_count++;
 	bytes_allocated += size;
 

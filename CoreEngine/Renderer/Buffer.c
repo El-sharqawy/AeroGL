@@ -13,9 +13,9 @@ typedef struct SGLBuffer
 	GLuint vertexCount;		// glDrawArrays needs it
 	GLuint indexCount;		// glDrawElements needs it
 
-	GLint iVboCapacity;
-	GLint iEboCapacity;
-	bool IsInitialized;
+	GLsizeiptr vboCapacity;
+	GLsizeiptr eboCapacity;
+	bool bIsInitialized;
 } SGLBuffer;
 
 void DeleteBuffer(GLuint* puiBufferID)
@@ -195,7 +195,7 @@ void DeleteGLBuffer(GLBuffer buffer)
 	DeleteBuffer(&buffer->uiVBO);
 	DeleteBuffer(&buffer->uiEBO);
 
-	buffer->IsInitialized = false; // Reset the engine state flag
+	buffer->bIsInitialized = false; // Reset the engine state flag
 }
 
 bool CreateGLBuffer(GLBuffer buffer)
@@ -260,8 +260,8 @@ bool AllocateBuffersStorage(GLBuffer buffer)
 		return (false);
 	}
 
-	GLsizeiptr vboBytes = buffer->iVboCapacity * sizeof(SVertex);
-	GLsizeiptr eboBytes = buffer->iEboCapacity * sizeof(GLuint);
+	GLsizeiptr vboBytes = buffer->vboCapacity * sizeof(SVertex);
+	GLsizeiptr eboBytes = buffer->eboCapacity * sizeof(GLuint);
 
 	if (IsGLVersionHigher(4, 5))
 	{
@@ -315,7 +315,7 @@ void LinkBuffers(GLBuffer buffer)
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
-	buffer->IsInitialized = true;
+	buffer->bIsInitialized = true;
 }
 
 void SetupVertexBufferAttributesVertex(GLBuffer buffer)
@@ -397,16 +397,16 @@ void UpdateBufferVertexData(GLBuffer buffer, const SVertex* pVertices, GLsizeipt
 		return;
 	}
 
-	if (vertexCount > buffer->iVboCapacity || indexCount > buffer->iEboCapacity)
+	if (vertexCount > buffer->vboCapacity || indexCount > buffer->eboCapacity)
 	{
 		// Grow by 50% or the required amount, whichever is larger
-		GLsizeiptr newVboCap = buffer->iVboCapacity + (buffer->iVboCapacity / 2);
+		GLsizeiptr newVboCap = buffer->vboCapacity + (buffer->vboCapacity / 2);
 		if (newVboCap < vertexCount)
 		{
 			newVboCap = vertexCount;
 		}
 
-		GLsizeiptr newEboCap = buffer->iEboCapacity + (buffer->iEboCapacity / 2);
+		GLsizeiptr newEboCap = buffer->eboCapacity + (buffer->eboCapacity / 2);
 		if (newEboCap < indexCount)
 		{
 			newEboCap = indexCount;
@@ -436,7 +436,7 @@ void UpdateBufferVertexData(GLBuffer buffer, const SVertex* pVertices, GLsizeipt
 
 		// Legacy "Orphaning": Re-specifying the buffer with NULL tells the driver
 		// to give us a fresh block of memory. This prevents pipeline stalls.
-		glBufferData(GL_ARRAY_BUFFER, buffer->iVboCapacity * sizeof(SVertex), nullptr, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, buffer->vboCapacity * sizeof(SVertex), nullptr, GL_DYNAMIC_DRAW);
 
 		glBufferSubData(GL_ARRAY_BUFFER, 0, vboByteSize, pVertices);
 
@@ -444,7 +444,7 @@ void UpdateBufferVertexData(GLBuffer buffer, const SVertex* pVertices, GLsizeipt
 
 		// Legacy "Orphaning": Re-specifying the buffer with NULL tells the driver
 		// to give us a fresh block of memory. This prevents pipeline stalls.
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, buffer->iEboCapacity * sizeof(GLuint), nullptr, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, buffer->eboCapacity * sizeof(GLuint), nullptr, GL_DYNAMIC_DRAW);
 
 		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, eboByteSize, pIndices);
 
@@ -471,9 +471,9 @@ bool InitializeGLBuffer(GLBuffer* ppBuffer)
 	memset(pGLBuffer, 0, sizeof(SGLBuffer));
 
 	// 1. Setup the Metadata inside the struct
-	pGLBuffer->iVboCapacity = INITIAL_VERTEX_CAPACITY;
-	pGLBuffer->iEboCapacity = INITIAL_INDEX_CAPACITY;
-	pGLBuffer->IsInitialized = false;
+	pGLBuffer->vboCapacity = INITIAL_VERTEX_CAPACITY;
+	pGLBuffer->eboCapacity = INITIAL_INDEX_CAPACITY;
+	pGLBuffer->bIsInitialized = false;
 
 	// 2. Create the GPU "Names" (IDs)
 	if (CreateGLBuffer(pGLBuffer) == false)
@@ -510,7 +510,7 @@ bool InitializeGLBuffer(GLBuffer* ppBuffer)
 void RenderBuffer(GLBuffer buffer, GLenum renderMode)
 {
 	// Safety: Don't draw if not initialized or if we have no data, no need to check vertexCount since we're using glDrawElements but we will keep it ..
-	if (!buffer || buffer->IsInitialized == false || buffer->vertexCount == 0 || buffer->indexCount == 0)
+	if (!buffer || buffer->bIsInitialized == false || buffer->vertexCount == 0 || buffer->indexCount == 0)
 	{
 		return;
 	}
@@ -524,13 +524,24 @@ void RenderBuffer(GLBuffer buffer, GLenum renderMode)
 	glDrawElements(renderMode, buffer->indexCount, GL_UNSIGNED_INT, NULL);
 }
 
-void ReallocateBuffer(GLBuffer buffer, size_t vNewSize, size_t iNewSize, bool copyOldData)
+/**
+ * @brief Reallocates buffer storage with optional data preservation.
+ *
+ * Creates new VBO/EBO with larger capacity and optionally copies old data.
+ * Uses GPU-to-GPU copy to avoid CPU round-trip.
+ *
+ * @param buffer [in/out] The buffer to resize.
+ * @param newVboCapacity [in] New vertex capacity.
+ * @param newEboCapacity [in] New index capacity.
+ * @param copyOldData [in] If true, preserves existing data; if false, starts fresh.
+ */
+void ReallocateBuffer(GLBuffer buffer, size_t newVboCapacity, size_t newEboCapacity, bool copyOldData)
 {
 	// 1. Store old state
 	GLuint oldVBO = buffer->uiVBO;
 	GLuint oldEBO = buffer->uiEBO;
-	GLsizeiptr oldVboByteSize = buffer->iVboCapacity * sizeof(SVertex);
-	GLsizeiptr oldEboByteSize = buffer->iEboCapacity * sizeof(GLuint);
+	GLsizeiptr oldVboByteSize = buffer->vboCapacity * sizeof(SVertex);
+	GLsizeiptr oldEboByteSize = buffer->eboCapacity * sizeof(GLuint);
 
 	// 2. Generate New Handles
 	GLuint newVBO, newEBO;
@@ -538,8 +549,8 @@ void ReallocateBuffer(GLBuffer buffer, size_t vNewSize, size_t iNewSize, bool co
 	CreateBuffer(&newEBO);
 
 	// 3. Allocate Storage, with Empty buffers
-	GLsizeiptr newVboByteSize = vNewSize * sizeof(SVertex);
-	GLsizeiptr newEboByteSize = iNewSize * sizeof(GLuint);
+	GLsizeiptr newVboByteSize = newVboCapacity * sizeof(SVertex);
+	GLsizeiptr newEboByteSize = newEboCapacity * sizeof(GLuint);
 
 	if (IsGLVersionHigher(4, 5))
 	{
@@ -609,10 +620,10 @@ void ReallocateBuffer(GLBuffer buffer, size_t vNewSize, size_t iNewSize, bool co
 	// 6. Update Buffer
 	buffer->uiVBO = newVBO;
 	buffer->uiEBO = newEBO;
-	buffer->iVboCapacity = (GLuint)vNewSize;
-	buffer->iEboCapacity = (GLuint)iNewSize;
+	buffer->vboCapacity = newVboCapacity;
+	buffer->eboCapacity = newEboCapacity;
 
-	syslog("Buffer Expanded to V:%zu E:%zu", vNewSize, iNewSize);
+	syslog("Buffer Expanded to V:%zu E:%zu", newVboCapacity, newEboCapacity);
 
 	LinkBuffers(buffer);
 }

@@ -12,14 +12,15 @@ typedef struct SAnubisVector
 	size_t elemSize;  // Size of one element (e.g., sizeof(SVertex))
 } SAnubisVector;
 
-typedef SAnubisVector* AnubisVector;
+typedef SAnubisVector* Vector;
 
-AnubisVector VectorInit(size_t element_size);
-void VectorPush(AnubisVector vec, const void* pItem);
-void VectorPush(AnubisVector vec, const void* pItem);
-void VectorFree(AnubisVector* vec);
-void VectorClear(AnubisVector vec);
-void* VectorGet(AnubisVector v, size_t index);
+Vector VectorInit(size_t element_size);
+Vector VectorInitSize(size_t element_size, size_t initCapcity);
+void VectorPush(Vector vec, const void* pItem);
+void VectorPush(Vector vec, const void* pItem);
+void VectorFree(Vector* vec);
+void VectorClear(Vector vec);
+void* VectorGet(Vector v, size_t index);
 
 #define ANUBIS_VECTOR_PUSH(vec_ptr, type, item) \
     do { \

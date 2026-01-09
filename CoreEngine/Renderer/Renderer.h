@@ -14,11 +14,11 @@ typedef struct SRenderer
     GLBuffer pTrianglesBuffer;
 
     // CPU Side Data (Batching)
-    AnubisVector pLineVertices;
-    AnubisVector pLineIndices;
+    Vector pLineVertices;
+    Vector pLineIndices;
 
-    AnubisVector pTriangleVertices;
-    AnubisVector pTriangleIndices;
+    Vector pTriangleVertices;
+    Vector pTriangleIndices;
 
     // Renderer Data
     char* szRendererName;

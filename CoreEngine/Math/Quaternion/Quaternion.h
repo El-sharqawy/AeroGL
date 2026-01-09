@@ -51,16 +51,16 @@ typedef struct __declspec(align(16)) SQuaternion
 		__m128 reg; // The SIMD register representation
 		float quat[4]; // Array access: Useful for loops or OpenGL (glUniform4fv)
 	};
-} Quaternion;
+} SQuaternion;
 
 // Use _mm_setr_ps (Set Reversed) so the order matches x, y, z, w 
 // _mm_set_ps usually takes arguments in reverse order (w, z, y, x)
 
-#define QuaternionF(val) ((Quaternion){ .reg = _mm_set1_ps(val) })
-#define QuaternionQ(w, x, y, z) ((Quaternion){ .reg = _mm_setr_ps(w, x, y, z) })
+#define QuaternionF(val) ((SQuaternion){ .reg = _mm_set1_ps(val) })
+#define QuaternionQ(w, x, y, z) ((SQuaternion){ .reg = _mm_setr_ps(w, x, y, z) })
 
-static const Quaternion S_Quaternion_Identity = { 0.0f, 0.0f, 0.0f, 1.0f };
-static const Quaternion S_Quaternion_Zero = { 0.0f, 0.0f, 0.0f, 0.0f };
+static const SQuaternion S_Quaternion_Identity = { 0.0f, 0.0f, 0.0f, 1.0f };
+static const SQuaternion S_Quaternion_Zero = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 /**
  * @brief Returns the Identity Quaternion.
@@ -74,7 +74,7 @@ static const Quaternion S_Quaternion_Zero = { 0.0f, 0.0f, 0.0f, 0.0f };
  *
  * @return SQuaternion The Identity Quaternion (w=1, x=0, y=0, z=0).
  */
-static inline Quaternion Quaternion_Identity()
+static inline SQuaternion Quaternion_Identity()
 {
 	return S_Quaternion_Identity;
 }
@@ -89,9 +89,9 @@ static inline Quaternion Quaternion_Identity()
  * @param q2 The constant reference to the right-hand side quaternion (second operand).
  * @return SQuaternion A new quaternion instance resulting from the multiplication.
  */
-static inline Quaternion Quaternion_Multiply(const Quaternion q1, const Quaternion q2)
+static inline SQuaternion Quaternion_Multiply(const SQuaternion q1, const SQuaternion q2)
 {
-	Quaternion result = S_Quaternion_Zero;
+	SQuaternion result = S_Quaternion_Zero;
 
 	/*
 	Formula from http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/arithmetic/index.htm
@@ -111,7 +111,7 @@ static inline Quaternion Quaternion_Multiply(const Quaternion q1, const Quaterni
 	return (result);
 }
 
-static inline Quaternion Quaternion_MultiplySIMD(const Quaternion q1, const Quaternion q2)
+static inline SQuaternion Quaternion_MultiplySIMD(const SQuaternion q1, const SQuaternion q2)
 {
 	// SSE Optimized Hamilton Product
 	__m128 wwww = _mm_set1_ps(q1.w);
@@ -131,7 +131,7 @@ static inline Quaternion Quaternion_MultiplySIMD(const Quaternion q1, const Quat
 	// ... further shuffles and adds ...
 
 	// Fallback if you prefer the scalar logic for clarity:
-	Quaternion res = S_Quaternion_Zero;
+	SQuaternion res = S_Quaternion_Zero;
 	res.w = q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z;
 	res.x = q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y;
 	res.y = q1.w * q2.y - q1.x * q2.z + q1.y * q2.w + q1.z * q2.x;
@@ -150,9 +150,9 @@ static inline Quaternion Quaternion_MultiplySIMD(const Quaternion q1, const Quat
  * @param quat [in] The Quaternion object for which the conjugate is calculated.
  * @return Quaternion A new quaternion object representing the conjugate.
  */
-static inline Quaternion Quaternion_Conjugate(const Quaternion quat)
+static inline SQuaternion Quaternion_Conjugate(const SQuaternion quat)
 {
-	Quaternion result = S_Quaternion_Zero;
+	SQuaternion result = S_Quaternion_Zero;
 	result.x = -quat.x;
 	result.y = -quat.y;
 	result.z = -quat.z;
@@ -171,7 +171,7 @@ static inline Quaternion Quaternion_Conjugate(const Quaternion quat)
  * @param quat [in] The SQuaternion object for which the squared length is calculated.
  * @return float The squared length (w² + x² + y² + z²) of the quaternion.
  */
-inline float Quaternion_LengthSquared(const Quaternion quat)
+inline float Quaternion_LengthSquared(const SQuaternion quat)
 {
 	// The difference between ss and ps is 
 	// (Packed Single-Precision): Input: [A, B, C, D], Output: [sqrt(A), sqrt(B), sqrt(C), sqrt(D)]
@@ -200,7 +200,7 @@ inline float Quaternion_LengthSquared(const Quaternion quat)
  *
  * @return float The magnitude (length) of the quaternion.
  */
-inline float Quaternion_Length(const Quaternion quat)
+inline float Quaternion_Length(const SQuaternion quat)
 {
 	// Multiply x*x, y*y, z*z, w*w and sum them into all slots
 	// "Multi-Media Dot Product Packed Single-precision."
@@ -213,7 +213,7 @@ inline float Quaternion_Length(const Quaternion quat)
 	return _mm_cvtss_f32(sqrt);
 }
 
-static inline Quaternion Quaternion_Normalize(const Quaternion quat)
+static inline SQuaternion Quaternion_Normalize(const SQuaternion quat)
 {
 	// Multiply x*x, y*y, z*z, w*w and sum them into all slots
 	// "Multi-Media Dot Product Packed Single-precision."
@@ -224,7 +224,7 @@ static inline Quaternion Quaternion_Normalize(const Quaternion quat)
 	__m128 invLen = _mm_rsqrt_ps(lenSq);
 
 	// 3. Multiply original components by the inverse length
-	Quaternion res;
+	SQuaternion res;
 	res.reg = _mm_mul_ps(quat.reg, invLen);
 
 	return (res);
@@ -247,14 +247,14 @@ static inline Quaternion Quaternion_Normalize(const Quaternion quat)
  * @param t [in] The interpolation factor (typically between 0.0 and 1.0).
  * @return SQuaternion The interpolated rotation quaternion.
  */
-static inline Quaternion Quaternion_Slerp(const Quaternion quat1, const Quaternion quat2, float t)
+static inline SQuaternion Quaternion_Slerp(const SQuaternion quat1, const SQuaternion quat2, float t)
 {
 	// Clamp t to [0,1] for safety
 	t = clampf(t, 0.0f, 1.0f);
 
 	// Based on http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/slerp/index.htm
 	// t is interpolation factor
-	Quaternion result = S_Quaternion_Zero;
+	SQuaternion result = S_Quaternion_Zero;
 
 	// Use local variables for q2, which we might negate for the shortest path
 	float w2 = quat2.w;
@@ -360,10 +360,10 @@ static inline Quaternion Quaternion_Slerp(const Quaternion quat1, const Quaterni
  * *If `bRadian` is true, the angle is negated internally, indicating a
  * right-handed or normal rotation convention.*
  */
-static inline Quaternion Quaternion_FromAxisAngle(float v3Axis[3], float fAngle, bool bRadian)
+static inline SQuaternion Quaternion_FromAxisAngle(float v3Axis[3], float fAngle, bool bRadian)
 {
 	// result Quaternion
-	Quaternion result = S_Quaternion_Zero;
+	SQuaternion result = S_Quaternion_Zero;
 
 	// Formula from http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/
 	float angleRad = bRadian ? fAngle : ToRadians(fAngle); // Converts angle to radians, the standard Right-Handed rotation convention, negate the angle to match left handed systems (-ToRadian(angleRad))
@@ -382,10 +382,10 @@ static inline Quaternion Quaternion_FromAxisAngle(float v3Axis[3], float fAngle,
 	return (result);
 }
 
-static inline Quaternion Quaternion_FromAxisAngleV(const Vector3 v3Axis, GLfloat fAngle, bool bRadian)
+static inline SQuaternion Quaternion_FromAxisAngleV(const Vector3 v3Axis, GLfloat fAngle, bool bRadian)
 {
 	// result Quaternion
-	Quaternion result = S_Quaternion_Zero;
+	SQuaternion result = S_Quaternion_Zero;
 
 	// Formula from http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/
 	GLfloat angleRad = fAngle;
@@ -447,7 +447,7 @@ static inline Quaternion Quaternion_FromAxisAngleV(const Vector3 v3Axis, GLfloat
  * @return float The rotation angle, in radians or degrees depending on
  *         the value of bWantRadian.
  */
-static inline float Quaternion_ToAxisAngle(const Quaternion quat, float outAxis[3], bool bWantRadian)
+static inline float Quaternion_ToAxisAngle(const SQuaternion quat, float outAxis[3], bool bWantRadian)
 {
 	// Ensure numerical safety
 	float wClamped = clampf(quat.w, -1.0f, 1.0f);
@@ -497,7 +497,7 @@ static inline float Quaternion_ToAxisAngle(const Quaternion quat, float outAxis[
  * @note The returned quaternion will be a unit quaternion if the underlying
  *       axis-angle construction produces normalized results.
  */
-static inline Quaternion Quaternion_FromXRotation(float fAngle, bool bRadian)
+static inline SQuaternion Quaternion_FromXRotation(float fAngle, bool bRadian)
 {
 	float v3XAxis[3] = { 1.0f, 0.0f, 0.0f };
 	return Quaternion_FromAxisAngle(v3XAxis, fAngle, bRadian);		// false = degrees, true = radians
@@ -520,7 +520,7 @@ static inline Quaternion Quaternion_FromXRotation(float fAngle, bool bRadian)
  *
  * @return SQuaternion  A new quaternion representing the Y-axis rotation.
  */
-static inline Quaternion Quaternion_FromYRotation(float fAngle, bool bRadian)
+static inline SQuaternion Quaternion_FromYRotation(float fAngle, bool bRadian)
 {
 	float v3YAxis[3] = { 0.0f, 1.0f, 0.0f };
 	return Quaternion_FromAxisAngle(v3YAxis, fAngle, bRadian);		// false = degrees, true = radians
@@ -543,7 +543,7 @@ static inline Quaternion Quaternion_FromYRotation(float fAngle, bool bRadian)
  *
  * @return SQuaternion  A new quaternion representing the Z-axis rotation.
  */
-static inline Quaternion Quaternion_FromZRotation(float fAngle, bool bRadian)
+static inline SQuaternion Quaternion_FromZRotation(float fAngle, bool bRadian)
 {
 	float v3ZAxis[3] = { 0.0f, 0.0f, 1.0f };
 	return Quaternion_FromAxisAngle(v3ZAxis, fAngle, bRadian);		// false = degrees, true = radians
@@ -564,9 +564,11 @@ static inline Quaternion Quaternion_FromZRotation(float fAngle, bool bRadian)
  *                match the convention used by the underlying axis-angle
  *                conversion logic.
  *
+ * @param bRadian [in] A boolean flag. Set to `false` if `fAngle` is in radians, `true` if in degrees.
+ * 
  * @return SQuaternion A new quaternion representing the rotation about the selected axis.
  */
-inline static Quaternion Quaternion_FromRotation(EAxis axis, float fAngle, bool bRadian)
+inline static SQuaternion Quaternion_FromRotation(EAxis axis, float fAngle, bool bRadian)
 {
 	if (axis == AXIS_X)
 	{
@@ -605,7 +607,7 @@ inline static Quaternion Quaternion_FromRotation(EAxis axis, float fAngle, bool 
  * @note This function is 'const' and does not modify the current object.
  * It returns a brand new quaternion instead.
  */
-inline static Quaternion Quaternion_FromEulerZYX_Float(float eulerRad[3], bool bToRadian)
+inline static SQuaternion Quaternion_FromEulerZYX_Float(float eulerRad[3], bool bToRadian)
 {
 	float Pitch = eulerRad[0];
 	float Yaw = eulerRad[1];
@@ -631,7 +633,7 @@ inline static Quaternion Quaternion_FromEulerZYX_Float(float eulerRad[3], bool b
 	const float sinRoll = sinf(Roll * 0.5f);
 
 	// Compute quaternion components
-	Quaternion result = S_Quaternion_Zero;
+	SQuaternion result = S_Quaternion_Zero;
 	result.x = sinPitch * cosYaw * cosRoll + cosPitch * sinYaw * sinRoll; // X component (Pitch)
 	result.y = cosPitch * sinYaw * cosRoll - sinPitch * cosYaw * sinRoll; // Y component (Yaw)
 	result.z = cosPitch * cosYaw * sinRoll - sinPitch * sinYaw * cosRoll; // Z component (Roll)
@@ -639,7 +641,7 @@ inline static Quaternion Quaternion_FromEulerZYX_Float(float eulerRad[3], bool b
 	return (result);
 }
 
-inline static Quaternion Quaternion_FromEulerZYX(const Vector3 v3EulerRad, bool bToRadian)
+inline static SQuaternion Quaternion_FromEulerZYX(const Vector3 v3EulerRad, bool bToRadian)
 {
 	float Pitch = v3EulerRad.x;
 	float Yaw = v3EulerRad.y;
@@ -665,7 +667,7 @@ inline static Quaternion Quaternion_FromEulerZYX(const Vector3 v3EulerRad, bool 
 	const float sinRoll = sinf(Roll * 0.5f);
 
 	// Compute quaternion components
-	Quaternion result = S_Quaternion_Zero;
+	SQuaternion result = S_Quaternion_Zero;
 	result.x = sinPitch * cosYaw * cosRoll + cosPitch * sinYaw * sinRoll; // X component (Pitch)
 	result.y = cosPitch * sinYaw * cosRoll - sinPitch * cosYaw * sinRoll; // Y component (Yaw)
 	result.z = cosPitch * cosYaw * sinRoll - sinPitch * sinYaw * cosRoll; // Z component (Roll)
@@ -694,7 +696,7 @@ inline static Quaternion Quaternion_FromEulerZYX(const Vector3 v3EulerRad, bool 
  * @note This function is 'const' and does not modify the current object.
  * It returns a brand new quaternion instead.
  */
-inline static Quaternion Quaternion_FromEulerXYZ_Float(float eulerRad[3], bool bToRadian)
+inline static SQuaternion Quaternion_FromEulerXYZ_Float(float eulerRad[3], bool bToRadian)
 {
 	float Pitch = eulerRad[0];
 	float Yaw = eulerRad[1];
@@ -720,7 +722,7 @@ inline static Quaternion Quaternion_FromEulerXYZ_Float(float eulerRad[3], bool b
 	const float sinRoll = sinf(Roll * 0.5f);
 
 	// Compute quaternion components (XYZ sequence formula)
-	Quaternion result = S_Quaternion_Zero;
+	SQuaternion result = S_Quaternion_Zero;
 
 	// The formulas are different from ZYX due to non-commutative rotation
 	result.x = sinPitch * cosYaw * cosRoll - cosPitch * sinYaw * sinRoll;
@@ -730,7 +732,7 @@ inline static Quaternion Quaternion_FromEulerXYZ_Float(float eulerRad[3], bool b
 	return (result);
 }
 
-inline static Quaternion Quaternion_FromEulerXYZ(const Vector3 v3EulerRad, bool bToRadian)
+inline static SQuaternion Quaternion_FromEulerXYZ(const Vector3 v3EulerRad, bool bToRadian)
 {
 	float Pitch = v3EulerRad.x;
 	float Yaw = v3EulerRad.y;
@@ -756,7 +758,7 @@ inline static Quaternion Quaternion_FromEulerXYZ(const Vector3 v3EulerRad, bool 
 	const float sinRoll = sinf(Roll * 0.5f);
 
 	// Compute quaternion components (XYZ sequence formula)
-	Quaternion result = S_Quaternion_Zero;
+	SQuaternion result = S_Quaternion_Zero;
 
 	// The formulas are different from ZYX due to non-commutative rotation
 	result.x = sinPitch * cosYaw * cosRoll - cosPitch * sinYaw * sinRoll;
@@ -792,7 +794,7 @@ inline static Quaternion Quaternion_FromEulerXYZ(const Vector3 v3EulerRad, bool 
  *
  * @post `eulerRad` contains the Euler angles corresponding to the ZYX rotation sequence.
  */
-static inline void Quaternion_ToEulerZYX(const Quaternion quat, float eulerRad[3])
+static inline void Quaternion_ToEulerZYX(const SQuaternion quat, float eulerRad[3])
 {
 	// Compute Roll (X-axis)
 	const float sinr_cosp = 2.0f * (quat.w * quat.x + quat.y * quat.z);
@@ -840,7 +842,7 @@ static inline void Quaternion_ToEulerZYX(const Quaternion quat, float eulerRad[3
  *
  * @pre The quaternion (*this) must be normalized (unit quaternion) for correct results.
  */
-static inline Vector3 Quaternion_RotateVec(const Quaternion quat, const Vector3 vec3)
+static inline Vector3 Quaternion_RotateVec(const SQuaternion quat, const Vector3 vec3)
 {
 	// Quaternion rotation formula (from euclideanspace.com):
 	//   p2.x = w*w*p1.x + 2*y*w*p1.z - 2*z*w*p1.y + x*x*p1.x + 2*y*x*p1.y + 2*z*x*p1.z - z*z*p1.x - y*y*p1.x
@@ -891,7 +893,7 @@ static inline Vector3 Quaternion_RotateVec(const Quaternion quat, const Vector3 
  * @note This method is faster than the standard 'RotateVec' but less readable.
  * @pre The quaternion (*this) must be normalized (unit quaternion) for correct results.
  */
-static inline Vector3 Quaternion_Rotate(const Quaternion quat, const Vector3 vec3)
+static inline Vector3 Quaternion_Rotate(const SQuaternion quat, const Vector3 vec3)
 {
 	// Quaternion rotation formula (from euclideanspace.com):
 	//   p2.x = w*w*p1.x + 2*y*w*p1.z - 2*z*w*p1.y + x*x*p1.x + 2*y*x*p1.y + 2*z*x*p1.z - z*z*p1.x - y*y*p1.x
@@ -931,7 +933,7 @@ static inline Vector3 Quaternion_Rotate(const Quaternion quat, const Vector3 vec
  *
  * @pre The quaternion must be normalized (unit quaternion).
  */
-static inline Matrix4 Quaternion_ToMatrix4(const Quaternion quat)
+static inline Matrix4 Quaternion_ToMatrix4(const SQuaternion quat)
 {
 	// [ 1-2(y^2+z^2)		2(xy+zw)		2(xz-yw)		0 ]
 	// [ 2(xy-zw)			1-2(x^2+z^2)	2(yz+xw)		0 ]
@@ -1003,9 +1005,9 @@ static inline Matrix4 Quaternion_ToMatrix4(const Quaternion quat)
  * @note The resulting quaternion will be a unit quaternion if the input
  *       matrix is a proper rotation matrix.
  */
-static inline Quaternion Quaternion_FromMatrix4(const Matrix4 mat)
+static inline SQuaternion Quaternion_FromMatrix4(const Matrix4 mat)
 {
-	Quaternion quat = S_Quaternion_Zero;
+	SQuaternion quat = S_Quaternion_Zero;
 
 	// Calculate the trace (sum of the diagonal elements: R00 + R11 + R22)
 	// R00 is m.mat[0][0]
@@ -1086,7 +1088,7 @@ static inline Quaternion Quaternion_FromMatrix4(const Matrix4 mat)
 *
 *@post The returned SEulerAngles contains the Euler angles corresponding to the ZYX rotation sequence.
 */
-static inline SEulerAngles Quaternion_ToEulerAnglesDegrees(const Quaternion quat)
+static inline SEulerAngles Quaternion_ToEulerAnglesDegrees(const SQuaternion quat)
 {
 	SEulerAngles angles = { 0.0f, 0.0f, 0.0f };
 
@@ -1144,6 +1146,66 @@ static inline SEulerAngles Quaternion_ToEulerAnglesDegrees(const Quaternion quat
 	angles.fRoll = ToDegrees(angles.fRoll); // Roll (Should be near zero)
 
 	return (angles);
+}
+
+/**
+ * @brief Applies an incremental rotation around a principal axis (X, Y, or Z).
+ * 
+ * Rotates the given quaternion by a specified angle around one of the
+ * standard axes. Useful for simple rotations like yaw, pitch, or roll.
+ *
+ * @param quat [in] The current quaternion orientation.
+ * @param axis [in] The axis to rotate around (AXIS_X, AXIS_Y, AXIS_Z).
+ * @param fAngle [in] The rotation angle.
+ * @param bRadian [in] If true, fAngle is in radians; if false, degrees.
+ * @return SQuaternion The resulting quaternion after rotation.
+ */
+inline static SQuaternion Quaternion_RotateAroundAxis(const SQuaternion quat, EAxis axis, float fAngle, bool bRadian)
+{
+	SQuaternion deltaRotation = Quaternion_FromRotation(axis, fAngle, bRadian);
+	return (Quaternion_Multiply(quat, deltaRotation)); // Apply rotation to the given Quat!);
+}
+
+/**
+ * @brief Creates a quaternion from an axis-angle rotation with automatic normalization.
+ *
+ * This is a safe convenience wrapper that automatically normalizes the input axis
+ * before creating the quaternion. Use when you're unsure if your axis is normalized.
+ *
+ * @param v3Axis [in] The rotation axis (will be normalized internally, must be non-zero).
+ * @param fAngle [in] The rotation angle.
+ * @param bRadian [in] If true, fAngle is in radians; if false, degrees.
+ * @return SQuaternion A unit quaternion representing the rotation around the normalized axis.
+ *
+ * @note For performance-critical code with pre-normalized axes, use Quaternion_FromAxisAngleV.
+ */
+static inline SQuaternion Quaternion_MakeRotation(Vector3 v3Axis, float fAngle, bool bRadian)
+{
+	Vector3 normalizedAxis = Vector3_Normalized(v3Axis);
+	return Quaternion_FromAxisAngleV(normalizedAxis, fAngle, bRadian);		// false = degrees, true = radians
+}
+
+/**
+ * @brief Applies an incremental rotation around an arbitrary axis (free rotation).
+ *
+ * Rotates the given quaternion by a specified angle around any custom axis vector.
+ * This enables gimbal-lock-free rotation in any direction. The axis is automatically
+ * normalized before use.
+ *
+ * @param quat [in] The current quaternion orientation.
+ * @param v3Axis [in] The axis to rotate around (will be normalized internally).
+ * @param fAngle [in] The rotation angle.
+ * @param bRadian [in] If true, fAngle is in radians; if false, degrees.
+ * @return SQuaternion The resulting quaternion after rotation.
+ *
+ * @note This is the "free rotation" function - use for arbitrary-axis rotations
+ *       like propellers, turrets tracking targets, or camera orbits.
+ */
+static inline SQuaternion Quaternion_RotateAxis(const SQuaternion quat, Vector3 v3Axis, float fAngle, bool bRadian)
+{
+	Vector3 normalizedAxis = Vector3_Normalized(v3Axis);
+	SQuaternion deltaRotation = Quaternion_FromAxisAngleV(normalizedAxis, fAngle, bRadian);		// false = degrees, true = radians
+	return (Quaternion_Multiply(quat, deltaRotation)); // Apply rotation to the given Quat!);
 }
 
 #endif // __QUATERNION_H__
