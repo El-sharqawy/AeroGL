@@ -18,37 +18,75 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="imconfig.h" />
+    <ClInclude Include="imgui.h" />
+    <ClInclude Include="ImGuiFileDialog.h" />
+    <ClInclude Include="ImGuiFileDialogConfig.h" />
+    <ClInclude Include="ImGuizmo\GraphEditor.h" />
+    <ClInclude Include="ImGuizmo\ImCurveEdit.h" />
+    <ClInclude Include="ImGuizmo\ImGradient.h" />
+    <ClInclude Include="ImGuizmo\ImGuizmo.h" />
+    <ClInclude Include="ImGuizmo\ImSequencer.h" />
+    <ClInclude Include="ImGuizmo\ImZoomSlider.h" />
+    <ClInclude Include="imgui_impl_glfw.h" />
+    <ClInclude Include="imgui_impl_opengl3.h" />
+    <ClInclude Include="imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="imgui_internal.h" />
+    <ClInclude Include="imstb_rectpack.h" />
+    <ClInclude Include="imstb_textedit.h" />
+    <ClInclude Include="imstb_truetype.h" />
+    <ClInclude Include="Stdafx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="imgui.cpp" />
+    <ClCompile Include="ImGuiFileDialog.cpp" />
+    <ClCompile Include="ImGuizmo\GraphEditor.cpp" />
+    <ClCompile Include="ImGuizmo\ImCurveEdit.cpp" />
+    <ClCompile Include="ImGuizmo\ImGradient.cpp" />
+    <ClCompile Include="ImGuizmo\ImGuizmo.cpp" />
+    <ClCompile Include="ImGuizmo\ImSequencer.cpp" />
+    <ClCompile Include="imgui_demo.cpp" />
+    <ClCompile Include="imgui_draw.cpp" />
+    <ClCompile Include="imgui_impl_glfw.cpp" />
+    <ClCompile Include="imgui_impl_opengl3.cpp" />
+    <ClCompile Include="imgui_tables.cpp" />
+    <ClCompile Include="imgui_widgets.cpp" />
+    <ClCompile Include="Stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
-    <VCProjectVersion>18.0</VCProjectVersion>
+    <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{b9c1d04a-d995-4138-9da8-26b05688000e}</ProjectGuid>
-    <RootNamespace>CoreEngine</RootNamespace>
+    <ProjectGuid>{3e68cc81-8c3e-45d6-9b8e-9a091327b327}</ProjectGuid>
+    <RootNamespace>LibImageUI</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -71,19 +109,27 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <ExternalIncludePath>$(SolutionDir)Extern\include;$(ExternalIncludePath)</ExternalIncludePath>
     <LibraryPath>$(SolutionDir)Extern\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <ExternalIncludePath>$(SolutionDir)/Extern/Include;$(ExternalIncludePath)</ExternalIncludePath>
+    <LibraryPath>$(SolutionDir)/Extern/Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>
+      </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
@@ -93,12 +139,16 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>
+      </SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
@@ -106,13 +156,16 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>Stdafx.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).stdafx</PrecompiledHeaderOutputFile>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>
+      </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
@@ -122,79 +175,20 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>
+      </SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="Core\Camera.c" />
-    <ClCompile Include="Core\CoreUtils.c" />
-    <ClCompile Include="Core\Input.c" />
-    <ClCompile Include="Core\Window.c" />
-    <ClCompile Include="Engine.c" />
-    <ClCompile Include="Lib\Vector.c" />
-    <ClCompile Include="Main.c" />
-    <ClCompile Include="Math\EngineMath.c" />
-    <ClCompile Include="Math\MathUtils.c" />
-    <ClCompile Include="Math\Matrix\Matrix4.c" />
-    <ClCompile Include="Math\Projection\OrthographicProjection.c" />
-    <ClCompile Include="Math\Projection\PerspectiveProjection.c" />
-    <ClCompile Include="Math\Quaternion\Quaternion.c" />
-    <ClCompile Include="Math\Transform.c" />
-    <ClCompile Include="Math\Vectors\Vector2.c" />
-    <ClCompile Include="Math\Vectors\Vector3.c" />
-    <ClCompile Include="Math\Vectors\Vector4.c" />
-    <ClCompile Include="Math\Vertex\Vertex.c" />
-    <ClCompile Include="Meshes\Mesh2D.c" />
-    <ClCompile Include="Meshes\Mesh3D.c" />
-    <ClCompile Include="OpenGLUtils\glad.c" />
-    <ClCompile Include="OpenGLUtils\stb_image.c" />
-    <ClCompile Include="OpenGLUtils\stb_image_write.c" />
-    <ClCompile Include="Renderer\Buffer.c" />
-    <ClCompile Include="Renderer\Renderer.c" />
-    <ClCompile Include="Renderer\Shader.c" />
-    <ClCompile Include="Renderer\StateManager.c" />
-    <ClCompile Include="UserInterface\Interface_imgui.cpp" />
-    <ClCompile Include="UserInterface\UserInterface.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Core\Camera.h" />
-    <ClInclude Include="Core\CoreUtils.h" />
-    <ClInclude Include="Core\Input.h" />
-    <ClInclude Include="Core\Window.h" />
-    <ClInclude Include="Engine.h" />
-    <ClInclude Include="Lib\Vector.h" />
-    <ClInclude Include="Math\EngineMath.h" />
-    <ClInclude Include="Math\Matrix4.h" />
-    <ClInclude Include="Math\MathUtils.h" />
-    <ClInclude Include="Math\Matrix\Matrix4.h" />
-    <ClInclude Include="Math\Projection\OrthographicProjection.h" />
-    <ClInclude Include="Math\Projection\PerspectiveProjection.h" />
-    <ClInclude Include="Math\Quaternion\Quaternion.h" />
-    <ClInclude Include="Math\Transform.h" />
-    <ClInclude Include="Math\Vectors\Vector2.h" />
-    <ClInclude Include="Math\Vectors\Vector3.h" />
-    <ClInclude Include="Math\Vectors\Vector4.h" />
-    <ClInclude Include="Math\Vertex\Vertex.h" />
-    <ClInclude Include="Meshes\Mesh2D.h" />
-    <ClInclude Include="Meshes\Mesh3D.h" />
-    <ClInclude Include="Renderer\Buffer.h" />
-    <ClInclude Include="Renderer\Renderer.h" />
-    <ClInclude Include="Renderer\Shader.h" />
-    <ClInclude Include="Renderer\StateManager.h" />
-    <ClInclude Include="UserInterface\Interface_imgui.h" />
-    <ClInclude Include="UserInterface\UserInterface.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\LibImageUI\LibImageUI.vcxproj">
-      <Project>{3e68cc81-8c3e-45d6-9b8e-9a091327b327}</Project>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

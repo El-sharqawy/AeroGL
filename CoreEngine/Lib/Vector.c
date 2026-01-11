@@ -25,8 +25,13 @@ Vector VectorInitSize(size_t element_size, size_t initCapcity)
 	return (vec);
 }
 
-void VectorPush(Vector vec, const void* pItem)
+bool VectorPush(Vector vec, const void* pItem)
 {
+	if (!vec)
+	{
+		return (false);
+	}
+
 	if (vec->count == vec->capacity || vec->pData == NULL)
 	{
 		size_t newCapacity = (vec->capacity == 0) ? 4 : vec->capacity * 2;
@@ -42,6 +47,33 @@ void VectorPush(Vector vec, const void* pItem)
 	void* pDest = (unsigned char*)vec->pData + (vec->count * vec->elemSize); // FIX: Cast pData to (unsigned char*) so the + operation knows to move byte-by-byte
 	memcpy(pDest, pItem, vec->elemSize);
 	vec->count++;
+
+	return (true);
+}
+
+bool VectorReserve(Vector vec, size_t reservedSize)
+{
+	if (!vec)
+	{
+		return (false);
+	}
+
+	// If already have enough capacity, do nothing
+	if (reservedSize <= vec->capacity)
+	{
+		return (true);
+	}
+
+	// tracked_realloc handles everything: alloc, copy, free
+	void* newPtr = tracked_realloc(vec->pData, reservedSize * vec->elemSize);
+	if (!newPtr)
+	{
+		return (false);
+	}
+
+	vec->pData = (unsigned char*)newPtr;
+	vec->capacity = reservedSize;
+	return (true);
 }
 
 void VectorFree(Vector* ppVec)
@@ -69,11 +101,11 @@ void VectorFree(Vector* ppVec)
 
 // Clear (Keep Memory): Useful if you want to reuse the buffer next frame 
 // without re-allocating (saves CPU time!)
-void VectorClear(Vector vec)
+bool VectorClear(Vector vec)
 {
 	if (!vec)
 	{
-		return;
+		return (false);
 	}
 	vec->count = 0; // Just reset the count; keep the capacity and pData!
 }

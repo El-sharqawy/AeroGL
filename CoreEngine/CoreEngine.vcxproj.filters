@@ -168,6 +168,9 @@
     <ClCompile Include="UserInterface\UserInterface.c">
       <Filter>Source Files\UserInterface</Filter>
     </ClCompile>
+    <ClCompile Include="Meshes\Mesh3D.c">
+      <Filter>Source Files\Meshes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\CoreUtils.h">
@@ -233,9 +236,6 @@
     <ClInclude Include="Renderer\StateManager.h">
       <Filter>Header Files\Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="Meshes\LineMesh.h">
-      <Filter>Header Files\Meshes</Filter>
-    </ClInclude>
     <ClInclude Include="Meshes\Mesh2D.h">
       <Filter>Header Files\Meshes</Filter>
     </ClInclude>
@@ -247,6 +247,9 @@
     </ClInclude>
     <ClInclude Include="UserInterface\UserInterface.h">
       <Filter>Header Files\UserInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="Meshes\Mesh3D.h">
+      <Filter>Header Files\Meshes</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

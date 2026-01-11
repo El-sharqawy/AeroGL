@@ -4,4 +4,5 @@
     <Platform Name="x86" />
   </Configurations>
   <Project Path="CoreEngine/CoreEngine.vcxproj" Id="b9c1d04a-d995-4138-9da8-26b05688000e" />
+  <Project Path="LibImageUI/LibImageUI.vcxproj" Id="3e68cc81-8c3e-45d6-9b8e-9a091327b327" />
 </Solution>

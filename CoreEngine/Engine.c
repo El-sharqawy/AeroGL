@@ -1,6 +1,7 @@
 #include "Engine.h"
 #include "Core/CoreUtils.h"
 #include "Lib/Vector.h"
+#include "UserInterface/Interface_imgui.h"
 #include <assert.h>
 
 static Engine s_Instance = NULL; // Hidden from other files
@@ -29,7 +30,6 @@ bool InitializeEngine(Engine pEngine)
 	}
 
 	CreateRenderer(&pEngine->renderer, pEngine->camera, "MainRenderer");
-	InitializeTriangle(pEngine->renderer); // make the shape
 
 	if (!InitializeInput(&pEngine->Input))
 	{
@@ -61,6 +61,8 @@ bool InitializeEngine(Engine pEngine)
 
 	glfwSetKeyCallback(GetGLWindow(pEngine->window), keyboard_callback);
 	glfwSetMouseButtonCallback(GetGLWindow(pEngine->window), mousebutton_callback);
+
+	ImGui_Init(GetGLWindow(pEngine->window));
 
 	return (true);;
 }
@@ -97,9 +99,15 @@ void UpdateEngine(Engine pEngine)
 	UpdateInput(pEngine->Input);
 	HandleEngineInput(pEngine); // Engine Handle Input
 
+	// Update ImgUI
+	ImGui_NewFrame();
+
 	// 3. Render
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	RenderEngine(pEngine);
+
+	// Render on top of everything
+	ImGui_Render();
 
 	// 4. Swap Window Buffers
 	glfwSwapBuffers(GetGLWindow(pEngine->window));
@@ -115,6 +123,8 @@ void RenderEngine(Engine pEngine)
 void DestroyEngine(Engine pEngine)
 {
 	syslog("Attemp to shutdown the engine...");
+
+	ImGui_Shutdown();
 
 	DestroyStateManager(&pEngine->stateManager);
 

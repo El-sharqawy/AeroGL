@@ -10,16 +10,16 @@ typedef struct SRenderer
 {
     // GPU Resources
     GLShader pShader;
-    GLBuffer pLinesBuffer;
-    GLBuffer pTrianglesBuffer;
-	GLBuffer pMesh2DBuffer;
+    GLBuffer pStaticTrianglesBuffer;
+    GLBuffer pDynamicTrianglesBuffer;
 
-    // CPU Side Data (Batching)
-    Vector pLineVertices;
-    Vector pLineIndices;
+    // Static geometry (initialized once)
+    Vector pStaticTriangleVertices;
+    Vector pStaticTriangleIndices;
 
-    Vector pTriangleVertices;
-    Vector pTriangleIndices;
+    // Dynamic geometry (changes per frame)
+    Vector pDynamicTriangleVertices;
+    Vector pDynamicTriangleIndices;
 
     // Renderer Data
     char* szRendererName;
@@ -32,11 +32,13 @@ typedef struct SRenderer* Renderer;
 bool CreateRenderer(Renderer* pRenderer, GLCamera pCamera, const char* szRendererName);
 void DestroyRenderer(Renderer* pRenderer);
 
-void InitializeTriangle(Renderer pRenderer);
+void InitializeStaticShapes(Renderer pRenderer);
+void InitializeMesh2D(Renderer pRenderer);
+
 void RenderRenderer(Renderer pRenderer);
-void RenderMesh2D(Renderer pRenderer);
 void RenderRendererLines(Renderer pRenderer);
-void RenderRendererTriangles(Renderer pRenderer);
+void RenderRendererStaticTriangles(Renderer pRenderer);
+void RenderRendererDynamicTriangles(Renderer pRenderer);
 
 void SetRendererDiffuseColorV(Renderer pRenderer, Vector4 v4DiffuseColor);
 void SetRendererDiffuseColor(Renderer pRenderer, float r, float g, float b, float a);

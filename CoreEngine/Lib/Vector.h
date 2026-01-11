@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef struct SAnubisVector
 {
@@ -16,10 +17,10 @@ typedef SAnubisVector* Vector;
 
 Vector VectorInit(size_t element_size);
 Vector VectorInitSize(size_t element_size, size_t initCapcity);
-void VectorPush(Vector vec, const void* pItem);
-void VectorPush(Vector vec, const void* pItem);
+bool VectorPush(Vector vec, const void* pItem);
+bool VectorReserve(Vector vec, size_t reversedSize);
 void VectorFree(Vector* vec);
-void VectorClear(Vector vec);
+bool VectorClear(Vector vec);
 void* VectorGet(Vector v, size_t index);
 
 #define ANUBIS_VECTOR_PUSH(vec_ptr, type, item) \

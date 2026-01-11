@@ -3,9 +3,9 @@
 #include "../Lib/Vector.h"
 #include <memory.h>
 #include "StateManager.h"
-#include "../Meshes/Mesh2D.h"
+#include "../Meshes/Mesh3D.h"
 
-Mesh2D meshes[16];
+Mesh3D meshes[16];
 
 bool CreateRenderer(Renderer* ppRenderer, GLCamera pCamera, const char* szRendererName)
 {
@@ -43,43 +43,31 @@ bool CreateRenderer(Renderer* ppRenderer, GLCamera pCamera, const char* szRender
 	LinkProgram(pRenderer->pShader);
 
 	// Validation Check
-	if (!InitializeGLBuffer(&pRenderer->pLinesBuffer))
+	if (!InitializeMesh3DGLBuffer(&pRenderer->pStaticTrianglesBuffer))
 	{
-		syslog("Failed To Initialize Lines Renderer Buffer");
+		syslog("Failed To Initialize Static Triangles Renderer Buffer");
 		DestroyRenderer(&pRenderer);
 		return (false);
 	}
 
-	// Validation Check
-	if (!InitializeGLBuffer(&pRenderer->pTrianglesBuffer))
+	if (!InitializeGLBuffer(&pRenderer->pDynamicTrianglesBuffer))
 	{
-		syslog("Failed To Initialize Triangles Renderer Buffer");
-		DestroyRenderer(&pRenderer);
-		return (false);
-	}
-
-	if (!InitializeGLBuffer(&pRenderer->pMesh2DBuffer))
-	{
-		syslog("Failed To Initialize 2D Mesh Renderer Buffer");
+		syslog("Failed To Initialize Dynamic Triangles Renderer Buffer");
 		DestroyRenderer(&pRenderer);
 	}
-
-	// Initialize Vectors
-	pRenderer->pLineVertices = VectorInit(sizeof(SVertex));
-	pRenderer->pLineIndices = VectorInit(sizeof(GLuint));
-
-	pRenderer->pTriangleVertices = VectorInit(sizeof(SVertex));
-	pRenderer->pTriangleIndices = VectorInit(sizeof(GLuint));
 
 	pRenderer->v4DiffuseColor = Vector4D(1.0f, 1.0f, 1.0f, 1.0f); // Default White
 
-	for (int i = 0; i < 3; i++)
-	{
-		meshes[i] = Mesh2D_Create(GL_LINE);
-	}
-	Mesh2D_MakeLine3D(meshes[0], Vector3D(0.0f, 0.0f, 0.0f), Vector3D(100.0f, 0.0f, 0.0f), Vector4D(1.0f, 0.0f, 0.0f, 1.0f));
-	Mesh2D_MakeLine3D(meshes[1], Vector3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 100.0f, 0.0f), Vector4D(0.0f, 1.0f, 0.0f, 1.0f));
-	Mesh2D_MakeLine3D(meshes[2], Vector3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 0.0f, 100.0f), Vector4D(0.0f, 0.0f, 1.0f, 1.0f));
+	// Initialize Vectors
+	pRenderer->pStaticTriangleVertices = VectorInit(sizeof(SMesh3D));
+	pRenderer->pStaticTriangleIndices = VectorInit(sizeof(GLuint));
+
+	pRenderer->pDynamicTriangleVertices = VectorInit(sizeof(SMesh3D));
+	pRenderer->pDynamicTriangleIndices = VectorInit(sizeof(GLuint));
+
+	InitializeLines(pRenderer);
+	InitializeStaticShapes(pRenderer);
+	InitializeMesh2D(pRenderer);
 
 	return (true);
 }
@@ -98,18 +86,17 @@ void DestroyRenderer(Renderer* ppRenderer)
 		tracked_free(pRenderer->szRendererName);
 	}
 
+	// Clear GPU
 	DestroyProgram(&pRenderer->pShader);
 
-	DestroyBuffer(&pRenderer->pLinesBuffer);
-	DestroyBuffer(&pRenderer->pTrianglesBuffer);
+	DestroyBuffer(&pRenderer->pStaticTrianglesBuffer);
+	DestroyBuffer(&pRenderer->pDynamicTrianglesBuffer);
 
-	DestroyBuffer(&pRenderer->pMesh2DBuffer);
+	VectorFree(&pRenderer->pStaticTriangleVertices);
+	VectorFree(&pRenderer->pStaticTriangleIndices);
 
-	VectorFree(&pRenderer->pLineVertices);
-	VectorFree(&pRenderer->pLineIndices);
-
-	VectorFree(&pRenderer->pTriangleVertices);
-	VectorFree(&pRenderer->pTriangleIndices);
+	VectorFree(&pRenderer->pDynamicTriangleVertices);
+	VectorFree(&pRenderer->pDynamicTriangleIndices);
 
 	for (int i = 0; i < 16; i++)
 	{
@@ -123,44 +110,41 @@ void DestroyRenderer(Renderer* ppRenderer)
 	*ppRenderer = NULL;
 }
 
-void InitializeTriangle(Renderer pRenderer)
+void InitializeStaticShapes(Renderer pRenderer)
 {
 	// Define 5 points for a pyramid (4 base points, 1 apex)
 	// Position (x,y,z)           Normals (x,y,z)     UV (u,v)     Color (r,g,b,a)
-	SVertex vertex1 = { { 0.0f, 1.0f, 0.0f  }, { 0.0f, 1.0f, 0.0f }, { 0.5f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } }; // 0: Apex (Red)
-	SVertex vertex2 = { {-0.5f, 0.0f, 0.5f  }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } }; // 1: Front-Left (Green)
-	SVertex vertex3 = { { 0.5f, 0.0f, 0.5f  }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }; // 2: Front-Right (Blue)
-	SVertex vertex4 = { { 0.5f, 0.0f, -0.5f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 1.0f, 0.0f, 1.0f } }; // 3: Back-Right (Yellow)
-	SVertex vertex5 = { {-0.5f, 0.0f, -0.5f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f }, { 1.0f, 0.0f, 1.0f, 1.0f } }; // 4: Back-Left (Magenta)
+	// SVertex vertex1 = { { 0.0f, 1.0f, 0.0f  }, { 0.0f, 1.0f, 0.0f }, { 0.5f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } }; // 0: Apex (Red)
+	// SVertex vertex2 = { {-0.5f, 0.0f, 0.5f  }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } }; // 1: Front-Left (Green)
+	// SVertex vertex3 = { { 0.5f, 0.0f, 0.5f  }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }; // 2: Front-Right (Blue)
+	// SVertex vertex4 = { { 0.5f, 0.0f, -0.5f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 1.0f, 0.0f, 1.0f } }; // 3: Back-Right (Yellow)
+	// SVertex vertex5 = { {-0.5f, 0.0f, -0.5f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f }, { 1.0f, 0.0f, 1.0f, 1.0f } }; // 4: Back-Left (Magenta)
 
-	ANUBIS_VECTOR_PUSH(pRenderer->pTriangleVertices, SVertex, vertex1);
-	ANUBIS_VECTOR_PUSH(pRenderer->pTriangleVertices, SVertex, vertex2);
-	ANUBIS_VECTOR_PUSH(pRenderer->pTriangleVertices, SVertex, vertex3);
-	ANUBIS_VECTOR_PUSH(pRenderer->pTriangleVertices, SVertex, vertex4);
-	ANUBIS_VECTOR_PUSH(pRenderer->pTriangleVertices, SVertex, vertex5);
+	// ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleVertices, SVertex, vertex1);
+	// ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleVertices, SVertex, vertex2);
+	// ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleVertices, SVertex, vertex3);
+	// ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleVertices, SVertex, vertex4);
+	// ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleVertices, SVertex, vertex5);
 
 	// 18 Indices total (4 sides + 2 for the square base)
-	ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, 0); ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, 1); ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, 2); // Front face
-	ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, 0); ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, 2); ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, 3); // Right face
-	ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, 0); ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, 3); ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, 4); // Back face
-	ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, 0); ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, 4); ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, 1); // Left face
+	// ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleIndices, GLuint, 0); ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleIndices, GLuint, 1); ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleIndices, GLuint, 2); // Front face
+	// ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleIndices, GLuint, 0); ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleIndices, GLuint, 2); ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleIndices, GLuint, 3); // Right face
+	// ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleIndices, GLuint, 0); ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleIndices, GLuint, 3); ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleIndices, GLuint, 4); // Back face
+	// ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleIndices, GLuint, 0); ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleIndices, GLuint, 4); ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleIndices, GLuint, 1); // Left face
 	// Base (Two triangles to make a square)
-	ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, 1); ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, 4); ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, 3); // Left face
-	ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, 1); ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, 3); ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, 2); // Left face
+	// ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleIndices, GLuint, 1); ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleIndices, GLuint, 4); ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleIndices, GLuint, 3); // Left face
+	// ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleIndices, GLuint, 1); ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleIndices, GLuint, 3); ANUBIS_VECTOR_PUSH(pRenderer->pStaticTriangleIndices, GLuint, 2); // Left face
 }
 
-void RenderRenderer(Renderer pRenderer)
+void InitializeMesh2D(Renderer pRenderer)
 {
-	RenderMesh2D(pRenderer);
-	RenderRendererLines(pRenderer);
-	RenderRendererTriangles(pRenderer);
-}
-
-void RenderMesh2D(Renderer pRenderer)
-{
-	// Create temporary object
-	Vector Meshes2DVertices = VectorInit(sizeof(SVertex));
-	Vector Meshes2DIndices = VectorInit(sizeof(GLuint));
+	for (int i = 0; i < 3; i++)
+	{
+		meshes[i] = Mesh2D_Create(GL_LINE);
+	}
+	Mesh2D_MakeLine3D(meshes[0], Vector3D(0.0f, 0.0f, 0.0f), Vector3D(100.0f, 0.0f, 0.0f), Vector4D(1.0f, 0.0f, 0.0f, 1.0f));
+	Mesh2D_MakeLine3D(meshes[1], Vector3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 100.0f, 0.0f), Vector4D(0.0f, 1.0f, 0.0f, 1.0f));
+	Mesh2D_MakeLine3D(meshes[2], Vector3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 0.0f, 100.0f), Vector4D(0.0f, 0.0f, 1.0f, 1.0f));
 
 	uint32_t vertexOffset = 0;
 
@@ -175,7 +159,7 @@ void RenderMesh2D(Renderer pRenderer)
 		for (size_t v = 0; v < meshes[i]->pVertices->count; v++)
 		{
 			SVertex* pVertex = (SVertex*)meshes[i]->pVertices->pData + v;
-			ANUBIS_VECTOR_PUSH(Meshes2DVertices, SVertex, *pVertex);
+			ANUBIS_VECTOR_PUSH(pRenderer->pMeshes2DVertices, SVertex, *pVertex);
 		}
 
 		// Copy Indices with OFFSET
@@ -183,55 +167,26 @@ void RenderMesh2D(Renderer pRenderer)
 		{
 			GLuint* pOriginalIndex = (GLuint*)meshes[i]->pIndices->pData + index;
 			GLuint offsetIndex = *pOriginalIndex + vertexOffset; // Shift the index
-			ANUBIS_VECTOR_PUSH(Meshes2DIndices, GLuint, offsetIndex);
+			ANUBIS_VECTOR_PUSH(pRenderer->pMeshes2DIndices, GLuint, offsetIndex);
 		}
 
 		// Increase the offset by the number of vertices we just added
 		vertexOffset += (uint32_t)meshes[i]->pVertices->count;
 	}
 
-	if (Meshes2DVertices->count > 0)
-	{
-		PushState(GetStateManager());
-		BindShader(GetStateManager(), pRenderer->pShader);
-
-		Matrix4 modelMat = S_Matrix4_Identity;
-
-		SetMat4(pRenderer->pShader, "u_matViewProjection", GetViewProjectionMatrix(pRenderer->pCamera));
-		SetMat4(pRenderer->pShader, "u_matModel", modelMat);
-
-		// One single upload to the GPU
-		UpdateBufferVertexData(pRenderer->pMesh2DBuffer,
-			(SVertex*)Meshes2DVertices->pData,
-			Meshes2DVertices->count,
-			(GLuint*)Meshes2DIndices->pData,
-			Meshes2DIndices->count);
-
-		RenderBuffer(pRenderer->pMesh2DBuffer, GL_LINES);
-		PopState(GetStateManager());
-	}
-
-
-	VectorFree(&Meshes2DVertices);
-	VectorFree(&Meshes2DIndices);
+	// One single upload to the GPU
+	UpdateBufferVertexData(pRenderer->pMesh2DBuffer, (SVertex*)pRenderer->pMeshes2DVertices->pData, pRenderer->pMeshes2DVertices->count, (GLuint*)pRenderer->pMeshes2DIndices->pData, pRenderer->pMeshes2DIndices->count);
 }
 
+void RenderRenderer(Renderer pRenderer)
+{
+	RenderMesh2D(pRenderer);
+	RenderRendererLines(pRenderer);
+	RenderRendererStaticTriangles(pRenderer);
+}
+	
 void RenderRendererLines(Renderer pRenderer)
 {
-	SetRendererDiffuseColor(pRenderer, 1.0f, 0.0f, 0.0f, 1.0f); // Red - X Axis
-	RenderLine3D(pRenderer, 0.0f, 0.0f, 0.0f, 100.0f, 0.0f, 0.0f);
-
-	SetRendererDiffuseColor(pRenderer, 0.0f, 1.0f, 0.0f, 1.0f); // Green - Y Axis
-	RenderLine3D(pRenderer, 0.0f, 0.0f, 0.0f, 0.0f, 100.0f, 0.0f);
-
-	SetRendererDiffuseColor(pRenderer, 0.0f, 0.0f, 1.0f, 1.0f); // Blue - Z Axis
-	RenderLine3D(pRenderer, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 100.0f);
-
-	RenderCircle2D(pRenderer, 0.0f, 0.0f, 0.0f, 1.0f, 8, false);
-	RenderCircle3D(pRenderer, 0.0f, 0.0f, 15.0f, 1.0f, 32);
-
-	RenderSphere3D(pRenderer, 0.0f, 10.0f, 0.0f, 3.0f, 64, 64);
-
 	if (pRenderer->pLineVertices->count == 0)
 	{
 		return;
@@ -244,55 +199,40 @@ void RenderRendererLines(Renderer pRenderer)
 
 	SetMat4(pRenderer->pShader, "u_matViewProjection", GetViewProjectionMatrix(pRenderer->pCamera));
 	SetMat4(pRenderer->pShader, "u_matModel", modelMat);
-
-	// UpdateBufferVertexData(pRenderer->pLinesBuffer, (SVertex*)pRenderer->pLineVertices->pData, pRenderer->pLineVertices->count, (GLuint*)pRenderer->pLineIndices->pData, pRenderer->pLineIndices->count);
 	
 	RenderBuffer(pRenderer->pLinesBuffer, GL_LINES);
 	PopState(GetStateManager());
-
-	VectorClear(pRenderer->pLineVertices);
-	VectorClear(pRenderer->pLineIndices);
 }
 
-void RenderRendererTriangles(Renderer pRenderer)
+void RenderRendererStaticTriangles(Renderer pRenderer)
 {
-	// InitializeTriangle(pRenderer);
-	SetRendererDiffuseColor(pRenderer, 1.0f, 1.0f, 1.0f, 1.0f); // Idk
-	RenderSolidCircle2D(pRenderer, 0.0f, 0.0f, 0.0f, 1.0f, 64, false);
-	RenderSolidCircle3D(pRenderer, 20.0f, 0.0f, 0.0f, 1.0f, 64);
-
-	if (pRenderer->pTriangleVertices->count == 0)
+	if (pRenderer->pStaticTriangleVertices->count == 0)
 	{
 		return;
 	}
-
 	
 	PushState(GetStateManager());
 	BindShader(GetStateManager(), pRenderer->pShader);
 
 	Matrix4 modelMat = S_Matrix4_Identity;
 
-	// 1. Initialize once (happens when the program starts)
-	static float fDegree = 0.0f;
-
-	// 2. Increment every time the function is called
-	fDegree += 0.01f;
-
-	// modelMat = Matrix4_Translate(modelMat, (Vector3) { 5.0f, 0.0f, 0.0f });
-	// modelMat = Matrix4_Rotate(modelMat, fDegree, (Vector3) { 0.0f, 1.0f, 0.0f });
-	// modelMat = Matrix4_Scale(modelMat, (Vector3) { 1.0f, 1.0f, 1.0f }); // Scale applied first to vertices
-
 	SetMat4(pRenderer->pShader, "u_matViewProjection", GetViewProjectionMatrix(pRenderer->pCamera));
 	SetMat4(pRenderer->pShader, "u_matModel", modelMat);
 
 	SetCapability(GetStateManager(), CAP_CULL_FACE, false);
 
-	UpdateBufferVertexData(pRenderer->pTrianglesBuffer, (SVertex*)pRenderer->pTriangleVertices->pData, pRenderer->pTriangleVertices->count, (GLuint*)pRenderer->pTriangleIndices->pData, pRenderer->pTriangleIndices->count);
-	RenderBuffer(pRenderer->pTrianglesBuffer, GL_TRIANGLES);
+	RenderBuffer(pRenderer->pStaticTrianglesBuffer, GL_TRIANGLES);
 	PopState(GetStateManager());
-	
-	VectorClear(pRenderer->pTriangleVertices);
-	VectorClear(pRenderer->pTriangleIndices);
+}
+
+void RenderRendererDynamicTriangles(Renderer pRenderer)
+{
+	if (pRenderer->pDynamicTriangleVertices->count == 0)
+	{
+		return;
+	}
+
+
 }
 
 void SetRendererDiffuseColorV(Renderer pRenderer, Vector4 v4DiffuseColor)
@@ -331,19 +271,19 @@ void RenderLine2D(Renderer pRenderer, float sx, float sz, float ex, float ez, fl
 
 void RenderTriangle3D(Renderer pRenderer, Vector3 p1, Vector3 p2, Vector3 p3)
 {
-	GLuint baseOffset = (GLuint)pRenderer->pTriangleVertices->count;
+	GLuint baseOffset = (GLuint)pRenderer->pDynamicTriangleVertices->count;
 
 	SVertex vertex1 = { .m_v3Position = p1, .m_v4Color = pRenderer->v4DiffuseColor };
 	SVertex vertex2 = { .m_v3Position = p2, .m_v4Color = pRenderer->v4DiffuseColor };
 	SVertex vertex3 = { .m_v3Position = p3, .m_v4Color = pRenderer->v4DiffuseColor };
 
-	ANUBIS_VECTOR_PUSH(pRenderer->pTriangleVertices, SVertex, vertex1);
-	ANUBIS_VECTOR_PUSH(pRenderer->pTriangleVertices, SVertex, vertex2);
-	ANUBIS_VECTOR_PUSH(pRenderer->pTriangleVertices, SVertex, vertex3);
+	ANUBIS_VECTOR_PUSH(pRenderer->pDynamicTriangleVertices, SVertex, vertex1);
+	ANUBIS_VECTOR_PUSH(pRenderer->pDynamicTriangleVertices, SVertex, vertex2);
+	ANUBIS_VECTOR_PUSH(pRenderer->pDynamicTriangleVertices, SVertex, vertex3);
 
-	ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, baseOffset);
-	ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, baseOffset + 1);
-	ANUBIS_VECTOR_PUSH(pRenderer->pTriangleIndices, GLuint, baseOffset + 2); // Triangle Face
+	ANUBIS_VECTOR_PUSH(pRenderer->pDynamicTriangleIndices, GLuint, baseOffset);
+	ANUBIS_VECTOR_PUSH(pRenderer->pDynamicTriangleIndices, GLuint, baseOffset + 1);
+	ANUBIS_VECTOR_PUSH(pRenderer->pDynamicTriangleIndices, GLuint, baseOffset + 2); // Triangle Face
 }
 
 void RenderCircle2D(Renderer pRenderer, float cx, float cy, float cz, float radius, int step, bool bHorizonal)
@@ -546,6 +486,10 @@ void RenderWiredSphere3D(Renderer pRenderer, float cx, float cy, float cz, float
  */
 void RenderSphere3D(Renderer pRenderer, float cx, float cy, float cz, float radius, int segments, int slices)
 {
+	// Reserve space to avoid reallocations
+	size_t estimatedVerts = pRenderer->pDynamicTriangleVertices->count + (segments * slices * 6);
+	VectorReserve(pRenderer->pDynamicTriangleVertices, estimatedVerts);
+
 	// Generate Vertices (Poles and Rings)
 	for (int i = 0; i < segments; ++i) // Iterate through stacks (latitude) - iSegments
 	{
