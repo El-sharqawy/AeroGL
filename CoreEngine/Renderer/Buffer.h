@@ -44,6 +44,8 @@ bool AllocateMesh3DBuffersStorage(GLBuffer buffer);
 void LinkMesh3DBuffers(GLBuffer buffer); // Must be called before SetupVertexBufferAttributesVertex ! 
 void SetupVertexBufferAttributesMesh3D(GLBuffer buffer);
 void UpdateBufferMesh3DVertexData(GLBuffer buffer, const SMesh3D* pVertices, GLsizeiptr vertexCount, const GLuint* pIndices, GLsizeiptr indexCount);
+bool InitializeMesh3DGLBuffer(GLBuffer* ppBuffer);
+void ReallocateMesh3DBuffer(GLBuffer buffer, size_t vNewSize, size_t iNewSize, bool copyOldData);
 
 void RenderBuffer(GLBuffer buffer, GLenum renderMode);
 

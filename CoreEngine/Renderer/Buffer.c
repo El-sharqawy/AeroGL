@@ -268,17 +268,17 @@ bool AllocateVertexBuffersStorage(GLBuffer buffer)
 		// IMPORTANT: glNamedBufferStorage is IMMUTABLE. 
 		// If the buffer was already allocated, we MUST delete and recreate the ID.
 		// Allocation (Immutable) - Ensure ID is fresh or deleted/recreated before calling
-		glNamedBufferStorage(buffer->uiVBO, vboBytes, nullptr, GL_DYNAMIC_STORAGE_BIT);
-		glNamedBufferStorage(buffer->uiEBO, eboBytes, nullptr, GL_DYNAMIC_STORAGE_BIT);
+		glNamedBufferStorage(buffer->uiVBO, vboBytes, NULL, GL_DYNAMIC_STORAGE_BIT);
+		glNamedBufferStorage(buffer->uiEBO, eboBytes, NULL, GL_DYNAMIC_STORAGE_BIT);
 	}
 	else
 	{
 		// Allocation (Mutable)
 		glBindBuffer(GL_ARRAY_BUFFER, buffer->uiVBO);
-		glBufferData(GL_ARRAY_BUFFER, vboBytes, nullptr, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, vboBytes, NULL, GL_DYNAMIC_DRAW);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->uiEBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboBytes, nullptr, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboBytes, NULL, GL_DYNAMIC_DRAW);
 	}
 
 	return (true);
@@ -410,7 +410,7 @@ void UpdateBufferVertexData(GLBuffer buffer, const SVertex* pVertices, GLsizeipt
 			newEboCap = indexCount;
 		}
 
-		ReallocateBuffer(buffer, newVboCap, newEboCap, false);
+		ReallocateVertexBuffer(buffer, newVboCap, newEboCap, false);
 		syslog("Attemp to Reallocate Buffer...");
 	}
 
@@ -434,7 +434,7 @@ void UpdateBufferVertexData(GLBuffer buffer, const SVertex* pVertices, GLsizeipt
 
 		// Legacy "Orphaning": Re-specifying the buffer with NULL tells the driver
 		// to give us a fresh block of memory. This prevents pipeline stalls.
-		glBufferData(GL_ARRAY_BUFFER, buffer->vboCapacity * sizeof(SVertex), nullptr, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, buffer->vboCapacity * sizeof(SVertex), NULL, GL_DYNAMIC_DRAW);
 
 		glBufferSubData(GL_ARRAY_BUFFER, 0, vboByteSize, pVertices);
 
@@ -442,7 +442,7 @@ void UpdateBufferVertexData(GLBuffer buffer, const SVertex* pVertices, GLsizeipt
 
 		// Legacy "Orphaning": Re-specifying the buffer with NULL tells the driver
 		// to give us a fresh block of memory. This prevents pipeline stalls.
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, buffer->eboCapacity * sizeof(GLuint), nullptr, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, buffer->eboCapacity * sizeof(GLuint), NULL, GL_DYNAMIC_DRAW);
 
 		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, eboByteSize, pIndices);
 
@@ -553,16 +553,16 @@ void ReallocateVertexBuffer(GLBuffer buffer, size_t newVboCapacity, size_t newEb
 	if (IsGLVersionHigher(4, 5))
 	{
 		// Modern: Immutable Storage
-		glNamedBufferStorage(newVBO, newVboByteSize, nullptr, GL_DYNAMIC_STORAGE_BIT);
-		glNamedBufferStorage(newEBO, newEboByteSize, nullptr, GL_DYNAMIC_STORAGE_BIT);
+		glNamedBufferStorage(newVBO, newVboByteSize, NULL, GL_DYNAMIC_STORAGE_BIT);
+		glNamedBufferStorage(newEBO, newEboByteSize, NULL, GL_DYNAMIC_STORAGE_BIT);
 	}
 	else
 	{
 		// Legacy: Mutable Storage (using GL_STATIC_DRAW or GL_DYNAMIC_DRAW)
 		glBindBuffer(GL_ARRAY_BUFFER, newVBO);
-		glBufferData(GL_ARRAY_BUFFER, newVboByteSize, nullptr, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, newVboByteSize, NULL, GL_STATIC_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, newEBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, newEboByteSize, nullptr, GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, newEboByteSize, NULL, GL_STATIC_DRAW);
 	}
 
 	if (copyOldData)
@@ -640,17 +640,17 @@ bool AllocateMesh3DBuffersStorage(GLBuffer buffer)
 	if (IsGLVersionHigher(4, 5))
 	{
 		// Immutable Data, can't resize .. MUST DELETE (Re-Allocate)
-		glNamedBufferStorage(buffer->uiVBO, vboSize, nullptr, GL_DYNAMIC_STORAGE_BIT);
-		glNamedBufferStorage(buffer->uiEBO, eboSize, nullptr, GL_DYNAMIC_STORAGE_BIT);
+		glNamedBufferStorage(buffer->uiVBO, vboSize, NULL, GL_DYNAMIC_STORAGE_BIT);
+		glNamedBufferStorage(buffer->uiEBO, eboSize, NULL, GL_DYNAMIC_STORAGE_BIT);
 	}
 	else
 	{
 		// Allocation (Mutable)
 		glBindBuffer(GL_ARRAY_BUFFER, buffer->uiVBO);
-		glBufferData(GL_ARRAY_BUFFER, vboSize, nullptr, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, vboSize, NULL, GL_DYNAMIC_DRAW);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->uiEBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboSize, nullptr, GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboSize, NULL, GL_DYNAMIC_DRAW);
 	}
 	return (true);
 }
@@ -723,14 +723,16 @@ void SetupVertexBufferAttributesMesh3D(GLBuffer buffer)
 	else
 	{
 		glEnableVertexAttribArray(iPosition);
-		glEnableVertexAttribArray(iTexCoords);
-		glEnableVertexAttribArray(iColors);
 
 		// We will Apply 16 Bytes on all components as (4 floats) since we are using SIMD .. 
 		glVertexAttribPointer(iPosition, 3, GL_FLOAT, GL_FALSE, sizeof(SMesh3D), (const void*)(numFloats * sizeof(GLfloat))); // 3 floats (x,y,w)
 		numFloats += 4; // we add 4 bytes for alignment (x,y,z,w)
+		
+		glEnableVertexAttribArray(iTexCoords);
 		glVertexAttribPointer(iTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(SMesh3D), (const void*)(numFloats * sizeof(GLfloat))); // 2 Floats (U, V)
 		numFloats += 4; // we add 4 bytes for alignment (x,y,z,w)
+		
+		glEnableVertexAttribArray(iColors);
 		glVertexAttribPointer(iColors, 4, GL_FLOAT, GL_FALSE, sizeof(SMesh3D), (const void*)(numFloats * sizeof(GLfloat))); // 4 flaots (r,g,b,a)
 		numFloats += 4; // we add 4 bytes for alignment (x,y,z,w)
 	}
@@ -738,6 +740,112 @@ void SetupVertexBufferAttributesMesh3D(GLBuffer buffer)
 
 void UpdateBufferMesh3DVertexData(GLBuffer buffer, const SMesh3D* pVertices, GLsizeiptr vertexCount, const GLuint* pIndices, GLsizeiptr indexCount)
 {
+	if (!pVertices || !pIndices || vertexCount == 0)
+	{
+		syserr("Called with null vertex or index data!");
+		return;
+	}
+
+	if (vertexCount > buffer->vboCapacity || indexCount > buffer->eboCapacity)
+	{
+		// Grow by 50% or the required amount, whichever is larger
+		GLsizeiptr newVboCap = buffer->vboCapacity + (buffer->vboCapacity / 2);
+		if (newVboCap < vertexCount)
+		{
+			newVboCap = vertexCount;
+		}
+		GLsizeiptr newEboCap = buffer->eboCapacity + (buffer->eboCapacity / 2);
+		if (newEboCap < indexCount)
+		{
+			newEboCap = indexCount;
+		}
+		ReallocateMesh3DBuffer(buffer, newVboCap, newEboCap, false);
+		syslog("Attemp to Reallocate Buffer...");
+	}
+
+	// Calculate byte sizes automatically based on the template type T
+	GLsizeiptr vboByteSize = vertexCount * sizeof(SMesh3D);
+	GLsizeiptr eboByteSize = indexCount * sizeof(GLuint);
+
+	if (IsGLVersionHigher(4, 5))
+	{
+		// DSA Path: Modern Invalidation
+		glInvalidateBufferData(buffer->uiVBO);
+		glInvalidateBufferData(buffer->uiEBO);
+
+		glNamedBufferSubData(buffer->uiVBO, 0, vboByteSize, pVertices);
+		glNamedBufferSubData(buffer->uiEBO, 0, eboByteSize, pIndices);
+	}
+	else
+	{
+		// Legacy Path: Manual Orphaning
+		glBindBuffer(GL_ARRAY_BUFFER, buffer->uiVBO);
+
+		// Legacy "Orphaning": Re-specifying the buffer with NULL tells the driver
+		// to give us a fresh block of memory. This prevents pipeline stalls.
+		glBufferData(GL_ARRAY_BUFFER, buffer->vboCapacity * sizeof(SMesh3D), NULL, GL_DYNAMIC_DRAW);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, vboByteSize, pVertices);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->uiEBO);
+
+		// Legacy "Orphaning": Re-specifying the buffer with NULL tells the driver
+		// to give us a fresh block of memory. This prevents pipeline stalls.
+		glBufferData(GL_ARRAY_BUFFER, buffer->eboCapacity * sizeof(GLuint), NULL, GL_DYNAMIC_DRAW);
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, eboByteSize, pIndices);
+	}
+}
+
+bool InitializeMesh3DGLBuffer(GLBuffer* ppBuffer)
+{
+	*ppBuffer = (GLBuffer)tracked_malloc(sizeof(SGLBuffer));
+	GLBuffer pGLBuffer = *ppBuffer;
+
+	if (!pGLBuffer)
+	{
+		syslog("Failed to Allocate Space for GLBuffer");
+		return (false);
+	}
+
+	// make sure it's all elements set to zero bytes
+	memset(pGLBuffer, 0, sizeof(SGLBuffer));
+
+	// 1. Setup the Metadata inside the struct
+	pGLBuffer->vboCapacity = INITIAL_VERTEX_CAPACITY;
+	pGLBuffer->eboCapacity = INITIAL_INDEX_CAPACITY;
+	pGLBuffer->bIsInitialized = false;
+
+	// 2. Create the GPU "Names" (IDs)
+	if (CreateGLBuffer(pGLBuffer) == false)
+	{
+		DeleteGLBuffer(pGLBuffer); // Clean up GPU side
+		tracked_free(pGLBuffer);   // Clean up CPU side
+		return (false);
+	}
+
+	// 3. Allocate the actual VRAM
+	// This uses the metadata we just set to call glNamedBufferStorage or glBufferData
+	if (AllocateMesh3DBuffersStorage(pGLBuffer) == false)
+	{
+		DeleteGLBuffer(pGLBuffer); // Clean up GPU side
+		tracked_free(pGLBuffer);   // Clean up CPU side
+		return (false);
+	}
+
+	// 4. Define the Vertex Layout (What does a vertex look like?)
+	// This tells the VAO how to interpret the data (Position, Color, etc.)
+	SetupVertexBufferAttributesMesh3D(pGLBuffer);
+
+	// 5. Physical Link (Which buffers belong to this VAO?)
+	LinkMesh3DBuffers(pGLBuffer);
+	
+	// 5.1 Log ..
+	syslog("Successfully Created and Linked Buffer (%d, %d, %d)", pGLBuffer->uiVAO, pGLBuffer->uiVBO, pGLBuffer->uiEBO);
+	return (true);
+}
+
+void ReallocateMesh3DBuffer(GLBuffer buffer, size_t vNewSize, size_t iNewSize, bool copyOldData)
+{
+
 }
 
 GLuint GetVertexArray(GLBuffer buffer)
