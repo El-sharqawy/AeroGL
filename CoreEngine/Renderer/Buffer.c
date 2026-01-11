@@ -722,7 +722,17 @@ void SetupVertexBufferAttributesMesh3D(GLBuffer buffer)
 	}
 	else
 	{
+		glEnableVertexAttribArray(iPosition);
+		glEnableVertexAttribArray(iTexCoords);
+		glEnableVertexAttribArray(iColors);
 
+		// We will Apply 16 Bytes on all components as (4 floats) since we are using SIMD .. 
+		glVertexAttribPointer(iPosition, 3, GL_FLOAT, GL_FALSE, sizeof(SMesh3D), (const void*)(numFloats * sizeof(GLfloat))); // 3 floats (x,y,w)
+		numFloats += 4; // we add 4 bytes for alignment (x,y,z,w)
+		glVertexAttribPointer(iTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(SMesh3D), (const void*)(numFloats * sizeof(GLfloat))); // 2 Floats (U, V)
+		numFloats += 4; // we add 4 bytes for alignment (x,y,z,w)
+		glVertexAttribPointer(iColors, 4, GL_FLOAT, GL_FALSE, sizeof(SMesh3D), (const void*)(numFloats * sizeof(GLfloat))); // 4 flaots (r,g,b,a)
+		numFloats += 4; // we add 4 bytes for alignment (x,y,z,w)
 	}
 }
 
