@@ -448,8 +448,78 @@ bool TerrainBuffer_Reallocate(TerrainGLBuffer pTerrainBuffer, GLsizeiptr newVboC
 	return (true);
 }
 
-bool TerrainBuffer_UploadData(TerrainGLBuffer pTerrainBuffer, const STerrainVertex* pVertices, GLsizeiptr vertexCount, const GLuint* pIndices, GLsizeiptr indexCount)
+bool TerrainBuffer_UploadData(TerrainGLBuffer pTerrainBuffer, TerrainMesh pTerrainMesh)
 {
-	// for tomorrow
-	return false;
+	if (!pTerrainBuffer || !pTerrainMesh || !pTerrainMesh->pVertices || !pTerrainMesh->pIndices)
+	{
+		syserr("Terrain Buffer or Data is NULL");
+		return false;
+	}
+
+	// Update Counts and Offsets
+	pTerrainMesh->indexOffset = GetTerrainBufferIndexOffset(pTerrainBuffer);
+	pTerrainMesh->vertexOffset = GetTerrainBufferVertexOffset(pTerrainBuffer);
+
+	const STerrainVertex* pVertices = (STerrainVertex*)pTerrainMesh->pVertices->pData;
+	const GLuint* pIndices = (GLuint*)pTerrainMesh->pIndices->pData;
+	GLsizeiptr vertexCount = pTerrainMesh->vertexCount;
+	GLsizeiptr indexCount = pTerrainMesh->indexCount;
+
+	// Check Capacity
+	GLsizeiptr requiredVboCapacity = pTerrainBuffer->vertexOffset + vertexCount; // total VBO size after upload
+	GLsizeiptr requiredEboCapacity = pTerrainBuffer->indexOffset + indexCount;   // total EBO size after upload
+
+	if (pTerrainBuffer->vboCapacity < requiredVboCapacity || pTerrainBuffer->eboCapacity < requiredEboCapacity)
+	{
+		// Reallocate with extra space to avoid frequent reallocations
+		GLsizeiptr newVboCapacity = (requiredVboCapacity > pTerrainBuffer->vboCapacity) ? requiredVboCapacity * 2 : pTerrainBuffer->vboCapacity;
+		GLsizeiptr newEboCapacity = (requiredEboCapacity > pTerrainBuffer->eboCapacity) ? requiredEboCapacity * 2 : pTerrainBuffer->eboCapacity;
+		if (!TerrainBuffer_Reallocate(pTerrainBuffer, newVboCapacity, newEboCapacity, true))
+		{
+			syserr("Failed to Reallocate Terrain Buffer");
+			return (true);
+		}
+	}
+
+	// Calculate byte offsets for glBufferSubData
+	GLsizeiptr vertexByteOffset = pTerrainBuffer->vertexOffset * sizeof(SVertex3D);
+	GLsizeiptr indexByteOffset = pTerrainBuffer->indexOffset * sizeof(GLuint);
+
+	GLsizeiptr vertexByteSize = vertexCount * sizeof(SVertex3D);
+	GLsizeiptr indexByteSize = indexCount * sizeof(GLuint);
+
+	// Upload Vertex Data
+	if (IsGLVersionHigher(4, 5))
+	{
+		glNamedBufferSubData(pTerrainBuffer->uiVBO, vertexByteOffset, vertexByteSize, pVertices);
+		glNamedBufferSubData(pTerrainBuffer->uiEBO, indexByteOffset, indexByteSize, pIndices);
+	}
+	else
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, pTerrainBuffer->uiVBO);
+		glBufferSubData(GL_ARRAY_BUFFER, vertexByteOffset, vertexByteSize, pVertices);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pTerrainBuffer->uiEBO);
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, indexByteOffset, indexByteSize, pIndices);
+	}
+
+	// Update Offsets
+	pTerrainBuffer->vertexOffset += vertexCount;
+	pTerrainBuffer->indexOffset += indexCount;
+
+	// Update total counts
+	pTerrainBuffer->vertexCount = (GLuint)pTerrainBuffer->vertexOffset;
+	pTerrainBuffer->indexCount = (GLuint)pTerrainBuffer->indexOffset;
+
+	return (true);
+}
+
+GLsizeiptr GetTerrainBufferVertexOffset(TerrainGLBuffer pTerrainBuffer)
+{
+	return (pTerrainBuffer->vertexOffset);
+}
+
+GLsizeiptr GetTerrainBufferIndexOffset(TerrainGLBuffer pTerrainBuffer)
+{
+	return (pTerrainBuffer->indexOffset);
 }
