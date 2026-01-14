@@ -126,7 +126,7 @@ bool TerrainBuffer_Initialize(TerrainGLBuffer* ppTerrainBuffer)
 	buffer->vboCapacity = INITIAL_VERTEX_CAPACITY;
 	buffer->eboCapacity = INITIAL_INDEX_CAPACITY;
 
-	buffer->vboSize = buffer->vboCapacity * sizeof(SVertex);
+	buffer->vboSize = buffer->vboCapacity * sizeof(STerrainVertex);
 	buffer->eboSize = buffer->eboCapacity * sizeof(GLuint);
 
 	if (IsGLVersionHigher(4, 5))
@@ -272,22 +272,22 @@ bool TerrainBuffer_AllocateVertexBuffer(TerrainGLBuffer pTerrainBuffer)
 	else
 	{
 		glEnableVertexAttribArray(iPosition);
-		glVertexAttribPointer(iPosition, 3, GL_FLOAT, GL_FALSE, sizeof(SVertex), (const void*)((GLsizeiptr)byteOffset));
+		glVertexAttribPointer(iPosition, 3, GL_FLOAT, GL_FALSE, sizeof(STerrainVertex), (const void*)((GLsizeiptr)byteOffset));
 
 		byteOffset += 4 * sizeof(GLfloat); // Move by 16 BYTES for alignment (SIMD)
 
 		glEnableVertexAttribArray(iNormals);
-		glVertexAttribPointer(iNormals, 3, GL_FLOAT, GL_FALSE, sizeof(SVertex), (const void*)((GLsizeiptr)byteOffset));
+		glVertexAttribPointer(iNormals, 3, GL_FLOAT, GL_FALSE, sizeof(STerrainVertex), (const void*)((GLsizeiptr)byteOffset));
 
 		byteOffset += 4 * sizeof(GLfloat); // Move by 16 BYTES for alignment (SIMD)
 
 		glEnableVertexAttribArray(iTexCoord);
-		glVertexAttribPointer(iTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(SVertex), (const void*)((GLsizeiptr)byteOffset));
+		glVertexAttribPointer(iTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(STerrainVertex), (const void*)((GLsizeiptr)byteOffset));
 
 		byteOffset += 4 * sizeof(GLfloat); // Move by 16 BYTES for alignment (SIMD)
 
 		glEnableVertexAttribArray(iColors);
-		glVertexAttribPointer(iColors, 4, GL_FLOAT, GL_FALSE, sizeof(SVertex), (const void*)((GLsizeiptr)byteOffset));
+		glVertexAttribPointer(iColors, 4, GL_FLOAT, GL_FALSE, sizeof(STerrainVertex), (const void*)((GLsizeiptr)byteOffset));
 
 		byteOffset += 4 * sizeof(GLfloat); // Move by 16 BYTES for alignment (SIMD)
 	}
@@ -304,13 +304,13 @@ bool TerrainBuffer_LinkBuffers(TerrainGLBuffer pTerrainBuffer)
 
 	if (IsGLVersionHigher(4, 5))
 	{
-		glVertexArrayVertexBuffer(pTerrainBuffer->uiVAO, 0, pTerrainBuffer->uiVBO, 0, sizeof(SVertex));
+		glVertexArrayVertexBuffer(pTerrainBuffer->uiVAO, 0, pTerrainBuffer->uiVBO, 0, sizeof(STerrainVertex));
 		glVertexArrayElementBuffer(pTerrainBuffer->uiVAO, pTerrainBuffer->uiEBO);
 	}
 	else if (IsGLVersionHigher(4, 3))
 	{
 		glBindVertexArray(pTerrainBuffer->uiVAO);
-		glBindVertexBuffer(0, pTerrainBuffer->uiVBO, 0, sizeof(SVertex));
+		glBindVertexBuffer(0, pTerrainBuffer->uiVBO, 0, sizeof(STerrainVertex));
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pTerrainBuffer->uiEBO);
 	}
 	else
@@ -360,7 +360,7 @@ bool TerrainBuffer_Reallocate(TerrainGLBuffer pTerrainBuffer, GLsizeiptr newVboC
 	}
 
 	// Update Buffer Bytes Size
-	pTerrainBuffer->vboSize = newVboCapacity * sizeof(SVertex);
+	pTerrainBuffer->vboSize = newVboCapacity * sizeof(STerrainVertex);
 	pTerrainBuffer->eboSize = newEboCapacity * sizeof(GLuint);
 
 	if (IsGLVersionHigher(4, 5))
@@ -448,7 +448,7 @@ bool TerrainBuffer_Reallocate(TerrainGLBuffer pTerrainBuffer, GLsizeiptr newVboC
 	return (true);
 }
 
-bool TerrainBuffer_UploadData(TerrainGLBuffer pTerrainBuffer, const SVertex* pVertices, GLsizeiptr vertexCount, const GLuint* pIndices, GLsizeiptr indexCount)
+bool TerrainBuffer_UploadData(TerrainGLBuffer pTerrainBuffer, const STerrainVertex* pVertices, GLsizeiptr vertexCount, const GLuint* pIndices, GLsizeiptr indexCount)
 {
 	// for tomorrow
 	return false;

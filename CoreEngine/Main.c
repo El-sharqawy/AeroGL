@@ -1,18 +1,7 @@
 #include "Engine.h"
 
-#include "Math/Vectors/Vector4.h"
-#include "Math/Vectors/Vector3.h"
-#include "Math/EngineMath.h"
-
-#include "Lib/Vector.h"
-
-#include <malloc.h> // For _aligned_malloc or aligned_alloc
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-
 #pragma comment(lib, "glfw3.lib")
-#pragma comment(lib, "Debug\\assimp-vc143-mtd.lib")
+// #pragma comment(lib, "Debug\\assimp-vc143-mtd.lib")
 
 int main(int argc, char* argv[])
 {

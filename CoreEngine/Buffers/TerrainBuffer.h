@@ -44,6 +44,6 @@ bool TerrainBuffer_AllocateVertexBuffer(TerrainGLBuffer pTerrainBuffer);
 bool TerrainBuffer_LinkBuffers(TerrainGLBuffer pTerrainBuffer);
 
 bool TerrainBuffer_Reallocate(TerrainGLBuffer pTerrainBuffer, GLsizeiptr newVboCapacity, GLsizeiptr newEboCapacity, bool copyOldData);
-bool TerrainBuffer_UploadData(TerrainGLBuffer pTerrainBuffer, const SVertex* pVertices, GLsizeiptr vertexCount, const GLuint* pIndices, GLsizeiptr indexCount);
+bool TerrainBuffer_UploadData(TerrainGLBuffer pTerrainBuffer, const STerrainVertex* pVertices, GLsizeiptr vertexCount, const GLuint* pIndices, GLsizeiptr indexCount);
 
 #endif // __TERRAIN_BUFFER__
