@@ -82,6 +82,18 @@
     <Filter Include="Header Files\UserInterface">
       <UniqueIdentifier>{3e8eeeb6-3418-44dc-886b-0fa767a49d2f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Buffers">
+      <UniqueIdentifier>{54127a8a-35ec-4868-8770-e009a09c79ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Buffers">
+      <UniqueIdentifier>{d379342b-eff2-46c6-b5ae-a255eff2a036}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Terrain">
+      <UniqueIdentifier>{34be47ca-b4c8-4058-9ee5-21e124481441}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Terrain">
+      <UniqueIdentifier>{f906f7e6-5452-4749-9050-194e5783c0be}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.c">
@@ -114,9 +126,6 @@
     <ClCompile Include="Renderer\Shader.c">
       <Filter>Source Files\Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer\Buffer.c">
-      <Filter>Source Files\Renderer</Filter>
-    </ClCompile>
     <ClCompile Include="Math\Projection\PerspectiveProjection.c">
       <Filter>Source Files\Math\Projection</Filter>
     </ClCompile>
@@ -147,17 +156,11 @@
     <ClCompile Include="Math\Quaternion\Quaternion.c">
       <Filter>Source Files\Math\Quaternion</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer\Renderer.c">
-      <Filter>Source Files\Renderer</Filter>
-    </ClCompile>
     <ClCompile Include="Core\Input.c">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\StateManager.c">
       <Filter>Source Files\Renderer</Filter>
-    </ClCompile>
-    <ClCompile Include="Meshes\Mesh2D.c">
-      <Filter>Source Files\Meshes</Filter>
     </ClCompile>
     <ClCompile Include="Math\Transform.c">
       <Filter>Source Files\Math</Filter>
@@ -170,6 +173,36 @@
     </ClCompile>
     <ClCompile Include="Meshes\Mesh3D.c">
       <Filter>Source Files\Meshes</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\DebugRenderer.c">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Buffers\IndirectBufferObject.c">
+      <Filter>Source Files\Buffers</Filter>
+    </ClCompile>
+    <ClCompile Include="Buffers\Buffer.c">
+      <Filter>Source Files\Buffers</Filter>
+    </ClCompile>
+    <ClCompile Include="Buffers\UniformBufferObject.c">
+      <Filter>Source Files\Buffers</Filter>
+    </ClCompile>
+    <ClCompile Include="Buffers\ShaderStorageBufferObject.c">
+      <Filter>Source Files\Buffers</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\TerrainRenderer.c">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Terrain\TerrainPatch.c">
+      <Filter>Source Files\Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="Meshes\TerrainMesh.c">
+      <Filter>Source Files\Meshes</Filter>
+    </ClCompile>
+    <ClCompile Include="Buffers\TerrainBuffer.c">
+      <Filter>Source Files\Buffers</Filter>
+    </ClCompile>
+    <ClCompile Include="Buffers\GLBuffer.c">
+      <Filter>Source Files\Buffers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -203,9 +236,6 @@
     <ClInclude Include="Renderer\Shader.h">
       <Filter>Header Files\Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Buffer.h">
-      <Filter>Header Files\Renderer</Filter>
-    </ClInclude>
     <ClInclude Include="Math\Vertex\Vertex.h">
       <Filter>Header Files\Math\Vertex</Filter>
     </ClInclude>
@@ -227,17 +257,11 @@
     <ClInclude Include="Math\Quaternion\Quaternion.h">
       <Filter>Header Files\Math\Quaternion</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Renderer.h">
-      <Filter>Header Files\Renderer</Filter>
-    </ClInclude>
     <ClInclude Include="Core\Input.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\StateManager.h">
       <Filter>Header Files\Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Meshes\Mesh2D.h">
-      <Filter>Header Files\Meshes</Filter>
     </ClInclude>
     <ClInclude Include="Math\Transform.h">
       <Filter>Header Files\Math</Filter>
@@ -250,6 +274,36 @@
     </ClInclude>
     <ClInclude Include="Meshes\Mesh3D.h">
       <Filter>Header Files\Meshes</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DebugRenderer.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Buffers\IndirectBufferObject.h">
+      <Filter>Header Files\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="Buffers\Buffer.h">
+      <Filter>Header Files\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="Buffers\UniformBufferObject.h">
+      <Filter>Header Files\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="Buffers\ShaderStorageBufferObject.h">
+      <Filter>Header Files\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\TerrainRenderer.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Terrain\TerrainPatch.h">
+      <Filter>Header Files\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="Meshes\TerrainMesh.h">
+      <Filter>Header Files\Meshes</Filter>
+    </ClInclude>
+    <ClInclude Include="Buffers\TerrainBuffer.h">
+      <Filter>Header Files\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="Buffers\GLBuffer.h">
+      <Filter>Header Files\Buffers</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

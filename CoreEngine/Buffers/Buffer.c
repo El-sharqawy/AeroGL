@@ -2,6 +2,8 @@
 #include "../Core/CoreUtils.h"
 #include <memory.h>
 #include <stddef.h> // Required for offsetof
+#include "../Renderer/StateManager.h"
+#include "GLBuffer.h"
 
 typedef struct SGLBuffer
 {
@@ -15,172 +17,12 @@ typedef struct SGLBuffer
 
 	GLsizeiptr vboCapacity;
 	GLsizeiptr eboCapacity;
+
+	GLsizeiptr vertexOffset;
+	GLsizeiptr indexOffset;
+
 	bool bIsInitialized;
 } SGLBuffer;
-
-void DeleteBuffer(GLuint* puiBufferID)
-{
-	if (puiBufferID && *puiBufferID != 0)
-	{
-		glDeleteBuffers(1, puiBufferID);
-		*puiBufferID = 0;
-	}
-}
-
-void DeleteVertexArray(GLuint* puiVertexArrayID)
-{
-	if (puiVertexArrayID && *puiVertexArrayID != 0)
-	{
-		glDeleteVertexArrays(1, puiVertexArrayID);
-		*puiVertexArrayID = 0;
-	}
-}
-
-void DeleteBuffers(GLuint* puiBufferIDs, GLsizei uiCount)
-{
-	if (!puiBufferIDs || uiCount <= 0)
-	{
-		return;
-	}
-
-	// OpenGL spec: "Unused names in buffers are silently ignored, as is the value 0."
-	glDeleteBuffers(uiCount, puiBufferIDs);
-
-	// Always reset to 0 so the rest of our engine knows they are gone
-	for (GLsizei i = 0; i < uiCount; ++i)
-	{
-		puiBufferIDs[i] = 0;
-	}
-}
-
-void DeleteVertexArrays(GLuint* puiVertexArrayIDs, GLsizei uiCount)
-{
-	if (!puiVertexArrayIDs || uiCount <= 0)
-	{
-		return;
-	}
-
-	// OpenGL spec: "Unused names in vertex arrays are silently ignored, as is the value 0."
-	glDeleteVertexArrays(uiCount, puiVertexArrayIDs);
-
-	// Always reset to 0 so the rest of our engine knows they are gone
-	for (GLsizei i = 0; i < uiCount; ++i)
-	{
-		puiVertexArrayIDs[i] = 0;
-	}
-}
-
-bool CreateBuffer(GLuint* puiBufferID)
-{
-	if (!puiBufferID)
-	{
-		return false;
-	}
-
-	// Prevent leaks by cleaning up existing ID
-	DeleteBuffer(puiBufferID);
-
-	// Create new ID
-	if (IsGLVersionHigher(4, 5))
-	{
-		glCreateBuffers(1, puiBufferID);
-	}
-	else
-	{
-		glGenBuffers(1, puiBufferID);
-	}
-	return (*puiBufferID != 0);
-}
-
-bool CreateVertexArray(GLuint* puiVertexArrayID)
-{
-	if (!puiVertexArrayID)
-	{
-		return false;
-	}
-
-	// Prevent leaks by cleaning up existing ID
-	DeleteVertexArray(puiVertexArrayID);
-
-	// Create new ID
-	if (IsGLVersionHigher(4, 5))
-	{
-		glCreateVertexArrays(1, puiVertexArrayID);
-	}
-	else
-	{
-		glGenVertexArrays(1, puiVertexArrayID);
-	}
-	return (*puiVertexArrayID != 0);
-}
-
-bool CreateBuffers(GLuint* puiBuffersIDs, GLsizei uiCount)
-{
-	if (!puiBuffersIDs || uiCount <= 0)
-	{
-		return false;
-	}
-
-	// Prevent leaks by cleaning up existing ID
-	DeleteBuffers(puiBuffersIDs, uiCount);
-
-	// Create new ID
-	if (IsGLVersionHigher(4, 5))
-	{
-		glCreateBuffers(uiCount, puiBuffersIDs);
-	}
-	else
-	{
-		glGenBuffers(uiCount, puiBuffersIDs);
-	}
-
-	// Make sure they are all have been Initialized
-	for (GLsizei i = 0; i < uiCount; ++i)
-	{
-		if (puiBuffersIDs[i] == 0)
-		{
-			DeleteBuffers(puiBuffersIDs, uiCount);
-			syserr("Failed to Create Buffer at Index: %d", i);
-			return (false);
-		}
-	}
-
-	return (true);
-}
-
-bool CreateVertexArrays(GLuint* puiVertexArrayIDs, GLsizei uiCount)
-{
-	if (!puiVertexArrayIDs || uiCount <= 0)
-	{
-		return false;
-	}
-
-	// Prevent leaks by cleaning up existing ID
-	DeleteVertexArrays(puiVertexArrayIDs, uiCount);
-
-	// Create new ID
-	if (IsGLVersionHigher(4, 5))
-	{
-		glCreateVertexArrays(uiCount, puiVertexArrayIDs);
-	}
-	else
-	{
-		glGenVertexArrays(uiCount, puiVertexArrayIDs);
-	}
-
-	// Make sure they are all have been Initialized
-	for (GLsizei i = 0; i < uiCount; ++i)
-	{
-		if (puiVertexArrayIDs[i] == 0)
-		{
-			DeleteVertexArrays(puiVertexArrayIDs, uiCount);
-			syserr("Failed to Create Vertex Array at Index: %d", i);
-			return (false);
-		}
-	}
-
-	return (true);
-}
 
 void DeleteGLBuffer(GLBuffer buffer)
 {
@@ -235,6 +77,69 @@ bool CreateGLBuffer(GLBuffer buffer)
 	}
 
 	return (true);
+}
+
+void ResetBuffer(GLBuffer buffer)
+{
+	if (!buffer)
+	{
+		return;
+	}
+
+	// Reset write positions to beginning
+	buffer->vertexOffset = 0;
+	buffer->indexOffset = 0;
+	buffer->vertexCount = 0;
+	buffer->indexCount = 0;
+
+	// GPU data is NOT touched - just reuse the space!
+}
+
+/**
+ * @brief Resets buffer AND zeroes GPU memory.
+ * WARNING: Slow! Only use for debugging or security.
+ */
+void ClearBuffer(GLBuffer buffer)
+{
+	if (!buffer)
+	{
+		syserr("ClearBuffer: NULL buffer");
+		return;
+	}
+
+	// Reset cursors
+	ResetBuffer(buffer);
+
+	// Zero GPU memory (expensive!)
+	if (IsGLVersionHigher(4, 3))
+	{
+		// Use glClearBufferData (OpenGL 4.3+)
+		glBindBuffer(GL_ARRAY_BUFFER, buffer->uiVBO);
+		glClearBufferData(GL_ARRAY_BUFFER, GL_R8, GL_RED, GL_UNSIGNED_BYTE, NULL);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->uiEBO);
+		glClearBufferData(GL_ELEMENT_ARRAY_BUFFER, GL_R8, GL_RED, GL_UNSIGNED_BYTE, NULL);
+	}
+	else
+	{
+		// Fallback: Upload zeros (very slow!)
+		size_t vertexBytes = buffer->vboCapacity * sizeof(SVertex3D);
+		size_t indexBytes = buffer->eboCapacity * sizeof(GLuint);
+
+		void* zeroVerts = calloc(buffer->vboCapacity, sizeof(SVertex3D));
+		void* zeroIndices = calloc(buffer->eboCapacity, sizeof(GLuint));
+
+		glBindBuffer(GL_ARRAY_BUFFER, buffer->uiVBO);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, vertexBytes, zeroVerts);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->uiEBO);
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indexBytes, zeroIndices);
+
+		free(zeroVerts);
+		free(zeroIndices);
+	}
+
+	syslog("Buffer cleared (GPU memory zeroed)");
 }
 
 void DestroyBuffer(GLBuffer* ppBuffer)
@@ -421,9 +326,6 @@ void UpdateBufferVertexData(GLBuffer buffer, const SVertex* pVertices, GLsizeipt
 	if (IsGLVersionHigher(4, 5))
 	{
 		// DSA Path: Modern Invalidation
-		glInvalidateBufferData(buffer->uiVBO);
-		glInvalidateBufferData(buffer->uiEBO);
-
 		glNamedBufferSubData(buffer->uiVBO, 0, vboByteSize, pVertices);
 		glNamedBufferSubData(buffer->uiEBO, 0, eboByteSize, pIndices);
 	}
@@ -431,19 +333,9 @@ void UpdateBufferVertexData(GLBuffer buffer, const SVertex* pVertices, GLsizeipt
 	{
 		// Legacy Path: Manual Orphaning
 		glBindBuffer(GL_ARRAY_BUFFER, buffer->uiVBO);
-
-		// Legacy "Orphaning": Re-specifying the buffer with NULL tells the driver
-		// to give us a fresh block of memory. This prevents pipeline stalls.
-		glBufferData(GL_ARRAY_BUFFER, buffer->vboCapacity * sizeof(SVertex), NULL, GL_DYNAMIC_DRAW);
-
 		glBufferSubData(GL_ARRAY_BUFFER, 0, vboByteSize, pVertices);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->uiEBO);
-
-		// Legacy "Orphaning": Re-specifying the buffer with NULL tells the driver
-		// to give us a fresh block of memory. This prevents pipeline stalls.
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, buffer->eboCapacity * sizeof(GLuint), NULL, GL_DYNAMIC_DRAW);
-
 		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, eboByteSize, pIndices);
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -505,23 +397,6 @@ bool InitializeVertexGLBuffer(GLBuffer* ppBuffer)
 	return (true);
 }
 
-void RenderBuffer(GLBuffer buffer, GLenum renderMode)
-{
-	// Safety: Don't draw if not initialized or if we have no data, no need to check vertexCount since we're using glDrawElements but we will keep it ..
-	if (!buffer || buffer->bIsInitialized == false || buffer->vertexCount == 0 || buffer->indexCount == 0)
-	{
-		return;
-	}
-
-	// Bind the 'Boss' (The VAO)
-	// In OpenGL, the VAO already knows about the VBO and EBO because of our LinkBuffers call
-	BindBufferVAO(GetStateManager(), buffer);
-
-	// Perform the draw
-	// indexCount was set to indexCount in our Update function
-	glDrawElements(renderMode, buffer->indexCount, GL_UNSIGNED_INT, NULL);
-}
-
 /**
  * @brief Reallocates buffer storage with optional data preservation.
  *
@@ -533,7 +408,7 @@ void RenderBuffer(GLBuffer buffer, GLenum renderMode)
  * @param newEboCapacity [in] New index capacity.
  * @param copyOldData [in] If true, preserves existing data; if false, starts fresh.
  */
-void ReallocateVertexBuffer(GLBuffer buffer, size_t newVboCapacity, size_t newEboCapacity, bool copyOldData)
+void ReallocateVertexBuffer(GLBuffer buffer, GLsizeiptr newVboCapacity, GLsizeiptr newEboCapacity, bool copyOldData)
 {
 	// 1. Store old state
 	GLuint oldVBO = buffer->uiVBO;
@@ -623,7 +498,7 @@ void ReallocateVertexBuffer(GLBuffer buffer, size_t newVboCapacity, size_t newEb
 
 	syslog("Buffer Expanded to V:%zu E:%zu", newVboCapacity, newEboCapacity);
 
-	LinkBuffers(buffer);
+	LinkVertexBuffers(buffer);
 }
 
 bool AllocateMesh3DBuffersStorage(GLBuffer buffer)
@@ -634,7 +509,7 @@ bool AllocateMesh3DBuffersStorage(GLBuffer buffer)
 		return (false);
 	}
 
-	GLsizeiptr vboSize = buffer->vboCapacity * sizeof(SMesh3D);
+	GLsizeiptr vboSize = buffer->vboCapacity * sizeof(SVertex3D);
 	GLsizeiptr eboSize = buffer->eboCapacity * sizeof(GLuint);
 
 	if (IsGLVersionHigher(4, 5))
@@ -652,6 +527,7 @@ bool AllocateMesh3DBuffersStorage(GLBuffer buffer)
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->uiEBO);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboSize, NULL, GL_DYNAMIC_DRAW);
 	}
+
 	return (true);
 }
 
@@ -666,7 +542,7 @@ void LinkMesh3DBuffers(GLBuffer buffer)
 	// DSA Linking
 	if (IsGLVersionHigher(4, 5))
 	{
-		glVertexArrayVertexBuffer(buffer->uiVAO, 0, buffer->uiVBO, 0, sizeof(SMesh3D));
+		glVertexArrayVertexBuffer(buffer->uiVAO, 0, buffer->uiVBO, 0, sizeof(SVertex3D));
 		glVertexArrayElementBuffer(buffer->uiVAO, buffer->uiEBO);
 	}
 	else
@@ -698,7 +574,7 @@ void SetupVertexBufferAttributesMesh3D(GLBuffer buffer)
 	GLint iTexCoords = 1;
 	GLint iColors = 2;
 
-	GLsizeiptr numFloats = 0;
+	GLuint numFloats = 0;
 
 	if (IsGLVersionHigher(4, 5))
 	{
@@ -708,12 +584,12 @@ void SetupVertexBufferAttributesMesh3D(GLBuffer buffer)
 		glEnableVertexArrayAttrib(buffer->uiVAO, iColors);
 
 		// We will Apply 16 Bytes on all components as (4 floats) since we are using SIMD .. 
-		glVertexArrayAttribFormat(buffer->uiVAO, iPosition, 3, GL_FLOAT, GL_FALSE, numFloats); // 3 floats (x,y,w)
-		numFloats += 4; // we add 4 bytes for alignment (x,y,z,w)
-		glVertexArrayAttribFormat(buffer->uiVAO, iTexCoords, 2, GL_FLOAT, GL_FALSE, numFloats); // 2 Floats (U, V)
-		numFloats += 4; // we add 4 bytes for alignment (x,y,z,w)
-		glVertexArrayAttribFormat(buffer->uiVAO, iColors, 4, GL_FLOAT, GL_FALSE, numFloats); // 4 flaots (r,g,b,a)
-		numFloats += 4; // we add 4 bytes for alignment (x,y,z,w)
+		glVertexArrayAttribFormat(buffer->uiVAO, iPosition, 3, GL_FLOAT, GL_FALSE, numFloats * sizeof(GLfloat)); // 3 floats (x,y,w)
+		numFloats += 4; // we add 4 floats for alignment (x,y,z,w)
+		glVertexArrayAttribFormat(buffer->uiVAO, iTexCoords, 2, GL_FLOAT, GL_FALSE, numFloats * sizeof(GLfloat)); // 2 Floats (U, V)
+		numFloats += 4; // we add 4 floats for alignment (x,y,z,w)
+		glVertexArrayAttribFormat(buffer->uiVAO, iColors, 4, GL_FLOAT, GL_FALSE, numFloats * sizeof(GLfloat)); // 4 flaots (r,g,b,a)
+		numFloats += 4; // we add 4 floats for alignment (x,y,z,w)
 
 		// Bind Attributes to VAO
 		glVertexArrayAttribBinding(buffer->uiVAO, iPosition, 0);
@@ -725,74 +601,166 @@ void SetupVertexBufferAttributesMesh3D(GLBuffer buffer)
 		glEnableVertexAttribArray(iPosition);
 
 		// We will Apply 16 Bytes on all components as (4 floats) since we are using SIMD .. 
-		glVertexAttribPointer(iPosition, 3, GL_FLOAT, GL_FALSE, sizeof(SMesh3D), (const void*)(numFloats * sizeof(GLfloat))); // 3 floats (x,y,w)
-		numFloats += 4; // we add 4 bytes for alignment (x,y,z,w)
+		glVertexAttribPointer(iPosition, 3, GL_FLOAT, GL_FALSE, sizeof(SVertex3D), (const void*)(numFloats * sizeof(GLfloat))); // 3 floats (x,y,w)
+		numFloats += 4; // we add 4 floats for alignment (x,y,z,w)
 		
 		glEnableVertexAttribArray(iTexCoords);
-		glVertexAttribPointer(iTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(SMesh3D), (const void*)(numFloats * sizeof(GLfloat))); // 2 Floats (U, V)
-		numFloats += 4; // we add 4 bytes for alignment (x,y,z,w)
+		glVertexAttribPointer(iTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(SVertex3D), (const void*)(numFloats * sizeof(GLfloat))); // 2 Floats (U, V)
+		numFloats += 4; // we add 4 floats for alignment (x,y,z,w)
 		
 		glEnableVertexAttribArray(iColors);
-		glVertexAttribPointer(iColors, 4, GL_FLOAT, GL_FALSE, sizeof(SMesh3D), (const void*)(numFloats * sizeof(GLfloat))); // 4 flaots (r,g,b,a)
-		numFloats += 4; // we add 4 bytes for alignment (x,y,z,w)
+		glVertexAttribPointer(iColors, 4, GL_FLOAT, GL_FALSE, sizeof(SVertex3D), (const void*)(numFloats * sizeof(GLfloat))); // 4 flaots (r,g,b,a)
+		numFloats += 4; // we add 4 floats for alignment (x,y,z,w)
 	}
 }
 
-void UpdateBufferMesh3DVertexData(GLBuffer buffer, const SMesh3D* pVertices, GLsizeiptr vertexCount, const GLuint* pIndices, GLsizeiptr indexCount)
+void UpdateBufferMesh3DVertexData(GLBuffer buffer, const SVertex3D* pVertices, GLsizeiptr vertexCount, const GLuint* pIndices, GLsizeiptr indexCount)
 {
-	if (!pVertices || !pIndices || vertexCount == 0)
+	if (!buffer)
 	{
-		syserr("Called with null vertex or index data!");
+		syserr("Buffer Is Null!");
 		return;
 	}
 
-	if (vertexCount > buffer->vboCapacity || indexCount > buffer->eboCapacity)
+	if (!pVertices || !pIndices)
+	{
+		syserr("Called with null Mesh3D vertex or index data!");
+		return;
+	}
+
+	// Check if we need to reallocate
+	GLsizeiptr newVertexCount = buffer->vertexOffset + vertexCount;
+	GLsizeiptr newIndexCount = buffer->indexOffset + indexCount;
+
+	if (newVertexCount > buffer->vboCapacity || newIndexCount > buffer->eboCapacity)
 	{
 		// Grow by 50% or the required amount, whichever is larger
 		GLsizeiptr newVboCap = buffer->vboCapacity + (buffer->vboCapacity / 2);
-		if (newVboCap < vertexCount)
+		if (newVboCap < newVertexCount)
 		{
-			newVboCap = vertexCount;
+			newVboCap = newVertexCount;
 		}
+
 		GLsizeiptr newEboCap = buffer->eboCapacity + (buffer->eboCapacity / 2);
-		if (newEboCap < indexCount)
+		if (newEboCap < newIndexCount)
 		{
-			newEboCap = indexCount;
+			newEboCap = newIndexCount;
 		}
-		ReallocateMesh3DBuffer(buffer, newVboCap, newEboCap, false);
+
+		ReallocateMesh3DBuffer(buffer, newVboCap, newEboCap, true);
 		syslog("Attemp to Reallocate Buffer...");
 	}
 
-	// Calculate byte sizes automatically based on the template type T
-	GLsizeiptr vboByteSize = vertexCount * sizeof(SMesh3D);
-	GLsizeiptr eboByteSize = indexCount * sizeof(GLuint);
+	// Calculate byte offsets for glBufferSubData
+	GLsizeiptr vertexByteOffset = buffer->vertexOffset * sizeof(SVertex3D);
+	GLsizeiptr indexByteOffset = buffer->indexOffset * sizeof(GLuint);
+
+	GLsizeiptr vertexByteSize = vertexCount * sizeof(SVertex3D);
+	GLsizeiptr indexByteSize = indexCount * sizeof(GLuint);
 
 	if (IsGLVersionHigher(4, 5))
 	{
 		// DSA Path: Modern Invalidation
-		glInvalidateBufferData(buffer->uiVBO);
-		glInvalidateBufferData(buffer->uiEBO);
-
-		glNamedBufferSubData(buffer->uiVBO, 0, vboByteSize, pVertices);
-		glNamedBufferSubData(buffer->uiEBO, 0, eboByteSize, pIndices);
+		glNamedBufferSubData(buffer->uiVBO, vertexByteOffset, vertexByteSize, pVertices);
+		glNamedBufferSubData(buffer->uiEBO, indexByteOffset, indexByteSize, pIndices);
 	}
 	else
 	{
 		// Legacy Path: Manual Orphaning
 		glBindBuffer(GL_ARRAY_BUFFER, buffer->uiVBO);
-
-		// Legacy "Orphaning": Re-specifying the buffer with NULL tells the driver
-		// to give us a fresh block of memory. This prevents pipeline stalls.
-		glBufferData(GL_ARRAY_BUFFER, buffer->vboCapacity * sizeof(SMesh3D), NULL, GL_DYNAMIC_DRAW);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, vboByteSize, pVertices);
+		glBufferSubData(GL_ARRAY_BUFFER, vertexByteOffset, vertexByteSize, pVertices);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->uiEBO);
-
-		// Legacy "Orphaning": Re-specifying the buffer with NULL tells the driver
-		// to give us a fresh block of memory. This prevents pipeline stalls.
-		glBufferData(GL_ARRAY_BUFFER, buffer->eboCapacity * sizeof(GLuint), NULL, GL_DYNAMIC_DRAW);
-		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, eboByteSize, pIndices);
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, indexByteOffset, indexByteSize, pIndices);
 	}
+
+	buffer->vertexOffset += vertexCount;
+	buffer->indexOffset += indexCount;
+
+	// Update total counts
+	buffer->vertexCount = (GLuint)buffer->vertexOffset;
+	buffer->indexCount = (GLuint)buffer->indexOffset;
+
+	syslog("buffer VertexOffset: %zu IndexOffset: %zu, VertexCount: %u, IndexCount: %u", buffer->vertexOffset, buffer->indexOffset, buffer->vertexCount, buffer->indexCount);
+}
+
+void UpdateBufferMesh3DData(GLBuffer buffer, Mesh3D mesh)
+{
+	if (!buffer || !mesh || !mesh->pVertices || !mesh->pVertices->pData ||
+		!mesh->pIndices || !mesh->pIndices->pData || mesh->vertexCount == 0)
+	{
+		syslog("UpdateBufferMesh3DData: Invalid mesh! vCount=%zu pDataV=%p pDataI=%p",
+			mesh->vertexCount, mesh->pVertices ? mesh->pVertices->pData : NULL,
+			mesh->pIndices ? mesh->pIndices->pData : NULL);
+		return;
+	}
+
+	mesh->indexOffset = GetBufferIndexOffset(buffer);
+	mesh->vertexOffset = GetBufferVertexOffset(buffer);
+
+	const SVertex3D* pVertices = (SVertex3D*)mesh->pVertices->pData;
+	const GLuint* pIndices = (GLuint*)mesh->pIndices->pData;
+	GLsizeiptr vertexCount = mesh->vertexCount;
+	GLsizeiptr indexCount = mesh->indexCount;
+
+	// Check if we need to reallocate
+	GLsizeiptr requiredVertexCount = buffer->vertexOffset + vertexCount;
+	GLsizeiptr requiredIndexCount = buffer->indexOffset + indexCount;
+
+	if (requiredVertexCount > buffer->vboCapacity || requiredIndexCount > buffer->eboCapacity)
+	{
+		// Grow by 50% or the required amount, whichever is larger
+		GLsizeiptr newVboCap = buffer->vboCapacity + (buffer->vboCapacity / 2);
+		if (newVboCap < requiredVertexCount)
+		{
+			newVboCap = requiredVertexCount;
+		}
+
+		GLsizeiptr newEboCap = buffer->eboCapacity + (buffer->eboCapacity / 2);
+		if (newEboCap < requiredIndexCount)
+		{
+			newEboCap = requiredIndexCount;
+		}
+
+		if (newVboCap > 1024 * 1024 || newEboCap > 1024 * 1024)
+		{
+			syserr("VBO(%zu) or EBO(%zu) out of bounds!", newVboCap, newEboCap);
+			return;
+		}
+
+		ReallocateMesh3DBuffer(buffer, newVboCap, newEboCap, true); // Copy old data
+		syslog("Attemp to Reallocate Buffer...");
+	}
+
+	// Calculate byte offsets for glBufferSubData
+	GLsizeiptr vertexByteOffset = buffer->vertexOffset * sizeof(SVertex3D);
+	GLsizeiptr indexByteOffset = buffer->indexOffset * sizeof(GLuint);
+
+	GLsizeiptr vertexByteSize = vertexCount * sizeof(SVertex3D);
+	GLsizeiptr indexByteSize = indexCount * sizeof(GLuint);
+
+	if (IsGLVersionHigher(4, 5))
+	{
+		// DSA Path: Modern Invalidation
+		glNamedBufferSubData(buffer->uiVBO, vertexByteOffset, vertexByteSize, pVertices);
+		glNamedBufferSubData(buffer->uiEBO, indexByteOffset, indexByteSize, pIndices);
+	}
+	else
+	{
+		// Legacy Path: Manual Orphaning
+		glBindBuffer(GL_ARRAY_BUFFER, buffer->uiVBO);
+		glBufferSubData(GL_ARRAY_BUFFER, vertexByteOffset, vertexByteSize, pVertices);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->uiEBO);
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, indexByteOffset, indexByteSize, pIndices);
+	}
+
+	buffer->vertexOffset += vertexCount;
+	buffer->indexOffset += indexCount;
+
+	// Update total counts
+	buffer->vertexCount = (GLuint)buffer->vertexOffset;
+	buffer->indexCount = (GLuint)buffer->indexOffset;
 }
 
 bool InitializeMesh3DGLBuffer(GLBuffer* ppBuffer)
@@ -831,11 +799,11 @@ bool InitializeMesh3DGLBuffer(GLBuffer* ppBuffer)
 		return (false);
 	}
 
-	// 4. Define the Vertex Layout (What does a vertex look like?)
+	// X. Define the Vertex Layout (What does a vertex look like?)
 	// This tells the VAO how to interpret the data (Position, Color, etc.)
-	SetupVertexBufferAttributesMesh3D(pGLBuffer);
+	SetupVertexBufferAttributesMesh3D(pGLBuffer); // Already Called in the next step 
 
-	// 5. Physical Link (Which buffers belong to this VAO?)
+	// 4. Physical Link (Which buffers belong to this VAO?)
 	LinkMesh3DBuffers(pGLBuffer);
 	
 	// 5.1 Log ..
@@ -843,12 +811,145 @@ bool InitializeMesh3DGLBuffer(GLBuffer* ppBuffer)
 	return (true);
 }
 
-void ReallocateMesh3DBuffer(GLBuffer buffer, size_t vNewSize, size_t iNewSize, bool copyOldData)
+void ReallocateMesh3DBuffer(GLBuffer buffer, GLsizeiptr newVboCapacity, GLsizeiptr newEboCapacity, bool copyOldData)
 {
+	if (!buffer)
+	{
+		return;
+	}
 
+	// Validate: Only error if trying to shrink WITH data copy
+	if (copyOldData)
+	{
+		if (newVboCapacity < buffer->vboCapacity || newEboCapacity < buffer->eboCapacity)
+		{
+			syserr("Cannot shrink buffer while copying data (would lose data)");
+			return;
+		}
+
+		if (newVboCapacity == buffer->vboCapacity && newEboCapacity == buffer->eboCapacity)
+		{
+			syslog("Buffer already has requested capacity, skipping reallocation");
+			return;  // Early exit - no work needed
+		}
+	}
+
+	GLuint oldVBO = buffer->uiVBO;
+	GLuint oldEBO = buffer->uiEBO;
+	GLsizeiptr oldVBOCapacity = buffer->vboCapacity * sizeof(SVertex3D);
+	GLsizeiptr oldEBOCapacity = buffer->eboCapacity * sizeof(GLuint);
+
+	GLuint newVBO, newEBO;
+	CreateBuffer(&newVBO);
+	CreateBuffer(&newEBO);
+
+	GLsizeiptr newVBOSize = newVboCapacity * sizeof(SVertex3D);
+	GLsizeiptr newEBOSize = newEboCapacity * sizeof(GLuint);
+
+	if (IsGLVersionHigher(4, 5))
+	{
+		glNamedBufferStorage(newVBO, newVBOSize, NULL, GL_DYNAMIC_STORAGE_BIT);
+		glNamedBufferStorage(newEBO, newEBOSize, NULL, GL_DYNAMIC_STORAGE_BIT);
+	}
+	else
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, newVBO);
+		glBufferData(GL_ARRAY_BUFFER, newVBOSize, NULL, GL_DYNAMIC_DRAW);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, newEBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, newEBOSize, NULL, GL_DYNAMIC_DRAW);
+	}
+
+	if (copyOldData)
+	{
+		if (IsGLVersionHigher(4, 5))
+		{
+			if (oldVBO != 0)
+			{
+				glCopyNamedBufferSubData(oldVBO, newVBO, 0, 0, oldVBOCapacity);
+			}
+			if (oldEBO != 0)
+			{
+				glCopyNamedBufferSubData(oldEBO, newEBO, 0, 0, oldEBOCapacity);
+			}
+		}
+		else
+		{
+			// Copy Old Vertex Buffer
+			if (oldVBO != 0)
+			{
+				glBindBuffer(GL_COPY_READ_BUFFER, oldVBO);
+				glBindBuffer(GL_COPY_WRITE_BUFFER, newVBO);
+				glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, oldVBOCapacity);
+			}
+
+			// Copy Old Index Buffer
+			if (oldEBO != 0)
+			{
+				glBindBuffer(GL_COPY_READ_BUFFER, oldEBO);
+				glBindBuffer(GL_COPY_WRITE_BUFFER, newEBO);
+				glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, oldEBOCapacity);
+			}
+		}
+	}
+
+	// Delete Old Buffers
+	if (oldVBO != 0)
+	{
+		DeleteBuffer(&oldVBO);
+	}
+	if (oldEBO != 0)
+	{
+		DeleteBuffer(&oldEBO);
+	}
+
+	// Assign New Buffers and their size
+	buffer->uiVBO = newVBO;
+	buffer->uiEBO = newEBO;
+	buffer->vboCapacity = newVboCapacity;
+	buffer->eboCapacity = newEboCapacity;
+
+	// Physical Link (Which buffers belong to this VAO?)
+	LinkMesh3DBuffers(buffer);
+
+	syslog("Reallocated buffer: VBO %zu -> %zu vertices, EBO %zu -> %zu indices", oldVBOCapacity / sizeof(SVertex3D), newVboCapacity, oldEBOCapacity / sizeof(GLuint), newEboCapacity);
 }
 
 GLuint GetVertexArray(GLBuffer buffer)
 {
 	return (buffer->uiVAO);
+}
+
+GLsizeiptr GetBufferVertexOffset(GLBuffer buffer)
+{
+	return (buffer->vertexOffset);
+}
+
+GLsizeiptr GetBufferIndexOffset(GLBuffer buffer)
+{
+	return (buffer->indexOffset);
+}
+
+void RenderBuffer(GLBuffer buffer, GLenum renderMode)
+{
+	if (!buffer)
+	{
+		syserr("Buffer is NULL!!");
+		return;
+	}
+
+	// Safety: Don't draw if not initialized or if we have no data, no need to check vertexCount since we're using glDrawElements but we will keep it ..
+	if (buffer->bIsInitialized == false || buffer->vertexCount == 0 || buffer->indexCount == 0)
+	{
+		syserr("Cannot render buffer! (%u-%u)", buffer->vertexCount, buffer->indexCount);
+		return;
+	}
+
+	// Bind the 'Boss' (The VAO)
+	// In OpenGL, the VAO already knows about the VBO and EBO because of our LinkBuffers call
+	BindBufferVAO(GetStateManager(), buffer);
+
+	// Perform the draw
+	// indexCount was set to indexCount in our Update function
+	glDrawElements(renderMode, buffer->indexCount, GL_UNSIGNED_INT, NULL);
 }

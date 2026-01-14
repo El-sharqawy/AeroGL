@@ -4,6 +4,7 @@
 #include "../Math/Projection/OrthographicProjection.h"
 #include "../Math/Quaternion/Quaternion.h"
 #include "Input.h"
+#include "../Buffers/UniformBufferObject.h"
 
 typedef struct SGLCamera
 {
@@ -89,6 +90,12 @@ typedef struct SGLCamera
 
 	// Use Quaternion to calculate camera rotations
 	bool bUseQuaternion;
+
+	// Camera Metrices Uniform Buffer Object
+	UniformBufferObject cameraUBO;
+
+	// metrices Data
+	SCameraUBO cameraSUBO; // struct Data
 } SGLCamera;
 
 bool InitializeCamera(GLCamera *ppCamera, float Width, float Height)
@@ -141,6 +148,13 @@ bool InitializeCamera(GLCamera *ppCamera, float Width, float Height)
 	pCamera->v3Right = Vector3_Normalized(Vector3_Cross(pCamera->v3Front, s_v3WorldUp));
 	pCamera->v3Up = Vector3_Normalized(Vector3_Cross(pCamera->v3Right, pCamera->v3Front));
 
+	if (!InitializeUniformBufferObject(&pCamera->cameraUBO, sizeof(SCameraUBO), UBO_BP_CAMERA, "Camera UBO"))
+	{
+		syserr("Failed To Create Camera UBO");
+	}
+
+	pCamera->cameraSUBO = (SCameraUBO){ S_Matrix4_Identity, S_Matrix4_Identity, S_Matrix4_Identity, S_Matrix4_Identity };
+
 	UpdateProjections(pCamera);
 
 	return (pCamera != NULL);
@@ -178,6 +192,9 @@ void DestroyCamera(GLCamera* ppCamera)
 	}
 
 	GLCamera pCamera = *ppCamera;
+
+	DestroyUniformBufferObject(&pCamera->cameraUBO);
+
 	tracked_free(pCamera);
 
 	*ppCamera = NULL;
@@ -412,4 +429,50 @@ void UpdateCameraDeminsions(GLCamera pCamera, float width, float height)
 	pCamera->Height = height;
 
 	UpdateProjections(pCamera);
+}
+
+void UpdateCamera(GLCamera pCamera)
+{
+	if (!pCamera)
+	{
+		return;
+	}
+
+	UpdateUniformBufferObject(pCamera);
+}
+
+void UpdateUniformBufferObject(GLCamera pCamera)
+{
+	bool needsUpload = false;
+
+	// Note: GetViewProjectionMatrix() internally updates the cached matrices 
+	// and clears the dirty flags!
+	if (pCamera->bViewDirty)
+	{
+		pCamera->cameraSUBO.viewMat = GetViewMatrix(pCamera);
+		needsUpload = true;
+	}
+
+	if (pCamera->bProjectionDirty)
+	{
+		pCamera->cameraSUBO.projectionMat = GetProjectionMatrix(pCamera);
+		needsUpload = true;
+	}
+
+	if (pCamera->bViewProjDirty)
+	{
+		pCamera->cameraSUBO.viewProjectionMat = GetViewProjectionMatrix(pCamera);
+		needsUpload = true;
+	}
+
+	if (pCamera->bBillboardDirty)
+	{
+		pCamera->cameraSUBO.viewBillBoard = GetViewBillboardMatrix(pCamera);
+		needsUpload = true;
+	}
+
+	if (needsUpload)
+	{
+		UniformBufferObject_Update(pCamera->cameraUBO, &pCamera->cameraSUBO, sizeof(SCameraUBO), 0, false);
+	}
 }

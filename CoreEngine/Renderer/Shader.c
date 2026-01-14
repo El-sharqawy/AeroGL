@@ -292,6 +292,30 @@ bool CheckCompileErrors(GLuint uiID, const char* szShaderFile, bool IsProgram)
 	return (iSuccess);
 }
 
+void SetInt(GLShader pShader, const char* szUniformName, GLint iInt)
+{
+	if (!pShader)
+	{
+		return;
+	}
+
+	// Use the program from the shader struct
+	GLuint program = pShader->programID;
+
+	// Optional: Only set if the shader is currently 'In Use'
+	UseProgram(pShader);
+
+	GLint iMatIndex = glGetUniformLocation(program, szUniformName);
+
+	if (iMatIndex == -1)
+	{
+		syserr("Failed to Find Uniform %s", szUniformName);
+		return;
+	}
+
+	glUniform1i(iMatIndex, iInt);
+}
+
 void SetMat4(GLShader pShader, const char* szUniformName, const Matrix4 mat)
 {
 	if (!pShader)

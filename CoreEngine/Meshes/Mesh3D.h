@@ -2,7 +2,9 @@
 #define __MESH_3D_H__
 
 #include "../Lib/Vector.h"
-#include "../Renderer/Buffer.h"
+#include "../Math/Vectors/Vector2.h"
+#include "../Math/Vectors/Vector3.h"
+#include "../Math/Vectors/Vector4.h"
 #include "../Math/Transform.h"
 #include <stdint.h>
 
@@ -27,8 +29,12 @@ typedef struct SMesh3D
 
 	// Cache counts for quick access
 	// (avoids dereferencing Vector->count repeatedly)
-	size_t vertexCount;		// Cached pVertices->count
-	size_t indexCount;		// Cached pIndices->count
+	GLsizeiptr vertexCount;		// Cached pVertices->count
+	GLsizeiptr indexCount;		// Cached pIndices->count
+
+	GLsizeiptr vertexOffset;        // Where this mesh starts in shared VBO (in vertices)
+	GLsizeiptr indexOffset;         // Where this mesh starts in shared EBO (in indices)
+
 	bool bDirty;			// True when vertices/indices modified, needs GPU upload
 } SMesh3D;
 
@@ -49,7 +55,7 @@ Mesh3D Mesh3D_Create(GLenum primitiveType);
  * Use this when you know the approximate size in advance
  * to avoid multiple reallocations.
  */
-Mesh3D Mesh3D_CreateWithCapacity(GLenum primitiveType, size_t vertexHint, size_t indexHint);
+Mesh3D Mesh3D_CreateWithCapacity(GLenum primitiveType, GLsizeiptr vertexHint, GLsizeiptr indexHint);
 
 /**
  * @brief Creates a 3D line segment from start to end point.
@@ -64,7 +70,14 @@ Mesh3D Mesh3D_CreateWithCapacity(GLenum primitiveType, size_t vertexHint, size_t
  *
  * @note For consistent line width across all platforms, use Mesh3D_MakeLineQuad instead.
  */
-void Mesh3D_MakeLine3D(Mesh3D pMesh, Vector3 start, Vector3 end, Vector4 color);
+void Mesh3D_AddLine3D(Mesh3D pMesh, Vector3 start, Vector3 end, Vector4 color);
+void Mesh3D_MakeAxis(Mesh3D pMesh, Vector3 position, float length);
+void Mesh3D_MakeCircle2D(Mesh3D pMesh, Vector3 center, float radius, int step, Vector4 color, bool bHorizonal);
+void Mesh3D_MakeWireSphere3D(Mesh3D pMesh, Vector3 center, float radius, int segments, int slices, Vector4 color, bool drawHorizontal);
+void Mesh3D_MakeTriangle3D(Mesh3D pMesh, Vector3 p1, Vector3 p2, Vector3 p3, Vector4 color);
+void Mesh3D_MakeSphere3D(Mesh3D pMesh, Vector3 center, float radius, int segments, int slices, Vector4 color);
+void Mesh3D_MakePyramid(Mesh3D pMesh, float baseSize, float height, Vector4 baseColor, Vector4 sideColor);
+void Mesh3D_MakeQuad3D(Mesh3D pMesh, Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, Vector4 color);
 
 /**
  * @brief Destroys a mesh and frees all resources.
@@ -74,5 +87,7 @@ void Mesh3D_MakeLine3D(Mesh3D pMesh, Vector3 start, Vector3 end, Vector4 color);
  * @param ppMesh [in/out] Pointer to mesh pointer (set to NULL after destruction).
  */
 void Mesh3D_Destroy(Mesh3D* ppMesh);
+void Mesh3D_Free(Mesh3D pMesh);
+void Mesh3D_PtrDestroy(void* elem);
 
 #endif // __MESH_3D_H__

@@ -4,9 +4,9 @@
 #include "Core/Window.h"
 #include "Core/Camera.h"
 #include "Core/Input.h"
+#include "Buffers/Buffer.h"
 #include "Renderer/Shader.h"
-#include "Renderer/Buffer.h"
-#include "Renderer/Renderer.h"
+#include "Renderer/DebugRenderer.h"
 #include "Renderer/StateManager.h"
 
 typedef struct SEngine
@@ -14,7 +14,8 @@ typedef struct SEngine
     GLWindow window;
     GLCamera camera;
     Input Input;
-    Renderer renderer;
+    // Renderer renderer;
+    DebugRenderer debugRenderer;
     StateManager stateManager;
     float deltaTime;
     float lastFrame;

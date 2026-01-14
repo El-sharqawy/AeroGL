@@ -20,6 +20,7 @@ GLenum GetShaderType(const char* szShaderFile);
 bool CheckCompileErrors(GLuint uiID, const char* szShaderFile, bool IsProgram);
 
 // Uniform Parts
+void SetInt(GLShader pShader, const char* szUniformName, GLint iInt);
 void SetMat4(GLShader pShader, const char* szUniformName, const Matrix4 mat);
 
 #endif // __SHADER_H__

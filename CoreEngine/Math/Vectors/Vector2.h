@@ -19,7 +19,7 @@
  * - Conversion to and from GLM vectors for interoperability
  * - Clear and concise implementation adhering to Betty coding standards
  */
-typedef struct SVector2f
+typedef struct __declspec(align(16)) SVector2f
 {
 	union
 	{

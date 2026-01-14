@@ -1,116 +1,133 @@
-#include "vector.h"
+#include "Vector.h"
 #include "../Core/CoreUtils.h"
-#include <stdlib.h>
-#include <stdint.h>
 #include <memory.h>
 
-Vector VectorInit(size_t element_size)
+bool Vector_Init(Vector* ppVector, size_t elementSize)
 {
-	Vector vec = (Vector)tracked_malloc(sizeof(SAnubisVector));
-	vec->pData = NULL;
-	vec->count = 0;
-	vec->capacity = 0;
-	vec->elemSize = element_size;
-	return (vec);
-}
+	*ppVector = (Vector)tracked_calloc(1, sizeof(SVector));
 
-Vector VectorInitSize(size_t element_size, size_t initCapcity)
-{
-	Vector vec = (Vector)tracked_malloc(sizeof(SAnubisVector));
-	vec->pData = NULL;
-
-	vec->count = 0;
-	vec->capacity = initCapcity;
-	vec->elemSize = element_size;
-	return (vec);
-}
-
-bool VectorPush(Vector vec, const void* pItem)
-{
-	if (!vec)
+	if (!*ppVector)
 	{
+		syserr("Failed to Allocate New Vector");
 		return (false);
 	}
 
-	if (vec->count == vec->capacity || vec->pData == NULL)
-	{
-		size_t newCapacity = (vec->capacity == 0) ? 4 : vec->capacity * 2;
-		void* newPtr = tracked_realloc(vec->pData, newCapacity * vec->elemSize);
-		if (newPtr)
-		{
-			vec->pData = (unsigned char*)newPtr;
-			vec->capacity = newCapacity;
-		}
-	}
-
-	// Calculate memory address: start + (index * size)
-	void* pDest = (unsigned char*)vec->pData + (vec->count * vec->elemSize); // FIX: Cast pData to (unsigned char*) so the + operation knows to move byte-by-byte
-	memcpy(pDest, pItem, vec->elemSize);
-	vec->count++;
+	(*ppVector)->count = 0;					// Number of elements
+	(*ppVector)->capacity = 0;				// Allocated slots
+	(*ppVector)->elemSize = elementSize;	// Size of one element (e.g., sizeof(SVertex))
+	(*ppVector)->destructor = NULL;			// NULL = raw copy, no free
 
 	return (true);
 }
 
-bool VectorReserve(Vector vec, size_t reservedSize)
+bool Vector_InitCapacity(Vector* ppVector, size_t elementSize, size_t capacity)
 {
-	if (!vec)
+	if (!Vector_Init(ppVector, elementSize)) // Reuse Init logic
 	{
-		return (false);
+		return false;
 	}
 
-	// If already have enough capacity, do nothing
-	if (reservedSize <= vec->capacity)
+	if (capacity > 0)
 	{
-		return (true);
+		Vector_Reserve(*ppVector, capacity);  // capacity=0 safe
 	}
 
-	// tracked_realloc handles everything: alloc, copy, free
-	void* newPtr = tracked_realloc(vec->pData, reservedSize * vec->elemSize);
-	if (!newPtr)
-	{
-		return (false);
-	}
-
-	vec->pData = (unsigned char*)newPtr;
-	vec->capacity = reservedSize;
-	return (true);
+	return true;
 }
 
-void VectorFree(Vector* ppVec)
+void Vector_Destroy(Vector* ppVector)
 {
-	if (!ppVec || !*ppVec) 
+	if (!ppVector || !*ppVector)
 	{
 		return;
 	}
 
-	// 2. Grab the actual AnubisVector pointer so we can work with it easily
-	Vector vec = *ppVec;
+	Vector vec = *ppVector;
 
-	// 3. Free the internal array data
+	if (vec->destructor)
+	{
+		for (size_t i = 0; i < vec->count; ++i)
+		{
+			void* elem = (char*)vec->pData + i * vec->elemSize;
+			// syslog("Vector_Destroy: Destroying element ptr %p", elem);
+			vec->destructor(&elem);
+		}
+	}
+
 	tracked_free(vec->pData);
 	vec->pData = NULL;
 
-	// Crucial: Set to zero so the vector is "dead" but safe
-	vec->count = 0;
-	vec->capacity = 0;
-
-	// Free vec from memory
 	tracked_free(vec);
-	*ppVec = NULL; // Now the caller's pointer is actually NULL
+	*ppVector = NULL;
 }
 
-// Clear (Keep Memory): Useful if you want to reuse the buffer next frame 
-// without re-allocating (saves CPU time!)
-bool VectorClear(Vector vec)
+void Vector_Clear(Vector pVector)
 {
-	if (!vec)
+	if (!pVector)
 	{
-		return (false);
+		return;
 	}
-	vec->count = 0; // Just reset the count; keep the capacity and pData!
+
+	pVector->count = 0;
 }
 
-void* VectorGet(Vector vec, size_t index)
+void Vector_Reserve(Vector pVector, size_t reservedSize)
+{
+	if (!pVector)
+	{
+		return;
+	}
+
+	// If already have enough capacity, do nothing
+	if (reservedSize <= pVector->capacity)
+	{
+		return;
+	}
+
+	// tracked_realloc handles everything: alloc, copy, free
+	void* newPtr = tracked_realloc(pVector->pData, reservedSize * pVector->elemSize);
+	if (!newPtr)
+	{
+		return;
+	}
+
+	pVector->pData = (unsigned char*)newPtr;
+	pVector->capacity = reservedSize;
+}
+
+bool Vector_PushBack(Vector* ppVector, const void* element)
+{
+	if (!ppVector || !*ppVector || !element)
+		return false;
+
+	Vector vec = *ppVector;  // Local copy for safety
+
+	if (vec->count == vec->capacity || vec->pData == NULL)
+	{
+		size_t newCapacity = (vec->capacity == 0) ? 4 : vec->capacity * 2; // 4 elements capacity
+		void* newPtr = tracked_realloc(vec->pData, newCapacity * vec->elemSize);
+		if (!newPtr)
+		{
+			syserr("Realloc failed! capacity=%zu", newCapacity);
+			return (false);  // Original pData remains valid
+		}
+
+		vec->pData = newPtr;
+		vec->capacity = newCapacity;
+	}
+
+	void* pDest = (unsigned char*)vec->pData + (vec->count * vec->elemSize); // FIX: Cast pData to (unsigned char*) so the + operation knows to move byte-by-byte
+	memcpy(pDest, element, vec->elemSize);
+
+	// syslog("Pushing element ptr %p", element);
+	vec->count++;
+
+	*ppVector = vec;  // Copy changes back!
+
+	return (true);
+}
+
+void* Vector_Get(Vector vec, size_t index)
 {
 	if (index >= vec->count)
 	{

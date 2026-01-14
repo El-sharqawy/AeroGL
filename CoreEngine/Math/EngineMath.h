@@ -163,8 +163,8 @@ static inline Vector3 GetSpherePos(float cx, float cy, float cz, float r, float 
 {
 	return (Vector3){
 		cx + r * sinf(phi) * cosf(theta),
-		cy + r * sinf(phi) * sinf(theta),
-		cz + r * cosf(phi)
+		cy + r * cosf(phi),
+		cz + r * sinf(phi) * sinf(theta)
 	};
 }
 

@@ -1,8 +1,3 @@
-#include "Core/Window.h"
-#include "Core/CoreUtils.h"
-#include "Renderer/Shader.h"
-#include "Renderer/Buffer.h"
-#include "Core/Camera.h"
 #include "Engine.h"
 
 #include "Math/Vectors/Vector4.h"
@@ -17,6 +12,7 @@
 #include <assert.h>
 
 #pragma comment(lib, "glfw3.lib")
+#pragma comment(lib, "Debug\\assimp-vc143-mtd.lib")
 
 int main(int argc, char* argv[])
 {

@@ -8,6 +8,14 @@
 #include "../Math/Matrix/Matrix4.h"
 #include "../Math/EngineMath.h"
 
+typedef struct SCameraUBO
+{
+	Matrix4 viewMat;
+	Matrix4 projectionMat;
+	Matrix4 viewProjectionMat;
+	Matrix4 viewBillBoard;
+} SCameraUBO;
+
 typedef struct SGLCamera* GLCamera;
 
 // The global World Up vector (U_World), typically (0, 1, 0). 
@@ -54,7 +62,8 @@ void ProcessCameraMouse(GLCamera pCamera);
 void ProcessCameraZoom(GLCamera pCamera);
 
 void UpdateCameraVectors(GLCamera pCamera);
-
 void UpdateCameraDeminsions(GLCamera pCamera, float width, float height);
+void UpdateCamera(GLCamera pCamera);
+void UpdateUniformBufferObject(GLCamera pCamera);
 
 #endif // __CAMERA_H__

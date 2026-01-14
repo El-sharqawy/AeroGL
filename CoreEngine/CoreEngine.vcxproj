@@ -109,7 +109,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <LanguageStandard_C>stdclatest</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -132,6 +132,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Buffers\Buffer.c" />
+    <ClCompile Include="Buffers\GLBuffer.c" />
+    <ClCompile Include="Buffers\IndirectBufferObject.c" />
+    <ClCompile Include="Buffers\ShaderStorageBufferObject.c" />
+    <ClCompile Include="Buffers\TerrainBuffer.c" />
+    <ClCompile Include="Buffers\UniformBufferObject.c" />
     <ClCompile Include="Core\Camera.c" />
     <ClCompile Include="Core\CoreUtils.c" />
     <ClCompile Include="Core\Input.c" />
@@ -150,19 +156,26 @@
     <ClCompile Include="Math\Vectors\Vector3.c" />
     <ClCompile Include="Math\Vectors\Vector4.c" />
     <ClCompile Include="Math\Vertex\Vertex.c" />
-    <ClCompile Include="Meshes\Mesh2D.c" />
     <ClCompile Include="Meshes\Mesh3D.c" />
+    <ClCompile Include="Meshes\TerrainMesh.c" />
     <ClCompile Include="OpenGLUtils\glad.c" />
     <ClCompile Include="OpenGLUtils\stb_image.c" />
     <ClCompile Include="OpenGLUtils\stb_image_write.c" />
-    <ClCompile Include="Renderer\Buffer.c" />
-    <ClCompile Include="Renderer\Renderer.c" />
+    <ClCompile Include="Renderer\DebugRenderer.c" />
     <ClCompile Include="Renderer\Shader.c" />
     <ClCompile Include="Renderer\StateManager.c" />
+    <ClCompile Include="Renderer\TerrainRenderer.c" />
+    <ClCompile Include="Terrain\TerrainPatch.c" />
     <ClCompile Include="UserInterface\Interface_imgui.cpp" />
     <ClCompile Include="UserInterface\UserInterface.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Buffers\Buffer.h" />
+    <ClInclude Include="Buffers\GLBuffer.h" />
+    <ClInclude Include="Buffers\IndirectBufferObject.h" />
+    <ClInclude Include="Buffers\ShaderStorageBufferObject.h" />
+    <ClInclude Include="Buffers\TerrainBuffer.h" />
+    <ClInclude Include="Buffers\UniformBufferObject.h" />
     <ClInclude Include="Core\Camera.h" />
     <ClInclude Include="Core\CoreUtils.h" />
     <ClInclude Include="Core\Input.h" />
@@ -181,12 +194,13 @@
     <ClInclude Include="Math\Vectors\Vector3.h" />
     <ClInclude Include="Math\Vectors\Vector4.h" />
     <ClInclude Include="Math\Vertex\Vertex.h" />
-    <ClInclude Include="Meshes\Mesh2D.h" />
     <ClInclude Include="Meshes\Mesh3D.h" />
-    <ClInclude Include="Renderer\Buffer.h" />
-    <ClInclude Include="Renderer\Renderer.h" />
+    <ClInclude Include="Meshes\TerrainMesh.h" />
+    <ClInclude Include="Renderer\DebugRenderer.h" />
     <ClInclude Include="Renderer\Shader.h" />
     <ClInclude Include="Renderer\StateManager.h" />
+    <ClInclude Include="Renderer\TerrainRenderer.h" />
+    <ClInclude Include="Terrain\TerrainPatch.h" />
     <ClInclude Include="UserInterface\Interface_imgui.h" />
     <ClInclude Include="UserInterface\UserInterface.h" />
   </ItemGroup>

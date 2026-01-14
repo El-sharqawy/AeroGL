@@ -10,7 +10,7 @@
 #define MAX_SCISSORS 4
 
 #include <glad/glad.h>
-#include "Buffer.h"
+#include "../Buffers/Buffer.h"
 #include "Shader.h"
 
 typedef enum EEngineCap

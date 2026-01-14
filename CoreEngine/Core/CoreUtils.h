@@ -10,6 +10,36 @@
 #define syserr(...) fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); fflush(stderr);
 #define syslog(...) fprintf(stdout, __VA_ARGS__); fprintf(stdout, "\n"); fflush(stdout);
 
+inline GLenum glCheckError_(const char* file, int line)
+{
+    GLenum errorCode;
+    while ((errorCode = glGetError()) != GL_NO_ERROR)
+    {
+        char error[256] = { 0 };
+        switch (errorCode)
+        {
+        case GL_INVALID_ENUM:
+            break;
+        case GL_INVALID_VALUE:
+            break;
+        case GL_INVALID_OPERATION:
+            break;
+        case GL_STACK_OVERFLOW:
+            break;
+        case GL_STACK_UNDERFLOW:
+            break;
+        case GL_OUT_OF_MEMORY:
+            break;
+        case GL_INVALID_FRAMEBUFFER_OPERATION:
+            break;
+        }
+        syserr("OpenGL Error: %d | File: %s (line: %d)", errorCode, file, line);
+    }
+    return errorCode;
+}
+
+#define glCheckError() glCheckError_(__FILE__, __LINE__) 
+
 #ifdef _MSC_VER
 __declspec(align(16))
 #else

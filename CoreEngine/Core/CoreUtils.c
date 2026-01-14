@@ -8,6 +8,8 @@
 size_t allocation_count = 0;
 size_t bytes_allocated = 0;
 
+// #define ENABLE_MEMORY_LOGS
+
 void* tracked_malloc_internal(size_t size, const char* file, int line)
 {
 	// 1. Align the header size to 16 bytes. 
@@ -45,7 +47,9 @@ void* tracked_malloc_internal(size_t size, const char* file, int line)
 	allocation_count++;
 	bytes_allocated += size;
 
+#if defined(ENABLE_MEMORY_LOGS)
 	syslog("allocated: %zu bytes (%s:%d)", bytes_allocated, get_filename(file), line);
+#endif
 
 	// Return pointer after the header
 	return user_ptr;
@@ -105,7 +109,9 @@ void* tracked_realloc_internal(void* ptr, size_t new_size, const char* file, int
 	size_t copy_size = (old_header->size < new_size) ? old_header->size : new_size;
 	memcpy(new_ptr, ptr, copy_size);
 
+#if defined(ENABLE_MEMORY_LOGS)
 	syslog("Reallocated: %zu bytes (Old: %zu)", new_size, old_header->size);
+#endif
 
 	// Free the old block
 	tracked_free_internal(ptr, file, line);
@@ -117,7 +123,12 @@ char* tracked_strdup_internal(const char* szSource, const char* file, int line)
 {
 	if (!szSource)
 	{
-		return (NULL);
+		char* emptyStr = (char*)tracked_malloc_internal(1, file, line);
+		if (emptyStr)
+		{
+			emptyStr[0] = '\0';
+		}
+		return emptyStr;
 	}
 
 	size_t len = strlen(szSource) + 1; // +1 for the null terminator '\0'
@@ -162,7 +173,9 @@ void tracked_free_internal(void* pObject, const char* file, int line)
 	allocation_count--;
 	bytes_allocated -= raw_ptr->size;
 
+#if defined(ENABLE_MEMORY_LOGS)
 	syslog("Automatically detected and will free: %zu bytes (%s:%d)", raw_ptr->size, get_filename(file), line);
+#endif
 
 	// 3. Free the original starting address
 	// Clear the magic before freeing to prevent "Double Free"

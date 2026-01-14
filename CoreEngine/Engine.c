@@ -29,7 +29,8 @@ bool InitializeEngine(Engine pEngine)
 		return (false);
 	}
 
-	CreateRenderer(&pEngine->renderer, pEngine->camera, "MainRenderer");
+	// CreateRenderer(&pEngine->renderer, pEngine->camera, "MainRenderer");
+	CreateDebugRenderer(&pEngine->debugRenderer, pEngine->camera, "DebugRenderer");
 
 	if (!InitializeInput(&pEngine->Input))
 	{
@@ -98,12 +99,15 @@ void UpdateEngine(Engine pEngine)
 	glfwPollEvents();
 	UpdateInput(pEngine->Input);
 	HandleEngineInput(pEngine); // Engine Handle Input
+	UpdateCamera(pEngine->camera);
 
 	// Update ImgUI
 	ImGui_NewFrame();
 
 	// 3. Render
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearColor(0.2f, 0.2f, 0.2f, 0.5f);
+
 	RenderEngine(pEngine);
 
 	// Render on top of everything
@@ -117,7 +121,8 @@ void UpdateEngine(Engine pEngine)
 
 void RenderEngine(Engine pEngine)
 {
-	RenderRenderer(pEngine->renderer);
+	// RenderRenderer(pEngine->renderer);
+	RenderDebugRenderer(pEngine->debugRenderer);
 }
 
 void DestroyEngine(Engine pEngine)
@@ -130,7 +135,8 @@ void DestroyEngine(Engine pEngine)
 
 	DestroyCamera(&pEngine->camera);
 
-	DestroyRenderer(&pEngine->renderer);
+	// DestroyRenderer(&pEngine->renderer);
+	DestroyDebugRenderer(&pEngine->debugRenderer);
 
 	DestroyInput(&pEngine->Input);
 

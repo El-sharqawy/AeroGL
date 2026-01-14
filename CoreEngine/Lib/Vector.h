@@ -1,32 +1,39 @@
 #ifndef __VECTOR_H__
 #define __VECTOR_H__
 
-#include <stdio.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 
-typedef struct SAnubisVector
+
+typedef void (*VectorDestructorFn)(void* element);
+
+typedef struct SVector
 {
 	void* pData;      // Raw memory block
 	size_t count;     // Number of elements
 	size_t capacity;  // Allocated slots
 	size_t elemSize;  // Size of one element (e.g., sizeof(SVertex))
-} SAnubisVector;
+	VectorDestructorFn destructor;  // NULL = raw copy, no free
+} SVector;
 
-typedef SAnubisVector* Vector;
+typedef struct SVector* Vector;
 
-Vector VectorInit(size_t element_size);
-Vector VectorInitSize(size_t element_size, size_t initCapcity);
-bool VectorPush(Vector vec, const void* pItem);
-bool VectorReserve(Vector vec, size_t reversedSize);
-void VectorFree(Vector* vec);
-bool VectorClear(Vector vec);
-void* VectorGet(Vector v, size_t index);
+bool Vector_Init(Vector* ppVector, size_t elementSize);
+bool Vector_InitCapacity(Vector* ppVector, size_t elementSize, size_t capacity);
+void Vector_Destroy(Vector* ppVector);
+void Vector_Clear(Vector pVector);
+void Vector_Reserve(Vector pVector, size_t reservedSize);
 
-#define ANUBIS_VECTOR_PUSH(vec_ptr, type, item) \
+bool Vector_PushBack(Vector* ppVector, const void* element);
+void* Vector_Get(Vector vec, size_t index);
+
+#define VECTOR_GET(vec, index, type) \
+    (*(type*)Vector_Get(vec, index));
+
+#define VECTOR_PUSH(vec_ptr, value) \
     do { \
-        type _temp = (item); \
-        VectorPush((vec_ptr), &_temp); \
+        typeof(value) _temp = (value); \
+        Vector_PushBack(&(vec_ptr), &_temp); \
     } while (0)
 
 #endif // __VECTOR_H__
