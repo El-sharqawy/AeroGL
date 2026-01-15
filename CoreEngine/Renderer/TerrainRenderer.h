@@ -2,7 +2,7 @@
 #define __TERRAIN_RENDERER_H__
 
 #include "Shader.h"
-#include "../Buffers/Buffer.h"
+#include "../Buffers/TerrainBuffer.h"
 #include "../Buffers/IndirectBufferObject.h"
 #include "../Buffers/ShaderStorageBufferObject.h"
 #include "../Core/Camera.h"
@@ -21,7 +21,7 @@ typedef struct STerrainRendererPrimitiveGroup
 
     // Specific for Lines
     Matrix4 modelsMetrices[TERRAIN_RENDERER_MAX_TYPES];    // CPU-side storage
-    Vector meshes;
+    Vector TerrainPatches; // TerrainPatch
     bool bMatricesDirty;
     GLenum primitiveType; // GL_LINES or GL_TRIANGLES
     ETerrainPrimitiveType groupType;
@@ -30,8 +30,8 @@ typedef struct STerrainRendererPrimitiveGroup
 typedef struct STerrainRenderer
 {
     // GPU Resources
-    GLShader pShader;
-    GLBuffer pDynamicGeometryBuffer;
+    GLShader pTerrainShader;
+    TerrainGLBuffer pTerrainBuffer;
 
     // Typed primitive groups (dynamic)
     STerrainRendererPrimitiveGroup groups[TERRAIN_RENDERER_MAX_TYPES];

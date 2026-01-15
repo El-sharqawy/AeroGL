@@ -14,11 +14,11 @@ typedef struct STerrainGLBuffer
 	GLuint vertexCount;		// glDrawArrays needs it
 	GLuint indexCount;		// glDrawElements needs it
 
-	GLsizeiptr vboCapacity;
-	GLsizeiptr eboCapacity;
+	GLsizeiptr vboCapacity;	// VBO size (capacity)
+	GLsizeiptr eboCapacity;	// EBO size (capacity)
 
-	GLsizeiptr vertexOffset;
-	GLsizeiptr indexOffset;
+	GLsizeiptr vertexOffset; // total written vertices offset
+	GLsizeiptr indexOffset;	// total written indices offset
 
 	GLsizeiptr vboSize; // Total Size (capacity * sizeof(element))
 	GLsizeiptr eboSize; // Total Size (capacity * sizeof(GLuint))
@@ -44,7 +44,7 @@ bool TerrainBuffer_AllocateVertexBuffer(TerrainGLBuffer pTerrainBuffer);
 bool TerrainBuffer_LinkBuffers(TerrainGLBuffer pTerrainBuffer);
 
 bool TerrainBuffer_Reallocate(TerrainGLBuffer pTerrainBuffer, GLsizeiptr newVboCapacity, GLsizeiptr newEboCapacity, bool copyOldData);
-bool TerrainBuffer_UploadData(TerrainGLBuffer pTerrainBuffer, const STerrainVertex* pVertices, GLsizeiptr vertexCount, const GLuint* pIndices, GLsizeiptr indexCount);
+bool TerrainBuffer_UploadData(TerrainGLBuffer pTerrainBuffer, TerrainMesh pTerrainMesh);
 
 GLsizeiptr GetTerrainBufferVertexOffset(TerrainGLBuffer pTerrainBuffer);
 GLsizeiptr GetTerrainBufferIndexOffset(TerrainGLBuffer pTerrainBuffer);
