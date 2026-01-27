@@ -49,7 +49,6 @@ void Vector_Destroy(Vector* ppVector)
 		for (size_t i = 0; i < vec->count; ++i)
 		{
 			void* elem = (char*)vec->pData + i * vec->elemSize;
-			// syslog("Vector_Destroy: Destroying element ptr %p", elem);
 			vec->destructor(&elem);
 		}
 	}

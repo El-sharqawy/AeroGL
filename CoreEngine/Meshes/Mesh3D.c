@@ -121,7 +121,7 @@ void Mesh3D_AddLine3D(Mesh3D pMesh, Vector3 start, Vector3 end, Vector4 color)
 
 	GLuint offset = (GLuint)pMesh->pVertices->count;
 
-	SVertex3D startVertex = { .m_v3Position = start, .m_v4Color = color  };
+	SVertex3D startVertex = { .m_v3Position = start, .m_v4Color = color };
 	SVertex3D endVertex = { .m_v3Position = end, .m_v4Color = color };
 
 	// Initialize Vertices
@@ -305,15 +305,15 @@ void Mesh3D_MakeWireSphere3D(Mesh3D pMesh, Vector3 center, float radius, int seg
 	}
 }
 
-void Mesh3D_MakeTriangle3D(Mesh3D pMesh, Vector3 p1, Vector3 p2, Vector3 p3, Vector4 color)
+void Mesh3D_MakeTriangle3D(Mesh3D pMesh, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 center, Vector4 color)
 {
 	GLuint baseOffset = (GLuint)pMesh->pVertices->count;
 	GLuint baseOffset1 = (GLuint)pMesh->pVertices->count + 1;
 	GLuint baseOffset2 = (GLuint)pMesh->pVertices->count + 2;
 
-	SVertex3D vertex1 = { .m_v3Position = p1, .m_v4Color = color };
-	SVertex3D vertex2 = { .m_v3Position = p2, .m_v4Color = color };
-	SVertex3D vertex3 = { .m_v3Position = p3, .m_v4Color = color };
+	SVertex3D vertex1 = { .m_v3Position = p1, .m_v3Normals = Vector3_Normalized(Vector3_Sub(p1, center)), .m_v2TexCoords = {0.0f, 0.0f}, .m_v4Color = color };
+	SVertex3D vertex2 = { .m_v3Position = p2, .m_v3Normals = Vector3_Normalized(Vector3_Sub(p2, center)), .m_v2TexCoords = {0.0f, 0.0f}, .m_v4Color = color };
+	SVertex3D vertex3 = { .m_v3Position = p3, .m_v3Normals = Vector3_Normalized(Vector3_Sub(p3, center)), .m_v2TexCoords = {0.0f, 0.0f}, .m_v4Color = color };
 
 	Vector_PushBack(&pMesh->pVertices, &vertex1);
 	Vector_PushBack(&pMesh->pVertices, &vertex2);
@@ -330,31 +330,64 @@ void Mesh3D_MakeTriangle3D(Mesh3D pMesh, Vector3 p1, Vector3 p2, Vector3 p3, Vec
 
 void Mesh3D_MakeSphere3D(Mesh3D pMesh, Vector3 center, float radius, int segments, int slices, Vector4 color)
 {
+	GLint index = 0;
 	// Generate Vertices (Poles and Rings)
-	for (int i = 0; i < segments; ++i) // Iterate through stacks (latitude) - iSegments
+	for (int i = 0; i <= segments; ++i) // Iterate through stacks (latitude) - iSegments
 	{
-		float phi1 = (float)(i) / (float)(segments) * (float)(M_PI); // angle phi from 0 to PI
-		float phi2 = (float)(i + 1) / (float)(segments) * (float)(M_PI); // angle phi from 0 to PI
-		
-		Vector3 prevPos = { 0 }; // Store the previous position to draw lines
-		for (int j = 0; j < slices; ++j) // Iterate through slices (longitude)
+		float phi = (float)(i) / (float)(segments) * (float)(M_PI); // angle phi from 0 to PI
+		float v = (float)i / (float)segments;
+
+		for (int j = 0; j <= slices; ++j) // Iterate through slices (longitude)
 		{
-			float theta1 = (float)(j) / (float)(slices) * (2.0f * (float)(M_PI)); // angle theta from 0 to 2*PI
-			float theta2 = (float)(j + 1) / (float)(slices) * (2.0f * (float)(M_PI)); // angle theta from 0 to 2*PI
+			float theta = (float)(j) / (float)(slices) * (2.0f * (float)(M_PI)); // angle theta from 0 to 2*PI
+
+			float u = (float)j / (float)slices;
 
 			// Calculate the 4 corners of the "quad" patch
-			Vector3 v1 = GetSpherePos(center.x, center.y, center.z, radius, phi1, theta1);
-			Vector3 v2 = GetSpherePos(center.x, center.y, center.z, radius, phi1, theta2);
-			Vector3 v3 = GetSpherePos(center.x, center.y, center.z, radius, phi2, theta1);
-			Vector3 v4 = GetSpherePos(center.x, center.y, center.z, radius, phi2, theta2);
+			// Vector3 pos = GetSpherePos(center.x, center.y, center.z, radius, phi, theta);
+			Vector3 pos = GetSpherePos(0.0f, 0.0f, 0.0f, radius, phi, theta);
 
-			// Draw two triangles to form the solid face
-			Mesh3D_MakeTriangle3D(pMesh, v1, v2, v3, color);
-			Mesh3D_MakeTriangle3D(pMesh, v2, v4, v3, color);
+			// Vector3 normal = Vector3_Normalized(Vector3_Sub(center, pos));
+			Vector3 normal = Vector3_Normalized(pos);
+
+			index = i * (slices + 1) + j;
+
+			SVertex3D vtx = { 0 };
+			vtx.m_v3Position = pos;
+			vtx.m_v3Normals = normal;
+			vtx.m_v2TexCoords = (Vector2){ u, v };
+			vtx.m_v4Color = color;
+
+			Vector_PushBack(&pMesh->pVertices, &vtx);
 		}
 	}
 
-	syslog("MakeSphere: NumVertices: %d NumIndices: %d", (GLuint)pMesh->pVertices->count, (GLuint)pMesh->pIndices->count)
+	// Generate indices (Poles and Rings)
+	for (int i = 0; i < segments; ++i) // Iterate through stacks (latitude) - iSegments
+	{
+		for (int j = 0; j < slices; ++j) // Iterate through slices (longitude)
+		{
+			GLuint i0 = i * (slices + 1) + j;	// (bottom-left)
+			GLuint i1 = i0 + 1;					// (bottom-right)
+			GLuint i2 = i0 + (slices + 1);		// (top-left)
+			GLuint i3 = i2 + 1;					// (top-right)
+
+			Vector_PushBack(&pMesh->pIndices, &i0);
+			Vector_PushBack(&pMesh->pIndices, &i1);
+			Vector_PushBack(&pMesh->pIndices, &i2);
+
+			Vector_PushBack(&pMesh->pIndices, &i1);
+			Vector_PushBack(&pMesh->pIndices, &i3);
+			Vector_PushBack(&pMesh->pIndices, &i2);
+		}
+	}
+
+	pMesh->vertexCount = (GLuint)pMesh->pVertices->count;
+	pMesh->indexCount = (GLuint)pMesh->pIndices->count;
+	pMesh->meshColor = color;
+
+	// Update metadata
+	TransformSetPositionV(&pMesh->transform, center); // Update Transformation Matrix
 }
 
 void Mesh3D_MakePyramid(Mesh3D pMesh, float baseSize, float height, Vector4 baseColor, Vector4 sideColor)
@@ -415,20 +448,20 @@ void Mesh3D_MakeQuad3D(Mesh3D pMesh, Vector3 topLeft, Vector3 topRight, Vector3 
 	GLuint baseOffset = (GLuint)pMesh->pVertices->count;
 
 	// Add 4 vertices
-	SVertex3D v0 = { .m_v3Position = topLeft, .m_v4Color = color };
-	SVertex3D v1 = { .m_v3Position = topRight, .m_v4Color = color };
-	SVertex3D v2 = { .m_v3Position = bottomLeft, .m_v4Color = color };
-	SVertex3D v3 = { .m_v3Position = bottomRight, .m_v4Color = color };
+	SVertex3D v0 = { .m_v3Position = topLeft, .m_v2TexCoords = Vector2D(0.0f, 1.0f), .m_v4Color = color };
+	SVertex3D v1 = { .m_v3Position = topRight, .m_v2TexCoords = Vector2D(1.0f, 1.0f), .m_v4Color = color };
+	SVertex3D v2 = { .m_v3Position = bottomLeft, .m_v2TexCoords = Vector2D(0.0f, 0.0f), .m_v4Color = color };
+	SVertex3D v3 = { .m_v3Position = bottomRight, .m_v2TexCoords = Vector2D(1.0f, 0.0f), .m_v4Color = color };
 
 	// Calculate normal for the quad
 	Vector3 edge1 = Vector3_Sub(topRight, topLeft);
 	Vector3 edge2 = Vector3_Sub(bottomLeft, topLeft);
 	Vector3 normal = Vector3_Normalized(Vector3_Cross(edge1, edge2));
 
-	// v0.m_v3Normal = normal;
-	// v1.m_v3Normal = normal;
-	// v2.m_v3Normal = normal;
-	// v3.m_v3Normal = normal;
+	v0.m_v3Normals = normal;
+	v1.m_v3Normals = normal;
+	v2.m_v3Normals = normal;
+	v3.m_v3Normals = normal;
 
 	Vector_PushBack(&pMesh->pVertices, &v0);
 	Vector_PushBack(&pMesh->pVertices, &v1);
@@ -456,6 +489,16 @@ void Mesh3D_MakeQuad3D(Mesh3D pMesh, Vector3 topLeft, Vector3 topRight, Vector3 
 	pMesh->indexCount += 6;
 }
 
+void Mesh3D_SetName(Mesh3D pMesh, const char* szName)
+{
+	if (pMesh->szMeshName)
+	{
+		tracked_free(pMesh->szMeshName);
+	}
+
+	pMesh->szMeshName = tracked_strdup(szName);
+}
+
 /**
  * @brief Destroys a mesh and frees all resources.
  *
@@ -471,6 +514,11 @@ void Mesh3D_Destroy(Mesh3D* ppMesh)
 	}
 
 	Mesh3D mesh = *ppMesh;
+
+	if (mesh->szMeshName)
+	{
+		tracked_free(mesh->szMeshName);
+	}
 
 	// 1. Free dynamic arrays
 	if (mesh->pVertices)
@@ -503,6 +551,11 @@ void Mesh3D_Free(Mesh3D pMesh)
 		return;
 	}
 
+	if (pMesh->szMeshName)
+	{
+		tracked_free(pMesh->szMeshName);
+	}
+
 	// 1. Free dynamic arrays
 	if (pMesh->pVertices)
 	{
@@ -518,11 +571,11 @@ void Mesh3D_Free(Mesh3D pMesh)
 	tracked_free(pMesh);
 }
 
-void Mesh3D_PtrDestroy(void** elem)
+void Mesh3D_PtrDestroy(Mesh3D pMesh)
 {
-	Mesh3D* pMesh = *(Mesh3D**)elem;  // Deref void* -> Mesh3D*
-	if (pMesh)
+	Mesh3D* ppMesh = *(Mesh3D**)pMesh;  // Deref void* -> Mesh3D*
+	if (ppMesh)
 	{
-		Mesh3D_Destroy(pMesh);  // Pass address of local pointer
+		Mesh3D_Destroy(ppMesh);  // Pass address of local pointer
 	}
 }

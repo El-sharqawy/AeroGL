@@ -143,10 +143,14 @@
     <ClCompile Include="Core\Input.c" />
     <ClCompile Include="Core\Window.c" />
     <ClCompile Include="Engine.c" />
+    <ClCompile Include="Lib\cJSON.c" />
+    <ClCompile Include="Lib\cJSON_Utils.c" />
     <ClCompile Include="Lib\Vector.c" />
     <ClCompile Include="Main.c" />
     <ClCompile Include="Math\EngineMath.c" />
+    <ClCompile Include="Math\FloatGrid.c" />
     <ClCompile Include="Math\MathUtils.c" />
+    <ClCompile Include="Math\Matrix\Matrix3.c" />
     <ClCompile Include="Math\Matrix\Matrix4.c" />
     <ClCompile Include="Math\Projection\OrthographicProjection.c" />
     <ClCompile Include="Math\Projection\PerspectiveProjection.c" />
@@ -165,7 +169,12 @@
     <ClCompile Include="Renderer\Shader.c" />
     <ClCompile Include="Renderer\StateManager.c" />
     <ClCompile Include="Renderer\TerrainRenderer.c" />
+    <ClCompile Include="Terrain\TerrainManager\TerrainManager.c" />
+    <ClCompile Include="Terrain\TerrainMap\TerrainMap.c" />
+    <ClCompile Include="Terrain\TerrainMap\TerrainMapLoad.c" />
     <ClCompile Include="Terrain\TerrainPatch.c" />
+    <ClCompile Include="Terrain\Terrain\Terrain.c" />
+    <ClCompile Include="Terrain\Terrain\TerrainLoad.c" />
     <ClCompile Include="UserInterface\Interface_imgui.cpp" />
     <ClCompile Include="UserInterface\UserInterface.c" />
   </ItemGroup>
@@ -181,10 +190,13 @@
     <ClInclude Include="Core\Input.h" />
     <ClInclude Include="Core\Window.h" />
     <ClInclude Include="Engine.h" />
+    <ClInclude Include="Lib\cJSON.h" />
+    <ClInclude Include="Lib\cJSON_Utils.h" />
     <ClInclude Include="Lib\Vector.h" />
     <ClInclude Include="Math\EngineMath.h" />
-    <ClInclude Include="Math\Matrix4.h" />
+    <ClInclude Include="Math\FloatGrid.h" />
     <ClInclude Include="Math\MathUtils.h" />
+    <ClInclude Include="Math\Matrix\Matrix3.h" />
     <ClInclude Include="Math\Matrix\Matrix4.h" />
     <ClInclude Include="Math\Projection\OrthographicProjection.h" />
     <ClInclude Include="Math\Projection\PerspectiveProjection.h" />
@@ -200,7 +212,11 @@
     <ClInclude Include="Renderer\Shader.h" />
     <ClInclude Include="Renderer\StateManager.h" />
     <ClInclude Include="Renderer\TerrainRenderer.h" />
+    <ClInclude Include="Terrain\TerrainData.h" />
+    <ClInclude Include="Terrain\TerrainManager\TerrainManager.h" />
+    <ClInclude Include="Terrain\TerrainMap\TerrainMap.h" />
     <ClInclude Include="Terrain\TerrainPatch.h" />
+    <ClInclude Include="Terrain\Terrain\Terrain.h" />
     <ClInclude Include="UserInterface\Interface_imgui.h" />
     <ClInclude Include="UserInterface\UserInterface.h" />
   </ItemGroup>

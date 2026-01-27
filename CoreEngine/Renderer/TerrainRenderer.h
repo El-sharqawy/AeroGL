@@ -6,35 +6,21 @@
 #include "../Buffers/IndirectBufferObject.h"
 #include "../Buffers/ShaderStorageBufferObject.h"
 #include "../Core/Camera.h"
+#include "../Terrain/Terrain/Terrain.h"
+#include "../Terrain/TerrainMap/TerrainMap.h"
 
-typedef enum ETerrainPrimitiveType
-{
-    TERRAIN_RENDERER_TRIANGLES,
-    TERRAIN_RENDERER_MAX_TYPES
-} ETerrainPrimitiveType;
-
-typedef struct STerrainRendererPrimitiveGroup
-{
-    // Specific for Lines
-    IndirectBufferObject pIndirectBuffer;
-    ShaderStorageBufferObject pRendererSSBO; // for Metrices
-
-    // Specific for Lines
-    Matrix4 modelsMetrices[TERRAIN_RENDERER_MAX_TYPES];    // CPU-side storage
-    Vector TerrainPatches; // TerrainPatch
-    bool bMatricesDirty;
-    GLenum primitiveType; // GL_LINES or GL_TRIANGLES
-    ETerrainPrimitiveType groupType;
-} STerrainRendererPrimitiveGroup;
+#define INITIALIZE_TERRAIN 10
 
 typedef struct STerrainRenderer
 {
     // GPU Resources
     GLShader pTerrainShader;
     TerrainGLBuffer pTerrainBuffer;
+    IndirectBufferObject pIndirectBuffer;
+    ShaderStorageBufferObject pRendererSSBO; // for Metrices
 
     // Typed primitive groups (dynamic)
-    STerrainRendererPrimitiveGroup groups[TERRAIN_RENDERER_MAX_TYPES];
+    GLenum primitiveType; // GL_LINES or GL_TRIANGLES
 
     // Renderer Data
     char* szRendererName;
@@ -47,7 +33,14 @@ typedef struct STerrainRenderer* TerrainRenderer;
 
 bool TerrainRenderer_Initialize(TerrainRenderer* ppTerrainRenderer, GLCamera pCamera, const char* szRendererName);
 void TerrainRenderer_Destroy(TerrainRenderer* pTerrainRenderer);
-bool DebugRenderer_InitGroup(TerrainRenderer pTerrainRenderer, ETerrainPrimitiveType type, GLenum glType, GLsizeiptr capacity);
-void DebugRenderer_DestroyGroup(TerrainRenderer pTerrainRenderer, ETerrainPrimitiveType type);
+bool TerrainRenderer_InitGLBuffers(TerrainRenderer pTerrainRenderer, GLenum glType, GLsizeiptr capacity);
+void TerrainRenderer_DestroyGLBuffers(TerrainRenderer pTerrainRenderer);
+
+void TerrainRenderer_UploadGPUData(TerrainRenderer pTerrainRenderer, TerrainMap pTerrainMap);
+void TerrainRenderer_Render(TerrainRenderer pTerrainRenderer, TerrainMap pTerrainMap);
+void TerrainRenderer_RenderIndirect(TerrainRenderer pTerrainRenderer);
+void TerrainRenderer_RenderLegacy(TerrainRenderer pTerrainRenderer);
+
+void TerrainRenderer_Reset(TerrainRenderer pTerrainRenderer);
 
 #endif // __TERRAIN_RENDERER_H__

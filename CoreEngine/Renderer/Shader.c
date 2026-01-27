@@ -15,7 +15,7 @@ typedef struct SGLShader
 	GLuint shaders[MAX_ATTACHED_SHADERS];		// Temporary storage for shader IDs
 } SGLShader;
 
-bool InitializeShader(GLShader* ppShader, const char* szName)
+bool Shader_Initialize(GLShader* ppShader, const char* szName)
 {
 	*ppShader = (GLShader)tracked_malloc(sizeof(SGLShader));
 
@@ -35,7 +35,7 @@ bool InitializeShader(GLShader* ppShader, const char* szName)
 	return (true);
 }
 
-void AttachShader(GLShader pShader, const char* szShaderFile)
+void Shader_AttachShader(GLShader pShader, const char* szShaderFile)
 {
 	if (!pShader)
 	{
@@ -95,7 +95,7 @@ void AttachShader(GLShader pShader, const char* szShaderFile)
 	pShader->IsInitialized = true;
 }
 
-void LinkProgram(GLShader pShader)
+void Shader_LinkProgram(GLShader pShader)
 {
 	if (pShader->IsInitialized == false)
 	{
@@ -134,7 +134,7 @@ void LinkProgram(GLShader pShader)
 	memset(pShader->shaders, 0, sizeof(pShader->shaders));
 }
 
-void UseProgram(GLShader pShader)
+void Shader_UseProgram(GLShader pShader)
 {
 	if (pShader && pShader->IsLinked && pShader->programID != 0)
 	{
@@ -146,7 +146,7 @@ void UseProgram(GLShader pShader)
 	}
 }
 
-void DestroyProgram(GLShader* ppShader)
+void Shader_Destroy(GLShader* ppShader)
 {
 	if (!ppShader || !*ppShader)
 	{
@@ -292,7 +292,79 @@ bool CheckCompileErrors(GLuint uiID, const char* szShaderFile, bool IsProgram)
 	return (iSuccess);
 }
 
-void SetInt(GLShader pShader, const char* szUniformName, GLint iInt)
+void Shader_SetBool(GLShader pShader, const char* szUniformName, bool bValue)
+{
+	if (!pShader)
+	{
+		return;
+	}
+
+	GLint iIntIndex = glGetUniformLocation(pShader->programID, szUniformName);
+	if (iIntIndex == -1)
+	{
+		syserr("Failed to Find Uniform %s", szUniformName);
+		return;
+	}
+
+	if (IsGLVersionHigher(4, 1))
+	{
+		glProgramUniform1i(pShader->programID, iIntIndex, (GLint)bValue);
+	}
+	else
+	{
+		glUniform1i(iIntIndex, (GLint)bValue);
+	}
+}
+
+void Shader_SetInt(GLShader pShader, const char* szUniformName, GLint iInt)
+{
+	if (!pShader)
+	{
+		return;
+	}
+
+	GLint iIntIndex = glGetUniformLocation(pShader->programID, szUniformName);
+	if (iIntIndex == -1)
+	{
+		syserr("Failed to Find Uniform %s", szUniformName);
+		return;
+	}
+
+	if (IsGLVersionHigher(4, 1))
+	{
+		glProgramUniform1i(pShader->programID, iIntIndex, iInt);
+	}
+	else
+	{
+		glUniform1i(iIntIndex, iInt);
+	}
+}
+
+void Shader_SetVec2(GLShader pShader, const char* szUniformName, const Vector2 vec2)
+{
+	if (!pShader)
+	{
+		return;
+	}
+
+	GLint iVecIndex = glGetUniformLocation(pShader->programID, szUniformName);
+	if (iVecIndex == -1)
+	{
+		syserr("Failed to Find Uniform %s", szUniformName);
+		return;
+	}
+	
+	if (IsGLVersionHigher(4, 1))
+	{
+		glProgramUniform2fv(pShader->programID, iVecIndex, 1, &vec2.v2[0]);
+	}
+	else
+	{
+		glUniform2fv(iVecIndex, 1, &vec2.v2[0]);
+	}
+}
+
+void Shader_SetVec3(GLShader pShader, const char* szUniformName, const Vector3 vec3)
 {
 	if (!pShader)
 	{
@@ -300,23 +372,24 @@ void SetInt(GLShader pShader, const char* szUniformName, GLint iInt)
 	}
 
 	// Use the program from the shader struct
-	GLuint program = pShader->programID;
-
-	// Optional: Only set if the shader is currently 'In Use'
-	UseProgram(pShader);
-
-	GLint iMatIndex = glGetUniformLocation(program, szUniformName);
-
-	if (iMatIndex == -1)
+	GLint iVecIndex = glGetUniformLocation(pShader->programID, szUniformName);
+	if (iVecIndex == -1)
 	{
 		syserr("Failed to Find Uniform %s", szUniformName);
 		return;
 	}
 
-	glUniform1i(iMatIndex, iInt);
+	if (IsGLVersionHigher(4, 1))
+	{
+		glProgramUniform3fv(pShader->programID, iVecIndex, 1, &vec3.v3[0]);
+	}
+	else
+	{
+		glUniform3fv(iVecIndex, 1, &vec3.v3[0]);
+	}
 }
 
-void SetMat4(GLShader pShader, const char* szUniformName, const Matrix4 mat)
+void Shader_SetVec4(GLShader pShader, const char* szUniformName, const Vector4 vec4)
 {
 	if (!pShader)
 	{
@@ -324,18 +397,63 @@ void SetMat4(GLShader pShader, const char* szUniformName, const Matrix4 mat)
 	}
 
 	// Use the program from the shader struct
-	GLuint program = pShader->programID;
+	GLint iVecIndex = glGetUniformLocation(pShader->programID, szUniformName);
+	if (iVecIndex == -1)
+	{
+		syserr("Failed to Find Uniform %s", szUniformName);
+		return;
+	}
 
-	// Optional: Only set if the shader is currently 'In Use'
-	UseProgram(pShader);
+	if (IsGLVersionHigher(4, 1))
+	{
+		glProgramUniform4fv(pShader->programID, iVecIndex, 1, &vec4.v4[0]);
+	}
+	else
+	{
+		glUniform4fv(iVecIndex, 1, &vec4.v4[0]);
+	}
+}
 
-	GLint iMatIndex = glGetUniformLocation(program, szUniformName);
+void Shader_SetMat4(GLShader pShader, const char* szUniformName, const Matrix4 mat)
+{
+	if (!pShader)
+	{
+		return;
+	}
 
+	GLint iMatIndex = glGetUniformLocation(pShader->programID, szUniformName);
 	if (iMatIndex == -1)
 	{
 		syserr("Failed to Find Uniform %s", szUniformName);
 		return;
 	}
 
-	glUniformMatrix4fv(iMatIndex, 1, GL_FALSE, &mat.cols[0].x);
+	if (IsGLVersionHigher(4, 1))
+	{
+		glProgramUniformMatrix4fv(pShader->programID, iMatIndex, 1, GL_FALSE, &mat.cols[0].x);
+	}
+	else
+	{
+		glUniformMatrix4fv(iMatIndex, 1, GL_FALSE, &mat.cols[0].x);
+	}
 }
+
+void Shader_SetBindlessSampler2D(GLShader pShader, const char* szUniformName, GLuint64 value)
+{
+	if (!pShader)
+	{
+		syserr("Shader is NULL!");
+		return;
+	}
+
+	GLint iBindlessTexLoc = glGetUniformLocation(pShader->programID, szUniformName);
+	if (iBindlessTexLoc == -1)
+	{
+		syserr("Failed to Find Uniform %s", szUniformName);
+		return;
+	}
+
+	// Upload to GPU
+	glProgramUniformHandleui64ARB(pShader->programID, iBindlessTexLoc, value);
+}
+

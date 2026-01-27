@@ -6,6 +6,8 @@
 #include "Input.h"
 #include "../Buffers/UniformBufferObject.h"
 
+static Input pInput;
+
 typedef struct SGLCamera
 {
 	// View port Width
@@ -124,7 +126,7 @@ bool InitializeCamera(GLCamera *ppCamera, float Width, float Height)
 	pCamera->v3Up = Vector3_Normalized(pCamera->v3Up);
 
 	pCamera->CameraZoom = 45.0f;
-	pCamera->CameraSpeed = 5.0f;
+	pCamera->CameraSpeed = 50.0f;
 
 	pCamera->v2MousePos = (Vector2){ 0.0f, 0.0f };
 
@@ -147,6 +149,8 @@ bool InitializeCamera(GLCamera *ppCamera, float Width, float Height)
 
 	pCamera->v3Right = Vector3_Normalized(Vector3_Cross(pCamera->v3Front, s_v3WorldUp));
 	pCamera->v3Up = Vector3_Normalized(Vector3_Cross(pCamera->v3Right, pCamera->v3Front));
+
+	pInput = GetInput(); // Using your Singleton!
 
 	if (!InitializeUniformBufferObject(&pCamera->cameraUBO, sizeof(SCameraUBO), UBO_BP_CAMERA, "Camera UBO"))
 	{
@@ -312,9 +316,6 @@ void ProcessCameraKeboardInput(GLCamera pCamera, ECameraDirections cameraDir, fl
 
 void ProcessCameraMouse(GLCamera pCamera)
 {
-	Input pInput = GetInput(); // Using your Singleton!
-
-
 	// Accumulate the rotation changes
 	if (pCamera->bUseQuaternion)
 	{
@@ -351,8 +352,6 @@ void ProcessCameraMouse(GLCamera pCamera)
 
 void ProcessCameraZoom(GLCamera pCamera)
 {
-	Input pInput = GetInput(); // Using your Singleton!
-
 	// 1. Adjust the zoom level (clamped to keep it sensible)
 	pCamera->CameraZoom -= pInput->mouseScroll;
 	pCamera->CameraZoom = clampf(pCamera->CameraZoom, 1.0f, 90.0f);
@@ -449,13 +448,13 @@ void UpdateUniformBufferObject(GLCamera pCamera)
 	// and clears the dirty flags!
 	if (pCamera->bViewDirty)
 	{
-		pCamera->cameraSUBO.viewMat = GetViewMatrix(pCamera);
+		// pCamera->cameraSUBO.viewMat = GetViewMatrix(pCamera);
 		needsUpload = true;
 	}
 
 	if (pCamera->bProjectionDirty)
 	{
-		pCamera->cameraSUBO.projectionMat = GetProjectionMatrix(pCamera);
+		// pCamera->cameraSUBO.projectionMat = GetProjectionMatrix(pCamera);
 		needsUpload = true;
 	}
 
@@ -473,6 +472,17 @@ void UpdateUniformBufferObject(GLCamera pCamera)
 
 	if (needsUpload)
 	{
-		UniformBufferObject_Update(pCamera->cameraUBO, &pCamera->cameraSUBO, sizeof(SCameraUBO), 0, false);
+		if (pCamera->cameraUBO->isPersistent)
+		{
+			// COPY data to existing GPU pointer (never reassign!)
+			memcpy(pCamera->cameraUBO->pBufferData, &pCamera->cameraSUBO, sizeof(SCameraUBO));
+
+			// Optional: Flush range (modern drivers auto with COHERENT_BIT)
+			glFlushMappedNamedBufferRange(pCamera->cameraUBO->bufferID, 0, sizeof(SCameraUBO));
+		}
+		else
+		{
+			UniformBufferObject_Update(pCamera->cameraUBO, &pCamera->cameraSUBO, sizeof(SCameraUBO), 0, false);
+		}
 	}
 }

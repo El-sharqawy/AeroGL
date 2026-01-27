@@ -79,9 +79,9 @@ void TerrainMesh_Destroy(TerrainMesh* ppMesh)
     *ppMesh = NULL;
 }
 
-void TerrainMesh_PtrDestroy(void* elem)
+void TerrainMesh_PtrDestroy(TerrainMesh pTerrainMesh)
 {
-    TerrainMesh* pMesh = *(TerrainMesh**)elem;  // Deref void* -> TerrainMesh*
+    TerrainMesh* pMesh = *(TerrainMesh**)pTerrainMesh;  // Deref void* -> TerrainMesh*
     if (pMesh)
     {
         TerrainMesh_Destroy(pMesh);  // Pass address of local pointer
@@ -134,68 +134,16 @@ void TerrainMesh_MakeQuad3D(TerrainMesh TerrainMesh, Vector3 topLeft, Vector3 to
     TerrainMesh->indexCount += 6;
 }
 
-TerrainPatch CreateTerrainPatch(int32_t index, int32_t width, int32_t depth, Vector3 worldPos, float cellSize)
+void TerrainMesh_AddVertex(TerrainMesh TerrainMesh, const STerrainVertex vertex)
 {
-    TerrainPatch patch = (TerrainPatch)tracked_malloc(sizeof(STerrainPatch));
+    TerrainMesh->vertexCount += 1;
 
-    int32_t vertexCapacity = (width + 1) * (depth + 1);  // Grid vertices
-    int32_t indexCapacity = width * depth * 6;            // 6 indices per quad
-
-    patch->terrainMesh = TerrainMesh_CreateWithCapacity(GL_TRIANGLES, vertexCapacity, indexCapacity);
-    patch->patchWidth = width;
-    patch->patchDepth = depth;
-    patch->patchIndex = index;
-
-    // Generate mesh geometry in LOCAL space (starting at 0,0,0)
-    GenerateTerrainPatchGeometry(patch, Vector3F(0.0f), cellSize);
-
-    // Position the mesh in world space
-    TransformSetPositionV(&patch->terrainMesh->transform, worldPos);
-    return patch;
+    Vector_PushBack(&TerrainMesh->pVertices, &vertex);
 }
 
-void GenerateTerrainPatchGeometry(TerrainPatch patch, Vector3 localOrigin, float cellSize)
+void TerrainMesh_AddIndex(TerrainMesh TerrainMesh, const GLuint index)
 {
-    TerrainMesh mesh = patch->terrainMesh;
-    int32_t width = patch->patchWidth;
-    int32_t depth = patch->patchDepth;
+    TerrainMesh->indexCount += 1;
 
-    // Clear any existing geometry
-    Vector_Clear(mesh->pVertices);
-    Vector_Clear(mesh->pIndices);
-    mesh->vertexCount = 0;
-    mesh->indexCount = 0;
-
-    // Generate quads
-    for (int32_t z = 0; z < depth; z++)
-    {
-        for (int32_t x = 0; x < width; x++)
-        {
-            // Calculate corner positions
-            Vector3 topLeft = Vector3D(localOrigin.x + (x * cellSize), localOrigin.y, localOrigin.z + (z * cellSize));
-
-            Vector3 topRight = Vector3D(localOrigin.x + ((x + 1) * cellSize), localOrigin.y, localOrigin.z + (z * cellSize));
-
-            Vector3 bottomLeft = Vector3D(localOrigin.x + (x * cellSize), localOrigin.y, localOrigin.z + ((z + 1) * cellSize));
-
-            Vector3 bottomRight = Vector3D(localOrigin.x + ((x + 1) * cellSize), localOrigin.y, localOrigin.z + ((z + 1) * cellSize));
-
-            // Create quad
-            TerrainMesh_MakeQuad3D(mesh, topLeft, topRight, bottomLeft, bottomRight, Vector4D(1.0f, 1.0f, 1.0f, 1.0f));
-        }
-    }
-
-    syslog("Generated terrain: %zu vertices, %zu indices", mesh->vertexCount, mesh->indexCount);
-}
-
-void DestroyTerrainPatch(TerrainPatch* ppTerrainPatch)
-{
-    if (!ppTerrainPatch || !*ppTerrainPatch)
-    {
-        return;
-    }
-
-    TerrainMesh_Destroy(&(*ppTerrainPatch)->terrainMesh);
-
-    *ppTerrainPatch = NULL;
+    Vector_PushBack(&TerrainMesh->pIndices, &index);
 }

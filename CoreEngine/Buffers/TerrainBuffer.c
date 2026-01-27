@@ -1,6 +1,7 @@
 #include "TerrainBuffer.h"
 #include "../Core/CoreUtils.h"
 #include "GLBuffer.h"
+#include "../Terrain/TerrainData.h"
 
 bool TerrainBuffer_Create(TerrainGLBuffer buffer)
 {
@@ -123,8 +124,8 @@ bool TerrainBuffer_Initialize(TerrainGLBuffer* ppTerrainBuffer)
 		return (false);
 	}
 
-	buffer->vboCapacity = INITIAL_VERTEX_CAPACITY;
-	buffer->eboCapacity = INITIAL_INDEX_CAPACITY;
+	buffer->vboCapacity = TERRAIN_PATCH_COUNT * 1024;
+	buffer->eboCapacity = TERRAIN_PATCH_COUNT * 1536;
 
 	buffer->vboSize = buffer->vboCapacity * sizeof(STerrainVertex);
 	buffer->eboSize = buffer->eboCapacity * sizeof(GLuint);
@@ -349,8 +350,6 @@ bool TerrainBuffer_Reallocate(TerrainGLBuffer pTerrainBuffer, GLsizeiptr newVboC
 	// Store old GPU Buffers Data
 	GLuint oldVBO = pTerrainBuffer->uiVBO;
 	GLuint oldEBO = pTerrainBuffer->uiEBO;
-	GLsizeiptr oldVBOBytesSize = pTerrainBuffer->vboSize;
-	GLsizeiptr oldEBOBytesSize = pTerrainBuffer->eboSize;
 
 	// New GPU Buffers
 	GLuint newBuffers[2] = { 0, 0 }; // 0 -> VBO , 1 -> EBO
@@ -382,44 +381,45 @@ bool TerrainBuffer_Reallocate(TerrainGLBuffer pTerrainBuffer, GLsizeiptr newVboC
 	GLenum error = glGetError();
 	if (error != GL_NO_ERROR)
 	{
-		syserr("TerrainBuffer_AllocateGPUStorage failed with GL error: 0x%X", error);
+		syserr("TerrainBuffer_Reallocate failed with GL error: 0x%X", error);
 		return (false);
 	}
 #endif
 
-	pTerrainBuffer->vertexOffset = 0;
-	pTerrainBuffer->indexOffset = 0;
+	// 1. Keep track of how much valid data we actually have right now
+	GLsizeiptr currentVertexCount = pTerrainBuffer->vertexOffset;
+	GLsizeiptr currentIndexCount = pTerrainBuffer->indexOffset;
 
 	// Copy Data
 	if (copyOldData)
 	{
-		// Vertex Buffer Object
-		if (oldVBOBytesSize > 0)
+		GLsizeiptr bytesToCopyVBO = currentVertexCount * sizeof(STerrainVertex);
+		if (bytesToCopyVBO > 0)
 		{
 			if (IsGLVersionHigher(4, 5))
 			{
-				glCopyNamedBufferSubData(oldVBO, newBuffers[0], 0, 0, oldVBOBytesSize);
+				glCopyNamedBufferSubData(oldVBO, newBuffers[0], 0, 0, bytesToCopyVBO);
 			}
 			else
 			{
 				glBindBuffer(GL_COPY_READ_BUFFER, oldVBO);
 				glBindBuffer(GL_COPY_WRITE_BUFFER, newBuffers[0]);
-				glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, oldVBOBytesSize);
+				glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, bytesToCopyVBO);
 			}
 		}
 
-		// Element Buffer Object
-		if (oldEBOBytesSize > 0)
+		GLsizeiptr bytesToCopyEBO = currentIndexCount * sizeof(GLuint);
+		if (bytesToCopyEBO > 0)
 		{
 			if (IsGLVersionHigher(4, 5))
 			{
-				glCopyNamedBufferSubData(oldEBO, newBuffers[1], 0, 0, oldEBOBytesSize);
+				glCopyNamedBufferSubData(oldEBO, newBuffers[1], 0, 0, bytesToCopyEBO);
 			}
 			else
 			{
 				glBindBuffer(GL_COPY_READ_BUFFER, oldEBO);
 				glBindBuffer(GL_COPY_WRITE_BUFFER, newBuffers[1]);
-				glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, oldEBOBytesSize);
+				glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, bytesToCopyEBO);
 			}
 		}
 	}
@@ -479,13 +479,17 @@ bool TerrainBuffer_UploadData(TerrainGLBuffer pTerrainBuffer, TerrainMesh pTerra
 			syserr("Failed to Reallocate Terrain Buffer");
 			return (true);
 		}
+		else
+		{
+			syslog("Attemp to reallocate buffer .. new VBO size: %zu - new VEO size: %zu", newVboCapacity, newEboCapacity);
+		}
 	}
 
 	// Calculate byte offsets for glBufferSubData
-	GLsizeiptr vertexByteOffset = pTerrainBuffer->vertexOffset * sizeof(SVertex3D);
+	GLsizeiptr vertexByteOffset = pTerrainBuffer->vertexOffset * sizeof(STerrainVertex);
 	GLsizeiptr indexByteOffset = pTerrainBuffer->indexOffset * sizeof(GLuint);
 
-	GLsizeiptr vertexByteSize = vertexCount * sizeof(SVertex3D);
+	GLsizeiptr vertexByteSize = vertexCount * sizeof(STerrainVertex);
 	GLsizeiptr indexByteSize = indexCount * sizeof(GLuint);
 
 	// Upload Vertex Data
@@ -522,4 +526,9 @@ GLsizeiptr GetTerrainBufferVertexOffset(TerrainGLBuffer pTerrainBuffer)
 GLsizeiptr GetTerrainBufferIndexOffset(TerrainGLBuffer pTerrainBuffer)
 {
 	return (pTerrainBuffer->indexOffset);
+}
+
+GLuint TerrainBuffer_GetVertexArray(TerrainGLBuffer pTerrainBuffer)
+{
+	return pTerrainBuffer->uiVAO;
 }

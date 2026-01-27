@@ -6,7 +6,7 @@
 
 static Input ms_Input = NULL;
 
-bool InitializeInput(Input* ppInput)
+bool Input_Initialize(Input* ppInput)
 {
     *ppInput = (Input)tracked_malloc(sizeof(SInput));
     
@@ -29,7 +29,7 @@ bool InitializeInput(Input* ppInput)
     return (true);
 }
 
-void DestroyInput(Input* ppInput)
+void Input_Destroy(Input* ppInput)
 {
     if (!ppInput || !*ppInput)
     {

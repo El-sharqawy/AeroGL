@@ -11,6 +11,7 @@
 
 #include <glad/glad.h>
 #include "../Buffers/Buffer.h"
+#include "../Buffers/TerrainBuffer.h"
 #include "Shader.h"
 
 typedef enum EEngineCap
@@ -24,7 +25,8 @@ typedef enum EEngineCap
 typedef struct SStateSnapshot
 {
 	// GLenum mEngineCapabilities[MAX_CAPABILITIES]; // Basic Toggle States (Enable/Disable) -- Disabled for now
-	GLBuffer pCurrentBuffer;
+	// GLBuffer pCurrentBuffer;
+	GLuint uiCurrentVAO;
 	GLShader pCurrentShader;
 
 	// UI Specifics
@@ -58,6 +60,7 @@ void PopState(StateManager pManager);
 
 void BindShader(StateManager pManager, GLShader pShader);
 void BindBufferVAO(StateManager pManager, GLBuffer pBuffer);
+void BindTerrainBufferVAO(StateManager pManager, TerrainGLBuffer pBuffer);
 void SetViewport(StateManager pManager, int x, int y, int width, int height);
 void SetScissorRect(StateManager pManager, int x, int y, int width, int height);
 void SetBlendFunc(StateManager pManager, GLenum src, GLenum dst);

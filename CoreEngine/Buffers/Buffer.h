@@ -9,37 +9,36 @@
 typedef struct SGLBuffer* GLBuffer;
 
 // GL Buffer Functions
-void DeleteGLBuffer(GLBuffer buffer);
-bool CreateGLBuffer(GLBuffer buffer);
+void GLBuffer_Delete(GLBuffer buffer);
+bool GLBuffer_Create(GLBuffer buffer);
 
-void ResetBuffer(GLBuffer buffer);
-void ClearBuffer(GLBuffer buffer);
-void DestroyBuffer(GLBuffer* buffer);
+void GLBuffer_ResetBuffer(GLBuffer buffer);
+void GLBuffer_ClearBuffer(GLBuffer buffer);
+void GLBuffer_DestroyBuffer(GLBuffer* buffer);
 
 /* SVertex Struct */
-bool AllocateVertexBuffersStorage(GLBuffer buffer);
-void LinkVertexBuffers(GLBuffer buffer); // Must be called before SetupVertexBufferAttributesVertex ! 
-void SetupVertexBufferAttributesVertex(GLBuffer buffer);
-void UpdateBufferVertexData(GLBuffer buffer, const SVertex* pVertices, GLsizeiptr vertexCount, const GLuint* pIndices, GLsizeiptr indexCount);
+bool GLBuffer_AllocateStorage(GLBuffer buffer);
+void GLBuffer_LinkBuffers(GLBuffer buffer); // Must be called before SetupVertexBufferAttributesVertex ! 
+void GLBuffer_AllocateVertexBuffer(GLBuffer buffer);
+void GLBuffer_UploadDataPtr(GLBuffer buffer, const SVertex* pVertices, GLsizeiptr vertexCount, const GLuint* pIndices, GLsizeiptr indexCount);
 
 // Combine the previous Functions Into One with Malloc
-bool InitializeVertexGLBuffer(GLBuffer* ppBuffer);
-void ReallocateVertexBuffer(GLBuffer buffer, GLsizeiptr newVboCapacity, GLsizeiptr newEboCapacity, bool copyOldData);
+bool GLBuffer_Initialize(GLBuffer* ppBuffer);
+bool GLBuffer_Reallocate(GLBuffer pBuffer, GLsizeiptr newVboCapacity, GLsizeiptr newEboCapacity, bool copyOldData);
 
 
 /* SMesh3D Struct */
-bool AllocateMesh3DBuffersStorage(GLBuffer buffer);
-void LinkMesh3DBuffers(GLBuffer buffer); // Must be called before SetupVertexBufferAttributesVertex ! 
-void SetupVertexBufferAttributesMesh3D(GLBuffer buffer);
-void UpdateBufferMesh3DVertexData(GLBuffer buffer, const SVertex3D* pVertices, GLsizeiptr vertexCount, const GLuint* pIndices, GLsizeiptr indexCount);
-void UpdateBufferMesh3DData(GLBuffer buffer, Mesh3D mesh);
-bool InitializeMesh3DGLBuffer(GLBuffer* ppBuffer);
-void ReallocateMesh3DBuffer(GLBuffer buffer, GLsizeiptr newVboCapacity, GLsizeiptr newEboCapacity, bool copyOldData);
+bool Mesh3DGLBuffer_AllocateStorage(GLBuffer buffer);
+void Mesh3DGLBuffer_LinkBuffers(GLBuffer buffer); // Must be called before SetupVertexBufferAttributesVertex ! 
+void Mesh3DGLBuffer_AllocateVertexBuffer(GLBuffer buffer);
+void Mesh3DGLBuffer_UploadDataPtr(GLBuffer buffer, const SVertex3D* pVertices, GLsizeiptr vertexCount, const GLuint* pIndices, GLsizeiptr indexCount);
+void Mesh3DGLBuffer_UploadData(GLBuffer buffer, Mesh3D mesh);
+bool Mesh3DGLBuffer_Initialize(GLBuffer* ppBuffer);
+bool Mesh3DGLBuffer_Reallocate(GLBuffer buffer, GLsizeiptr newVboCapacity, GLsizeiptr newEboCapacity, bool copyOldData);
+void Mesh3DGLBuffer_RenderBuffer(GLBuffer buffer, GLenum renderMode);
 
-void RenderBuffer(GLBuffer buffer, GLenum renderMode);
-
-GLuint GetVertexArray(GLBuffer buffer);
-GLsizeiptr GetBufferVertexOffset(GLBuffer buffer);
-GLsizeiptr GetBufferIndexOffset(GLBuffer buffer);
+GLuint Mesh3DGLBuffer_GetVertexArray(GLBuffer buffer);
+GLsizeiptr Mesh3DGLBuffer_GetBufferVertexOffset(GLBuffer buffer);
+GLsizeiptr Mesh3DGLBuffer_GetBufferIndexOffset(GLBuffer buffer);
 
 #endif // __BUFFER_H__

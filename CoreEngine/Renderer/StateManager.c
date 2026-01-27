@@ -19,7 +19,7 @@ bool InitializeStateManager(StateManager* ppStateManager)
 
 	stateManager->top = 0;
 	stateManager->pCurrentStack = &stateManager->stateStack[0];
-	stateManager->pCurrentStack->pCurrentBuffer = NULL;
+	stateManager->pCurrentStack->uiCurrentVAO = 0;
 	stateManager->pCurrentStack->pCurrentShader = NULL;
 
 	stateManager->pCurrentStack->viewport[0] = 0;
@@ -90,7 +90,15 @@ void BindShader(StateManager pManager, GLShader pShader)
 
 void BindBufferVAO(StateManager pManager, GLBuffer pBuffer)
 {
-	pManager->pCurrentStack->pCurrentBuffer = pBuffer;
+	pManager->pCurrentStack->uiCurrentVAO = Mesh3DGLBuffer_GetVertexArray(pBuffer);
+
+	// Immediately sync the GPU with the current stack
+	ApplyState(pManager, pManager->pCurrentStack);
+}
+
+void BindTerrainBufferVAO(StateManager pManager, TerrainGLBuffer pBuffer)
+{
+	pManager->pCurrentStack->uiCurrentVAO = TerrainBuffer_GetVertexArray(pBuffer);
 
 	// Immediately sync the GPU with the current stack
 	ApplyState(pManager, pManager->pCurrentStack);
@@ -200,23 +208,16 @@ void ApplyState(StateManager pManager, StateSnapshot pNewStateSnap)
 	{
 		if (pNewStateSnap->pCurrentShader != NULL)
 		{
-			UseProgram(pNewStateSnap->pCurrentShader);
+			Shader_UseProgram(pNewStateSnap->pCurrentShader);
 		}
 		else
 		{
 			glUseProgram(0); // Unbind
 		}
 	}
-	if (pNewStateSnap->pCurrentBuffer != pActive->pCurrentBuffer)
+	if (pNewStateSnap->uiCurrentVAO != pActive->uiCurrentVAO)
 	{
-		if (pNewStateSnap->pCurrentBuffer != NULL)
-		{
-			glBindVertexArray(GetVertexArray(pNewStateSnap->pCurrentBuffer));
-		}
-		else
-		{
-			glBindVertexArray(0); // Unbind
-		}
+		glBindVertexArray(pNewStateSnap->uiCurrentVAO);
 	}
 
 	// Always update the tracker so the NEXT ApplyState knows what happened

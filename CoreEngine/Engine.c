@@ -8,11 +8,14 @@ static Engine s_Instance = NULL; // Hidden from other files
 
 bool InitializeEngine(Engine pEngine)
 {
+	srand(0);
+
 	s_Instance = pEngine;
 
 	// Validation Check
 	if (!AllocateWindow(&pEngine->window))
 	{
+		DestroyEngine(pEngine);
 		return (false);
 	}
 
@@ -20,25 +23,39 @@ bool InitializeEngine(Engine pEngine)
 	SetWindowMode(pEngine->window, WINDOWED);
 	if (!InitializeWindow(pEngine->window))
 	{
+		DestroyEngine(pEngine);
+		return (false);
+	}
+
+	if (!Input_Initialize(&pEngine->Input))
+	{
+		DestroyEngine(pEngine);
 		return (false);
 	}
 
 	// Validation Check
 	if (!InitializeCamera(&pEngine->camera, GetWindowWidthF(pEngine->window), GetWindowHeightF(pEngine->window)))
 	{
+		DestroyEngine(pEngine);
 		return (false);
 	}
 
 	// CreateRenderer(&pEngine->renderer, pEngine->camera, "MainRenderer");
-	CreateDebugRenderer(&pEngine->debugRenderer, pEngine->camera, "DebugRenderer");
-
-	if (!InitializeInput(&pEngine->Input))
+	if (!CreateDebugRenderer(&pEngine->debugRenderer, pEngine->camera, "DebugRenderer"))
 	{
+		DestroyEngine(pEngine);
 		return (false);
 	}
 
 	if (!InitializeStateManager(&pEngine->stateManager))
 	{
+		DestroyEngine(pEngine);
+		return (false);
+	}
+
+	if (!TerrainManager_Initialize(&pEngine->terrainManager))
+	{
+		DestroyEngine(pEngine);
 		return (false);
 	}
 
@@ -104,6 +121,8 @@ void UpdateEngine(Engine pEngine)
 	// Update ImgUI
 	ImGui_NewFrame();
 
+	TerrainManager_Update(pEngine->terrainManager);
+
 	// 3. Render
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0.2f, 0.2f, 0.2f, 0.5f);
@@ -123,6 +142,7 @@ void RenderEngine(Engine pEngine)
 {
 	// RenderRenderer(pEngine->renderer);
 	RenderDebugRenderer(pEngine->debugRenderer);
+	TerrainManager_Render(pEngine->terrainManager);
 }
 
 void DestroyEngine(Engine pEngine)
@@ -131,6 +151,8 @@ void DestroyEngine(Engine pEngine)
 
 	ImGui_Shutdown();
 
+	TerrainManager_Destroy(&pEngine->terrainManager);
+
 	DestroyStateManager(&pEngine->stateManager);
 
 	DestroyCamera(&pEngine->camera);
@@ -138,7 +160,7 @@ void DestroyEngine(Engine pEngine)
 	// DestroyRenderer(&pEngine->renderer);
 	DestroyDebugRenderer(&pEngine->debugRenderer);
 
-	DestroyInput(&pEngine->Input);
+	Input_Destroy(&pEngine->Input);
 
 	DeallocateWindow(&pEngine->window);
 
@@ -155,6 +177,17 @@ void OnEngineKeyButton(Engine pEngine, int key, int action)
 	if (key > GLFW_KEY_LAST || key < 0)
 	{
 		return;
+	}
+
+	if (key == GLFW_KEY_1 && action == GLFW_PRESS)
+	{
+		TerrainManager_Clear(pEngine->terrainManager);
+	}
+	if (key == GLFW_KEY_2 && action == GLFW_PRESS)
+	{
+		TerrainManager_SetMapName(pEngine->terrainManager, "AnubisCity");
+		TerrainManager_SetMapDeminsions(pEngine->terrainManager, 1, 1);
+		TerrainManager_CreateMap(pEngine->terrainManager);
 	}
 
 	OnKeyButton(pEngine->Input, key, action);

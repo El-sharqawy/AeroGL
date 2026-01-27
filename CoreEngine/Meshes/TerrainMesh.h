@@ -18,10 +18,6 @@ typedef struct STerrainVertex
 
 typedef struct STerrainMesh
 {
-	// Shape Data
-	Vector pVertices;
-	Vector pIndices;
-
 	// Mesh Transformation (pos, scale, orientation)
 	STransform transform;
 
@@ -37,6 +33,11 @@ typedef struct STerrainMesh
 	GLsizeiptr indexOffset;         // Where this mesh starts in shared EBO (in indices)
 
 	bool bDirty;			// True when vertices/indices modified, needs GPU upload
+	int32_t meshMatrixIndex;
+
+	// Shape Data
+	Vector pVertices;
+	Vector pIndices;
 } STerrainMesh;
 
 typedef struct STerrainMesh* TerrainMesh;
@@ -58,29 +59,10 @@ TerrainMesh TerrainMesh_Create(GLenum primitiveType);
  */
 TerrainMesh TerrainMesh_CreateWithCapacity(GLenum primitiveType, GLsizeiptr vertexHint, GLsizeiptr indexHint);
 void TerrainMesh_Destroy(TerrainMesh* ppMesh);
-void TerrainMesh_PtrDestroy(void* elem);
+void TerrainMesh_PtrDestroy(TerrainMesh pTerrainMesh);
 void TerrainMesh_MakeQuad3D(TerrainMesh TerrainMesh, Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, Vector4 color);
 
-typedef struct STerrainPatch
-{
-	TerrainMesh terrainMesh;
-
-	// Patch dimensions
-	int32_t patchWidth; // Number of squares in the X direction
-	int32_t patchDepth; // Number of squares in the Z direction
-	int32_t patchIndex; // Unique index for this patch
-
-	// Terrain-specific data
-	Vector3 worldPosition;   // Position in world space (X, Z)
-	float cellSize;          // Size of each quad cell
-	float minHeight;         // For culling optimization
-	float maxHeight;
-} STerrainPatch;
-
-typedef struct STerrainPatch* TerrainPatch;
-
-TerrainPatch CreateTerrainPatch(int32_t index, int32_t width, int32_t depth, Vector3 worldPos, float cellSize);
-void GenerateTerrainPatchGeometry(TerrainPatch patch, Vector3 worldPos, float cellSize);
-void DestroyTerrainPatch(TerrainPatch* ppTerrainPatch);
+void TerrainMesh_AddVertex(TerrainMesh TerrainMesh, const STerrainVertex vertex);
+void TerrainMesh_AddIndex(TerrainMesh TerrainMesh, const GLuint index);
 
 #endif // __TERRAIN_MESH__

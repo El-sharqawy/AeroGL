@@ -1,0 +1,10 @@
+{
+	"ScriptType":	"AnubisMapSettings",
+	"MapData":	{
+		"MapSize":	{
+			"x":	1,
+			"z":	1
+		},
+		"MapName":	"AnubisCity"
+	}
+}

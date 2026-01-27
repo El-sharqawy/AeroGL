@@ -94,6 +94,24 @@
     <Filter Include="Header Files\Terrain">
       <UniqueIdentifier>{f906f7e6-5452-4749-9050-194e5783c0be}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Terrain\TerrainManager">
+      <UniqueIdentifier>{47ff5132-819c-4b52-ae16-a5b979f9788a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Terrain\TerrainManager">
+      <UniqueIdentifier>{8355b4c2-8c88-4653-afb1-ba6056afcceb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Terrain\TerrainMap">
+      <UniqueIdentifier>{5b16b618-677e-451f-a563-3d1a411f0f48}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Terrain\TerrainMap">
+      <UniqueIdentifier>{63ffd4c8-3f79-44b8-a954-330904013a11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Terrain\Terrain">
+      <UniqueIdentifier>{3ee1a474-c8b8-421e-b4a7-b64463deba57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Terrain\Terrain">
+      <UniqueIdentifier>{eb2cea7c-36df-4f55-afed-fd064681f249}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.c">
@@ -143,9 +161,6 @@
     </ClCompile>
     <ClCompile Include="Math\Vertex\Vertex.c">
       <Filter>Source Files\Math\Vertex</Filter>
-    </ClCompile>
-    <ClCompile Include="Math\Matrix\Matrix4.c">
-      <Filter>Header Files\Math\Matrix</Filter>
     </ClCompile>
     <ClCompile Include="Engine.c">
       <Filter>Source Files</Filter>
@@ -204,6 +219,36 @@
     <ClCompile Include="Buffers\GLBuffer.c">
       <Filter>Source Files\Buffers</Filter>
     </ClCompile>
+    <ClCompile Include="Math\Matrix\Matrix4.c">
+      <Filter>Source Files\Math\Matrix</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Matrix\Matrix3.c">
+      <Filter>Source Files\Math\Matrix</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\FloatGrid.c">
+      <Filter>Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Lib\cJSON_Utils.c">
+      <Filter>Source Files\Lib</Filter>
+    </ClCompile>
+    <ClCompile Include="Lib\cJSON.c">
+      <Filter>Source Files\Lib</Filter>
+    </ClCompile>
+    <ClCompile Include="Terrain\TerrainManager\TerrainManager.c">
+      <Filter>Source Files\Terrain\TerrainManager</Filter>
+    </ClCompile>
+    <ClCompile Include="Terrain\TerrainMap\TerrainMap.c">
+      <Filter>Source Files\Terrain\TerrainMap</Filter>
+    </ClCompile>
+    <ClCompile Include="Terrain\Terrain\TerrainLoad.c">
+      <Filter>Source Files\Terrain\Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="Terrain\Terrain\Terrain.c">
+      <Filter>Source Files\Terrain\Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="Terrain\TerrainMap\TerrainMapLoad.c">
+      <Filter>Source Files\Terrain\TerrainMap</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\CoreUtils.h">
@@ -211,9 +256,6 @@
     </ClInclude>
     <ClInclude Include="Core\Window.h">
       <Filter>Header Files\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Matrix4.h">
-      <Filter>Header Files\Math</Filter>
     </ClInclude>
     <ClInclude Include="Math\EngineMath.h">
       <Filter>Header Files\Math</Filter>
@@ -247,9 +289,6 @@
     </ClInclude>
     <ClInclude Include="Math\Vectors\Vector3.h">
       <Filter>Header Files\Math\Vectors</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Matrix\Matrix4.h">
-      <Filter>Source Files\Math\Matrix</Filter>
     </ClInclude>
     <ClInclude Include="Lib\Vector.h">
       <Filter>Header Files\Lib</Filter>
@@ -304,6 +343,33 @@
     </ClInclude>
     <ClInclude Include="Buffers\GLBuffer.h">
       <Filter>Header Files\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Matrix\Matrix4.h">
+      <Filter>Header Files\Math\Matrix</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Matrix\Matrix3.h">
+      <Filter>Header Files\Math\Matrix</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\FloatGrid.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Terrain\TerrainData.h">
+      <Filter>Header Files\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="Lib\cJSON_Utils.h">
+      <Filter>Header Files\Lib</Filter>
+    </ClInclude>
+    <ClInclude Include="Lib\cJSON.h">
+      <Filter>Header Files\Lib</Filter>
+    </ClInclude>
+    <ClInclude Include="Terrain\TerrainManager\TerrainManager.h">
+      <Filter>Header Files\Terrain\TerrainManager</Filter>
+    </ClInclude>
+    <ClInclude Include="Terrain\TerrainMap\TerrainMap.h">
+      <Filter>Header Files\Terrain\TerrainMap</Filter>
+    </ClInclude>
+    <ClInclude Include="Terrain\Terrain\Terrain.h">
+      <Filter>Header Files\Terrain\Terrain</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -48,5 +48,6 @@ bool TerrainBuffer_UploadData(TerrainGLBuffer pTerrainBuffer, TerrainMesh pTerra
 
 GLsizeiptr GetTerrainBufferVertexOffset(TerrainGLBuffer pTerrainBuffer);
 GLsizeiptr GetTerrainBufferIndexOffset(TerrainGLBuffer pTerrainBuffer);
+GLuint TerrainBuffer_GetVertexArray(TerrainGLBuffer pTerrainBuffer);
 
 #endif // __TERRAIN_BUFFER__

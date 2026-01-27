@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <xmmintrin.h> // SSE
-	
+
 size_t allocation_count = 0;
 size_t bytes_allocated = 0;
 
@@ -144,7 +144,7 @@ char* tracked_strdup_internal(const char* szSource, const char* file, int line)
 
 void tracked_free_internal(void* pObject, const char* file, int line)
 {
-	if (!pObject)
+	if (pObject == NULL)
 	{
 		return;
 	}
@@ -183,6 +183,17 @@ void tracked_free_internal(void* pObject, const char* file, int line)
 
 	memset(pObject, 0xFE, raw_ptr->size); // Easy to track use-after-free bugs
 	_mm_free(raw_ptr);
+}
+
+void* cjson_tracked_malloc(size_t size)
+{
+	// We manually pass "cJSON" as the file so you know where the leak originated
+	return tracked_malloc_internal(size, "cJSON_Internal", 0);
+}
+
+void cjson_tracked_free(void* ptr)
+{
+	tracked_free_internal(ptr, "cJSON_Internal", 0);
 }
 
 const char* get_filename_ext(const char* filename)
@@ -249,4 +260,55 @@ float clampf(float val, float min, float max)
 		return min;
 	}
 	return val;
+}
+
+float random_float()
+{
+	// Returns a random real in [0,1).
+	return (float)rand() / ((float)RAND_MAX + 1.0f);
+}
+
+float random_float_range(float min, float max)
+{
+	// Returns a random real in [min,max).
+	return min + (max - min) * random_float();
+}
+
+bool MakeDirectory(const char* fullPath)
+{
+	errno_t result = 0;
+
+	if (!IsDirectoryExists(fullPath))
+	{
+		// Create the directory
+		result = MKDIR(fullPath);
+	}
+
+	if (result != 0)
+	{
+		char buffer[100];
+		// Use strerror to get a human-readable message from the error code
+		if (strerror_s(buffer, sizeof(buffer), result) == 0)
+		{
+			syserr("Error Creating Map Folder: %s (Code: %d)", buffer, result);
+		}
+		else
+		{
+			syserr("Failed to retrieve error message (Code: %d)", result);
+		}
+		return (false);
+	}
+
+	return (true);
+}
+
+bool IsDirectoryExists(const char* path)
+{
+	struct stat stats;
+	// Get file/directory information
+	if (stat(path, &stats) == 0 && S_ISDIR(stats.st_mode)) 
+	{
+		return 1; // Directory exists
+	}
+	return 0; // Directory does not exist
 }

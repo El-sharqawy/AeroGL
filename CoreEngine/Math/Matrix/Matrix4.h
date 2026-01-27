@@ -601,4 +601,10 @@ static inline Matrix4 Matrix4_Scale(const Matrix4 mat, Vector3 v3Scale)
 
 	return (scaleMatrix);
 }
+
+static inline Matrix4 Matrix4_Transpose(const Matrix4 mat)
+{
+
+}
+
 #endif // __MATRIX4_H__

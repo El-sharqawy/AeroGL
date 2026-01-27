@@ -8,15 +8,16 @@
 #include "Renderer/Shader.h"
 #include "Renderer/DebugRenderer.h"
 #include "Renderer/StateManager.h"
+#include "Terrain/TerrainManager/TerrainManager.h"
 
 typedef struct SEngine
 {
     GLWindow window;
     GLCamera camera;
     Input Input;
-    // Renderer renderer;
     DebugRenderer debugRenderer;
     StateManager stateManager;
+    TerrainManager terrainManager;
     float deltaTime;
     float lastFrame;
     bool isRunning;

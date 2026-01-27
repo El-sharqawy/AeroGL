@@ -6,6 +6,7 @@
 #include <math.h>
 #include <xmmintrin.h> // SSE
 #include <smmintrin.h> // SSE4.1 (for dot product)
+#include "../../Core/CoreUtils.h"
 
 /**
  * SVector3Df: A 3D float vector struct.
@@ -58,8 +59,8 @@ typedef struct __declspec(align(16)) SVector3f
 	};
 } Vector3;
 
-#define Vector3F(val) ((Vector3){ .reg = _mm_setr_ps(val, val, val, 0.0f) })
-#define Vector3D(x, y, z) ((Vector3){ .reg = _mm_setr_ps(x, y, z, 0.0f) })
+#define Vector3F(val) ((Vector3){ .reg = _mm_setr_ps((float)val, (float)val, (float)val, 0.0f) })
+#define Vector3D(x, y, z) ((Vector3){ .reg = _mm_setr_ps((float)x, (float)y, (float)z, 0.0f) })
 #define Vector3Zero(val) ((Vector3){ .reg = _mm_setr_ps(0.0f, 0.0f, 0.0f, 0.0f) })
 #define Vector3One(val) ((Vector3){ .reg = _mm_setr_ps(1.0f, 1.0f, 1.0f, 0.0f) })
 
@@ -446,6 +447,71 @@ static inline Vector3 Vector3_Lerp(const Vector3 a, const Vector3 b, float t)
 static inline Vector3 Vector3_Negate(const Vector3 vec3)
 {
 	return (Vector3) { -vec3.x, -vec3.y, -vec3.z };
+}
+
+static inline Vector3 Vector3_Random()
+{
+	return (Vector3) { random_float(), random_float(), random_float() };
+}
+
+static inline Vector3 Vector3_RandomRange(float min, float max)
+{
+	return (Vector3) { random_float_range(min, max), random_float_range(min, max), random_float_range(min, max) };
+}
+
+static inline Vector3 Vector3_RandomInsideUnitSphere()
+{
+	while (true)
+	{
+		Vector3 vec = Vector3_RandomRange(-1.0f, 1.0f);
+		float lenSq = Vector3_LengthSQ(vec);
+
+		if (Vector3_LengthSQ(vec) >= 1.0f)
+			continue;
+
+		return vec;
+	}
+}
+
+static inline Vector3 Vector3_RandomNormalized()
+{
+	return Vector3_Normalized(Vector3_RandomInsideUnitSphere());
+}
+
+static inline Vector3 Vector3_RandomOnHemisphere(const Vector3 normal)
+{
+	Vector3 on_unit_sphere = Vector3_RandomNormalized();
+	if (Vector3_Dot(on_unit_sphere, normal) > 0.0) // In the same hemisphere as the normal
+	{
+		return on_unit_sphere;
+	}
+	else
+	{
+		return Vector3_Negate(on_unit_sphere);
+	}
+}
+
+static inline bool Vector3_NearZero(const Vector3 vec)
+{
+	// Return true if the vector is close to zero in all dimensions.
+	float s = 1e-8f;
+	return (fabs(vec.v3[0]) < VECTOR3_EPS) && (fabs(vec.v3[1]) < VECTOR3_EPS) && (fabs(vec.v3[2]) < VECTOR3_EPS);
+}
+
+static inline Vector3 Vector3_Reflect(const Vector3 vec, const Vector3 noramlVec)
+{
+	// v - 2 * dot(v, n) * n
+	float dot = Vector3_Dot(vec, noramlVec);
+	Vector3 scaled_n = Vector3_Muls(noramlVec, 2.0f * dot);
+	return Vector3_Sub(vec, scaled_n);
+}
+
+static inline Vector3 Vector3_Refract(const Vector3 vec, const Vector3 normal, float etai_over_etat)
+{
+	float cos_theta = fminf(Vector3_Dot(Vector3_Negate(vec), normal), 1.0f);
+	Vector3 r_out_perp = Vector3_Muls(Vector3_Add(vec, Vector3_Muls(normal, cos_theta)), etai_over_etat);
+	Vector3 r_out_parallel = Vector3_Muls(normal, -sqrtf(fabsf(1.0f - Vector3_LengthSQ(r_out_perp))));
+	return Vector3_Add(r_out_perp, r_out_parallel);
 }
 
 //////////////// MATH PARTS ////////////////

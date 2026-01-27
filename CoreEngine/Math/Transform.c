@@ -14,6 +14,7 @@
 void TransformSetPosition(Transform pTransform, float x, float y, float z)
 {
 	pTransform->v3Position = Vector3D(x ,y , z );
+	pTransform->bDirty = true;
 }
 
 /**
@@ -28,6 +29,7 @@ void TransformSetPosition(Transform pTransform, float x, float y, float z)
 void TransformSetPositionV(Transform pTransform, const Vector3 v3Pos)
 {
 	pTransform->v3Position = v3Pos;
+	pTransform->bDirty = true;
 }
 
 /**
@@ -47,6 +49,7 @@ void TransformSetPositionV(Transform pTransform, const Vector3 v3Pos)
 void TransformSetScale(Transform pTransform, float sx, float sy, float sz)
 {
 	pTransform->v3Scale = Vector3D(sx, sy, sz);
+	pTransform->bDirty = true;
 }
 
 /**
@@ -64,6 +67,7 @@ void TransformSetScale(Transform pTransform, float sx, float sy, float sz)
 void TransformSetScaleV(Transform pTransform, const Vector3 v3Scale)
 {
 	pTransform->v3Scale = v3Scale;
+	pTransform->bDirty = true;
 }
 
 /**
@@ -82,6 +86,7 @@ void TransformSetScaleV(Transform pTransform, const Vector3 v3Scale)
 void TransformSetRotationEuler(Transform pTransform, Vector3 v3Euler, bool bRadian)
 {
 	pTransform->qOrientation = Quaternion_FromEulerZYX(v3Euler, bRadian);
+	pTransform->bDirty = true;
 }
 
 /**
@@ -99,6 +104,7 @@ void TransformSetRotationEuler(Transform pTransform, Vector3 v3Euler, bool bRadi
 void TransformSetRotationQuat(Transform pTransform, SQuaternion qRotation)
 {
 	pTransform->qOrientation = qRotation;
+	pTransform->bDirty = true;
 }
 
 /**
@@ -118,6 +124,7 @@ void TransformSetRotationQuat(Transform pTransform, SQuaternion qRotation)
 void TransformSetRotationAroundAxis(Transform pTransform, EAxis axis, float fAngle, bool bRadian)
 {
 	pTransform->qOrientation = Quaternion_FromRotation(axis, fAngle, bRadian);
+	pTransform->bDirty = true;
 }
 
 /**
@@ -137,6 +144,7 @@ void TransformSetRotationAroundAxis(Transform pTransform, EAxis axis, float fAng
 void TransformSetRotation(Transform pTransform, Vector3 v3Axis, float fAngle, bool bRadian)
 {
 	pTransform->qOrientation = Quaternion_MakeRotation(v3Axis, fAngle, bRadian);
+	pTransform->bDirty = true;
 }
 
 /**
@@ -157,6 +165,7 @@ void TransformSetRotation(Transform pTransform, Vector3 v3Axis, float fAngle, bo
 void TransformRotateAroundAxis(Transform pTransform, EAxis axis, float fAngle, bool bRadian)
 {
 	pTransform->qOrientation = Quaternion_RotateAroundAxis(pTransform->qOrientation, axis, fAngle, bRadian);
+	pTransform->bDirty = true;
 }
 
 /**
@@ -179,6 +188,7 @@ void TransformRotateAroundAxis(Transform pTransform, EAxis axis, float fAngle, b
 void TransformRotateAxis(Transform pTransform, Vector3 v3Axis, float fAngle, bool bRadian)
 {
 	pTransform->qOrientation = Quaternion_RotateAxis(pTransform->qOrientation, v3Axis, fAngle, bRadian);
+	pTransform->bDirty = true;
 }
 
 /**
@@ -200,13 +210,18 @@ void TransformRotateAxis(Transform pTransform, Vector3 v3Axis, float fAngle, boo
  */
 Matrix4 TransformGetMatrix(Transform pTransform)
 {
-	Matrix4 rotationMat = Quaternion_ToMatrix4(pTransform->qOrientation); // Get Rotation
+	if (pTransform->bDirty)
+	{
+		Matrix4 rotationMat = Quaternion_ToMatrix4(pTransform->qOrientation); // Get Rotation
 
-	// Apply TRS Calculations
-	Matrix4 mat = S_Matrix4_Identity;
-	mat = Matrix4_Translate(mat, pTransform->v3Position); // Get Translation
-	mat = Matrix4_Mul(mat, rotationMat);
-	mat = Matrix4_Scale(mat, pTransform->v3Scale);
+		// Apply TRS Calculations
+		Matrix4 mat = S_Matrix4_Identity;
+		mat = Matrix4_Translate(mat, pTransform->v3Position); // Get Translation
+		mat = Matrix4_Mul(mat, rotationMat);
+		mat = Matrix4_Scale(mat, pTransform->v3Scale);
 
-	return (mat);
+		pTransform->matrix = mat;  // Store clean result
+		pTransform->bDirty = false;
+	}
+	return (pTransform->matrix);
 }

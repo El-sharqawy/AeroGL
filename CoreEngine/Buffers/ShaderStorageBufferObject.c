@@ -1,11 +1,11 @@
 #include "ShaderStorageBufferObject.h"
 #include "../Core/CoreUtils.h"
-#include "Buffer.h"
+#include "GLBuffer.h"
 #include <memory.h>
 
 static GLint siMaxSSBOSize = 0;
 
-bool InitializeShaderStorageBufferObject(ShaderStorageBufferObject* ppSSBO, GLsizeiptr bufferSize, GLuint bindingPt, const char* name)
+bool ShaderStorageBufferObject_Initialize(ShaderStorageBufferObject* ppSSBO, GLsizeiptr bufferSize, GLuint bindingPt, const char* name)
 {
     if (siMaxSSBOSize == 0)
     {
@@ -40,19 +40,43 @@ bool InitializeShaderStorageBufferObject(ShaderStorageBufferObject* ppSSBO, GLsi
 
     if (!CreateBuffer(&pSSBO->bufferID))
     {
-        DestroyShaderStorageBufferObject(&pSSBO);
+        ShaderStorageBufferObject_Destroy(&pSSBO);
         syserr("Failed to Create GPU Buffers!");
         return (false);
     }
 
+    pSSBO->bufferFlags = GL_MAP_WRITE_BIT |
+                         GL_MAP_PERSISTENT_BIT |
+                         GL_MAP_COHERENT_BIT;  // CPU writes immediately visible to GPU
+
     if (IsGLVersionHigher(4, 5))
     {
-        glNamedBufferStorage(pSSBO->bufferID, bufferSize, NULL, GL_DYNAMIC_STORAGE_BIT);
+        glNamedBufferStorage(pSSBO->bufferID, bufferSize, NULL, GL_DYNAMIC_STORAGE_BIT | pSSBO->bufferFlags);
+
+        // Map ONCE and keep pointer forever
+        pSSBO->pBufferData = glMapNamedBufferRange(pSSBO->bufferID, 0, bufferSize, pSSBO->bufferFlags);
+        pSSBO->isPersistent = true;
     }
     else
     {
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, pSSBO->bufferID);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSize, NULL, GL_DYNAMIC_DRAW);
+
+        if (IsGLVersionHigher(4, 4))
+        {
+            glBufferStorage(GL_SHADER_STORAGE_BUFFER, bufferSize, NULL, GL_DYNAMIC_STORAGE_BIT | pSSBO->bufferFlags); // Need to check if it's compitable with +4.4
+            pSSBO->pBufferData = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bufferSize, pSSBO->bufferFlags);
+            pSSBO->isPersistent = true;
+        }
+        else
+        {
+            glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSize, NULL, GL_DYNAMIC_DRAW);
+        }
+    }
+
+    if (pSSBO->isPersistent && pSSBO->pBufferData == NULL)
+    {
+        syslog("SSBO Persistent map failed: 0x%x", glGetError());
+        return false;
     }
 
     pSSBO->bufferSize = bufferSize;
@@ -70,7 +94,7 @@ bool InitializeShaderStorageBufferObject(ShaderStorageBufferObject* ppSSBO, GLsi
     return (true);
 }
 
-void DestroyShaderStorageBufferObject(ShaderStorageBufferObject* ppSSBO)
+void ShaderStorageBufferObject_Destroy(ShaderStorageBufferObject* ppSSBO)
 {
     if (!ppSSBO || !*ppSSBO)
     {
@@ -82,6 +106,13 @@ void DestroyShaderStorageBufferObject(ShaderStorageBufferObject* ppSSBO)
     if (pSSBO->szBufferName)
     {
         tracked_free(pSSBO->szBufferName);
+    }
+
+    if (pSSBO->pBufferData)
+    {
+        glUnmapNamedBuffer(pSSBO->bufferID);  // Unmap ONCE at destroy
+        pSSBO->pBufferData = NULL;
+        pSSBO->isPersistent = false;
     }
 
     DeleteBuffer(&pSSBO->bufferID);

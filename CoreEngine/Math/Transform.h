@@ -10,6 +10,9 @@ typedef struct STransform
 	Vector3 v3Position;			// Position
 	Vector3 v3Scale;			// Scale
 	SQuaternion qOrientation;	// Rotation
+
+	Matrix4 matrix;     // Cached result
+	bool bDirty;        // Track changes
 } STransform;
 
 typedef struct STransform* Transform;
@@ -17,20 +20,24 @@ typedef struct STransform* Transform;
 
 static inline STransform TransformInit()
 {
-	STransform transform;
+	STransform transform = { 0 };
 	transform.v3Position = Vector3F(0.0f);
 	transform.v3Scale = Vector3F(1.0f);
-	transform.qOrientation = S_Quaternion_Identity;
+	transform.qOrientation = Quaternion_Identity();
+	transform.matrix = Matrix4_Identity();
+	transform.bDirty = false;
 
 	return (transform);
 }
 
 static inline STransform TransformInitP(float x, float y, float z)
 {
-	STransform transform;
+	STransform transform = { 0 };
 	transform.v3Position = Vector3D(x, y, z);
 	transform.v3Scale = Vector3F(1.0f);
-	transform.qOrientation = S_Quaternion_Identity;
+	transform.qOrientation = Quaternion_Identity();
+	transform.matrix = Matrix4_Identity();
+	transform.bDirty = true;
 
 	return (transform);
 }
@@ -38,74 +45,99 @@ static inline STransform TransformInitP(float x, float y, float z)
 // ===== Position + Rotation (Euler Angles) =====
 static inline STransform TransformInitPR(float x, float y, float z, float pitch, float yaw, float roll, bool bDegreesInput)
 {
-	STransform transform;
+	STransform transform = { 0 };
 	transform.v3Position = Vector3D(x, y, z);
 	transform.v3Scale = Vector3F(1.0f);
 
 	Vector3 eulerAngles = Vector3D(pitch, yaw, roll);
 	transform.qOrientation = Quaternion_FromEulerZYX(eulerAngles, bDegreesInput);
+
+	transform.matrix = Matrix4_Identity();
+	transform.bDirty = true;
 
 	return (transform);
 }
 
 static inline STransform TransformInitPS(float x, float y, float z, float sx, float sy, float sz)
 {
-	STransform transform;
+	STransform transform = { 0 };
 	transform.v3Position = Vector3D(x, y, z);
 	transform.v3Scale = Vector3D(sx, sy, sz);
-	transform.qOrientation = S_Quaternion_Identity;
+
+	transform.qOrientation = Quaternion_Identity();
+	transform.matrix = Matrix4_Identity();
+
+	transform.bDirty = true;
 
 	return (transform);
 }
 
 static inline STransform TransformInitPSR(float x, float y, float z, float sx, float sy, float sz, float pitch, float yaw, float roll, bool bDegreesInput)
 {
-	STransform transform;
+	STransform transform = { 0 };
 	transform.v3Position = Vector3D(x, y, z);
 	transform.v3Scale = Vector3D(sx, sy, sz);
 
 	Vector3 eulerAngles = Vector3D(pitch, yaw, roll);
 	transform.qOrientation = Quaternion_FromEulerZYX(eulerAngles, bDegreesInput);
 
+	transform.matrix = Matrix4_Identity();
+
+	transform.bDirty = true;
+
 	return (transform);
 }
 
 static inline STransform TransformInitVP(const Vector3 v3Pos)
 {
-	STransform transform;
+	STransform transform = { 0 };
 	transform.v3Position = v3Pos;
 	transform.v3Scale = Vector3F(1.0f);
-	transform.qOrientation = S_Quaternion_Identity;
+
+	transform.qOrientation = Quaternion_Identity();
+	transform.matrix = Matrix4_Identity();
+
+	transform.bDirty = true;
 
 	return (transform);
 }
 
 static inline STransform TransformInitVPR(const Vector3 v3Pos, const Vector3 v3RotationAngles, bool bDegreesInput)
 {
-	STransform transform;
+	STransform transform = { 0 };
 	transform.v3Position = v3Pos;
 	transform.v3Scale = Vector3F(1.0f);
 	transform.qOrientation = Quaternion_FromEulerZYX(v3RotationAngles, bDegreesInput);
+
+	transform.matrix = Matrix4_Identity();
+	transform.bDirty = true;
 
 	return (transform);
 }
 
 static inline STransform TransformInitVPS(const Vector3 v3Pos, const Vector3 v3Scale)
 {
-	STransform transform;
+	STransform transform = { 0 };
 	transform.v3Position = v3Pos;
 	transform.v3Scale = v3Scale;
-	transform.qOrientation = S_Quaternion_Identity;
+
+	transform.qOrientation = Quaternion_Identity();
+	transform.matrix = Matrix4_Identity();
+
+	transform.bDirty = true;
 
 	return (transform);
 }
 
 static inline STransform TransformInitVPSR(const Vector3 v3Pos, const Vector3 v3Scale, const Vector3 v3RotationAngles, bool bDegreesInput)
 {
-	STransform transform;
+	STransform transform = { 0 };
 	transform.v3Position = v3Pos;
 	transform.v3Scale = v3Scale;
 	transform.qOrientation = Quaternion_FromEulerZYX(v3RotationAngles, bDegreesInput);
+
+	transform.matrix = Matrix4_Identity();
+	transform.bDirty = true;
 
 	return (transform);
 }

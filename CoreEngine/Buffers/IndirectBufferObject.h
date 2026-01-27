@@ -31,7 +31,7 @@ typedef struct SIndirectBufferObject
 
 typedef struct SIndirectBufferObject* IndirectBufferObject;
 
-bool InitializeIndirectBuffer(IndirectBufferObject* ppIndirectBuffer, GLsizeiptr initialCapacity);
+bool IndirectBufferObject_Initialize(IndirectBufferObject* ppIndirectBuffer, GLsizeiptr initialCapacity);
 
 void IndirectBufferObject_GenerateGL(IndirectBufferObject pIndirectBuf, GLsizeiptr bufferSize);
 void IndirectBufferObject_AddCommand(IndirectBufferObject pIndirectBuf, GLuint count, GLuint instanceCount, GLuint firstIndex, GLuint baseVertex, GLuint baseInstance);
@@ -43,6 +43,6 @@ void IndirectBufferObject_UnBind();
 
 void IndirectBufferObject_SetCommand(IndirectBufferObject pIndirectBuf, size_t index, const IndirectDrawCommand cmd);
 
-void DestroyIndirectBuffer(IndirectBufferObject* ppIndirectBuffer);
+void IndirectBufferObject_Destroy(IndirectBufferObject* ppIndirectBuffer);
 
 #endif // __INDIRECT_BUFFER_OBJECT_H__

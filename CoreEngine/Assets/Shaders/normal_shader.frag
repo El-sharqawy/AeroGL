@@ -1,6 +1,6 @@
 #version 460 core
 
-// Required for your MakeTextureResident logic
+// Required for MakeTextureResident logic
 #ifdef USE_BINDLESS
     #extension GL_ARB_bindless_texture : require
 #endif
@@ -8,8 +8,8 @@
 layout (location = 0) out vec4 v4FragColor;
 
 in vec3 v3Position;
-in vec2 v2TexCoord;
 in vec3 v3Normals;
+in vec2 v2TexCoord;
 in vec4 v4Color;
 
 // If you are NOT using bindless, remove 'layout(bindless_sampler)'

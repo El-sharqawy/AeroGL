@@ -24,8 +24,8 @@ typedef struct __declspec(align(16)) SInput
 
 typedef struct SInput* Input;
 
-bool InitializeInput(Input* ppInput);
-void DestroyInput(Input* ppInput);
+bool Input_Initialize(Input* ppInput);
+void Input_Destroy(Input* ppInput);
 Input GetInput();
 
 void UpdateInput(Input pInput);

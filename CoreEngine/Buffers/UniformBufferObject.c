@@ -1,6 +1,6 @@
 #include "UniformBufferObject.h"
 #include "../Core/CoreUtils.h"
-#include "Buffer.h"
+#include "GLBuffer.h"
 #include <memory.h>
 
 static GLint siMaxUBOSize = 0;
@@ -26,16 +26,46 @@ bool InitializeUniformBufferObject(UniformBufferObject* ppUniBufObj, GLsizeiptr 
 
 	buffer->szBufferName = tracked_strdup(szBufferName);
 
-	CreateBuffer(&buffer->bufferID);
+	if (!CreateBuffer(&buffer->bufferID))
+	{
+		DestroyUniformBufferObject(&buffer);
+		syserr("Failed to Create GPU Uniform Buffers!");
+		return (false);
+	}
+
+	buffer->bufferFlags = GL_MAP_WRITE_BIT |
+						  GL_MAP_PERSISTENT_BIT |
+						  GL_MAP_COHERENT_BIT;  // CPU writes immediately visible to GPU
+
 
 	if (IsGLVersionHigher(4, 5))
 	{
-		glNamedBufferStorage(buffer->bufferID, bufferSize, NULL, GL_DYNAMIC_STORAGE_BIT);
+		glNamedBufferStorage(buffer->bufferID, bufferSize, NULL, GL_DYNAMIC_STORAGE_BIT | buffer->bufferFlags);
+
+		// Map ONCE and keep pointer forever
+		buffer->pBufferData = glMapNamedBufferRange(buffer->bufferID, 0, bufferSize, buffer->bufferFlags);
+		buffer->isPersistent = true;
 	}
 	else
 	{
 		glBindBuffer(GL_UNIFORM_BUFFER, buffer->bufferID);
-		glBufferData(GL_UNIFORM_BUFFER, bufferSize, NULL, GL_DYNAMIC_DRAW);
+
+		if (IsGLVersionHigher(4, 4))
+		{
+			glBufferStorage(GL_UNIFORM_BUFFER, bufferSize, NULL, GL_DYNAMIC_STORAGE_BIT | buffer->bufferFlags); // Need to check if it's compitable with +4.4
+			buffer->pBufferData = glMapBufferRange(GL_UNIFORM_BUFFER, 0, bufferSize, buffer->bufferFlags);
+			buffer->isPersistent = true;
+		}
+		else
+		{
+			glBufferData(GL_UNIFORM_BUFFER, bufferSize, NULL, GL_DYNAMIC_DRAW);
+		}
+	}
+
+	if (buffer->isPersistent && buffer->pBufferData == NULL)
+	{
+		syslog("UBO Persistent map failed: 0x%x", glGetError());
+		return false;
 	}
 
 	buffer->bindingPoint = bindingPt;

@@ -5,10 +5,16 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <glad/glad.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/stat.h>
 
 #define nullptr NULL
 #define syserr(...) fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); fflush(stderr);
 #define syslog(...) fprintf(stdout, __VA_ARGS__); fprintf(stdout, "\n"); fflush(stdout);
+
+#define S_ISDIR(m)	(m & _S_IFDIR)
+#define MAX_STRING_LEN 256
 
 inline GLenum glCheckError_(const char* file, int line)
 {
@@ -73,11 +79,28 @@ void tracked_free_internal(void* pObject, const char* file, int line);
 #define tracked_strdup(szSource) tracked_strdup_internal(szSource,  __FILE__, __LINE__)
 #define tracked_free(pObject) tracked_free_internal(pObject, __FILE__, __LINE__)
 
+void* cjson_tracked_malloc(size_t size);
+void cjson_tracked_free(void* ptr);
+
 const char* get_filename_ext(const char* filename);
 const char* get_filename(const char* filepath);
 
 bool IsGLVersionHigher(GLint MajorVer, GLint MinorVer);
 
 float clampf(float val, float min, float max);
+float random_float();
+float random_float_range(float min, float max);
+
+bool MakeDirectory(const char* fullPath);
+bool IsDirectoryExists(const char* path);
+
+#if defined(_WIN32) || defined(_WIN64)
+#include <direct.h>  // For _mkdir on Windows
+#define MKDIR(path) _mkdir(path)
+#else
+#include <sys/stat.h> // For mkdir on Linux/Unix
+#include <sys/types.h>
+#define MKDIR(path) mkdir(path, 0755) // rwxr-xr-x permissions
+#endif
 
 #endif // __CORE_UTILS_H__

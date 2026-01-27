@@ -1,8 +1,8 @@
 #include "IndirectBufferObject.h"
 #include "../Core/CoreUtils.h"
-#include "Buffer.h"
+#include "GLBuffer.h"
 
-bool InitializeIndirectBuffer(IndirectBufferObject* ppIndirectBuffer, GLsizeiptr initialCapacity)
+bool IndirectBufferObject_Initialize(IndirectBufferObject* ppIndirectBuffer, GLsizeiptr initialCapacity)
 {
 	*ppIndirectBuffer = (IndirectBufferObject)tracked_calloc(1, sizeof(SIndirectBufferObject));
 	IndirectBufferObject pIndirectBuf = *ppIndirectBuffer;
@@ -16,7 +16,7 @@ bool InitializeIndirectBuffer(IndirectBufferObject* ppIndirectBuffer, GLsizeiptr
 	if (!Vector_InitCapacity(&pIndirectBuf->commands, sizeof(SIndirectDrawCommand), initialCapacity))
 	{
 		syserr("Failed to create command vector");
-		DestroyIndirectBuffer(&pIndirectBuf);
+		IndirectBufferObject_Destroy(&pIndirectBuf);
 		return (false);
 	}
 
@@ -205,7 +205,7 @@ void IndirectBufferObject_UnBind()
 	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
 }
 
-void DestroyIndirectBuffer(IndirectBufferObject* ppIndirectBuffer)
+void IndirectBufferObject_Destroy(IndirectBufferObject* ppIndirectBuffer)
 {
 	if (!ppIndirectBuffer || !*ppIndirectBuffer)
 	{

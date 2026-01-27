@@ -23,12 +23,9 @@ typedef struct SDebugRendererPrimitiveGroup
 {
     // Specific for Lines
     IndirectBufferObject pIndirectBuffer;
-    ShaderStorageBufferObject pRendererSSBO; // for Metrices
 
     // Specific for Lines
-    Matrix4 modelsMetrices[MAX_DEBUG_LINE_MESHES];    // CPU-side storage
     Vector meshes;
-    bool bMatricesDirty;
     GLenum primitiveType; // GL_LINES or GL_TRIANGLES
     EDebugPrimitiveType groupType;
 } SDebugRendererPrimitiveGroup;
@@ -38,6 +35,8 @@ typedef struct SDebugRenderer
     // GPU Resources
     GLShader pShader;
     GLBuffer pDynamicGeometryBuffer;
+    ShaderStorageBufferObject pRendererSSBO; // for Metrices
+    Matrix4 modelsMetrices[MAX_DEBUG_MESHES];    // CPU-side storage
 
     // Typed primitive groups (dynamic)
     SDebugRendererPrimitiveGroup groups[DEBUG_MAX_TYPES];
@@ -47,6 +46,7 @@ typedef struct SDebugRenderer
     Vector4 v4DiffuseColor;
     GLCamera pCamera;
     Vector3 v3PickingPoint;
+    int32_t meshCounter;
 } SDebugRenderer;
 
 typedef struct SDebugRenderer* DebugRenderer;
@@ -64,6 +64,9 @@ void RenderDebugRendererIndirect(DebugRenderer pDebugRenderer, EDebugPrimitiveTy
 void RenderDebugRendererLegacy(DebugRenderer pDebugRenderer, EDebugPrimitiveType type);
 
 void DebugRenderer_SetLineMeshPosition(DebugRenderer pDebugRenderer, int meshIndex, Vector3 v3NewPos);
+
+void DebugRenderer_UpdateSunPosition(DebugRenderer pDebugRenderer, Mesh3D sunSphere);
+void DebugRenderer_UpdateDirtyMeshes(DebugRenderer pDebugRenderer);
 
 void SetRenderColor(DebugRenderer pDebugRenderer, Vector4 v4Color);
 
