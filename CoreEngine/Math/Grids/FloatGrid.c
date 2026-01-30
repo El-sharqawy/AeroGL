@@ -1,5 +1,5 @@
 #include "FloatGrid.h"
-#include "../Core/CoreUtils.h"
+#include "../../Core/CoreUtils.h"
 #include <memory.h>
 
 bool FloatGrid_Initialize(FloatGrid* ppFloatGrid, int32_t width, int32_t height)

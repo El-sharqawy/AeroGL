@@ -112,6 +112,18 @@
     <Filter Include="Source Files\Terrain\Terrain">
       <UniqueIdentifier>{eb2cea7c-36df-4f55-afed-fd064681f249}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Math\Grids">
+      <UniqueIdentifier>{b0da34fb-1672-416e-a56b-46a90bceb5f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Math\Grids">
+      <UniqueIdentifier>{57cdfe88-b5fc-4023-b8d3-1b0ddd515b44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\PipeLine">
+      <UniqueIdentifier>{8544d328-5037-41bf-9dc7-4b516cc42546}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\PipeLine">
+      <UniqueIdentifier>{9ee510a0-4ee2-4486-b019-7abbcbec434d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.c">
@@ -140,9 +152,6 @@
     </ClCompile>
     <ClCompile Include="Core\Camera.c">
       <Filter>Source Files\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\Shader.c">
-      <Filter>Source Files\Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Math\Projection\PerspectiveProjection.c">
       <Filter>Source Files\Math\Projection</Filter>
@@ -173,9 +182,6 @@
     </ClCompile>
     <ClCompile Include="Core\Input.c">
       <Filter>Source Files\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\StateManager.c">
-      <Filter>Source Files\Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Math\Transform.c">
       <Filter>Source Files\Math</Filter>
@@ -225,9 +231,6 @@
     <ClCompile Include="Math\Matrix\Matrix3.c">
       <Filter>Source Files\Math\Matrix</Filter>
     </ClCompile>
-    <ClCompile Include="Math\FloatGrid.c">
-      <Filter>Source Files\Math</Filter>
-    </ClCompile>
     <ClCompile Include="Lib\cJSON_Utils.c">
       <Filter>Source Files\Lib</Filter>
     </ClCompile>
@@ -248,6 +251,15 @@
     </ClCompile>
     <ClCompile Include="Terrain\TerrainMap\TerrainMapLoad.c">
       <Filter>Source Files\Terrain\TerrainMap</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Grids\FloatGrid.c">
+      <Filter>Source Files\Math\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="PipeLine\StateManager.c">
+      <Filter>Source Files\PipeLine</Filter>
+    </ClCompile>
+    <ClCompile Include="PipeLine\Shader.c">
+      <Filter>Source Files\PipeLine</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -275,9 +287,6 @@
     <ClInclude Include="Engine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Shader.h">
-      <Filter>Header Files\Renderer</Filter>
-    </ClInclude>
     <ClInclude Include="Math\Vertex\Vertex.h">
       <Filter>Header Files\Math\Vertex</Filter>
     </ClInclude>
@@ -298,9 +307,6 @@
     </ClInclude>
     <ClInclude Include="Core\Input.h">
       <Filter>Header Files\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\StateManager.h">
-      <Filter>Header Files\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Math\Transform.h">
       <Filter>Header Files\Math</Filter>
@@ -350,9 +356,6 @@
     <ClInclude Include="Math\Matrix\Matrix3.h">
       <Filter>Header Files\Math\Matrix</Filter>
     </ClInclude>
-    <ClInclude Include="Math\FloatGrid.h">
-      <Filter>Header Files\Math</Filter>
-    </ClInclude>
     <ClInclude Include="Terrain\TerrainData.h">
       <Filter>Header Files\Terrain</Filter>
     </ClInclude>
@@ -370,6 +373,15 @@
     </ClInclude>
     <ClInclude Include="Terrain\Terrain\Terrain.h">
       <Filter>Header Files\Terrain\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Grids\FloatGrid.h">
+      <Filter>Header Files\Math\Grids</Filter>
+    </ClInclude>
+    <ClInclude Include="PipeLine\StateManager.h">
+      <Filter>Header Files\PipeLine</Filter>
+    </ClInclude>
+    <ClInclude Include="PipeLine\Shader.h">
+      <Filter>Header Files\PipeLine</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

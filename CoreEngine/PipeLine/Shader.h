@@ -16,13 +16,17 @@ void Shader_LinkProgram(GLShader pShader);
 void Shader_UseProgram(GLShader pShader);
 void Shader_Destroy(GLShader* pShader);
 
+void Shader_SetInjection(GLShader pShader, bool bAllow);
+
+// Shader Private Methods
 char* LoadFromFile(const char* szShaderFile);
 GLenum GetShaderType(const char* szShaderFile);
 bool CheckCompileErrors(GLuint uiID, const char* szShaderFile, bool IsProgram);
 
 // Uniform Parts
 void Shader_SetBool(GLShader pShader, const char* szUniformName, bool bValue);
-void Shader_SetInt(GLShader pShader, const char* szUniformName, GLint iInt);
+void Shader_SetInt(GLShader pShader, const char* szUniformName, GLint iValue);
+void Shader_SetFloat(GLShader pShader, const char* szUniformName, float fValue);
 void Shader_SetVec2(GLShader pShader, const char* szUniformName, const Vector2 vec2);
 void Shader_SetVec3(GLShader pShader, const char* szUniformName, const Vector3 vec3);
 void Shader_SetVec4(GLShader pShader, const char* szUniformName, const Vector4 vec4);

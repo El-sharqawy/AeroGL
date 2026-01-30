@@ -6,7 +6,7 @@
 #include <math.h>
 #include <xmmintrin.h> // SSE
 #include <smmintrin.h> // SSE4.1 (for dot product)
-#include "../../Core/CoreUtils.h"
+#include "../MathUtils.h"
 
 /**
  * SVector3Df: A 3D float vector struct.

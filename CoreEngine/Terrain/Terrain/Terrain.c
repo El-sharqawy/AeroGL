@@ -2,6 +2,7 @@
 #include "../TerrainMap/TerrainMap.h"
 #include "../TerrainPatch.h"
 #include "../TerrainData.h"
+#include "../../Math/Grids/FloatGrid.h"
 #include <memory.h>
 
 bool Terrain_Initialize(Terrain* ppTerrain)
@@ -72,24 +73,7 @@ bool Terrain_Load(Terrain pTerrain)
 	Vector3 terrainStartPos = Vector3D(TERRAIN_XSIZE * pTerrain->terrainXCoord, 0.0f, pTerrain->terrainZCoord * TERRAIN_ZSIZE);
 	TransformSetPositionV(&pTerrain->transform, terrainStartPos);
 
-	// Initialize HeightMap
-	if (!FloatGrid_Initialize(&pTerrain->heightMap, HEIGHTMAP_RAW_XSIZE, HEIGHTMAP_RAW_ZSIZE))
-	{
-		Terrain_Destroy(&pTerrain);
-		syserr("Failed to Initialize HeightMap");
-		return (false);
-	}
-
-	for (int32_t iZ = 50; iZ <= 55; iZ++)
-	{
-		for (int32_t iX = 50; iX <= 55; iX++)
-		{
-			FloatGrid_SetAt(pTerrain->heightMap, iZ, iX, 10.0f);
-		}
-	}
-
-	pTerrain->bIsReady = true;
-
+	pTerrain->isInitialized = true;
 	return (true);
 }
 
@@ -118,10 +102,10 @@ bool Terrain_InitializePatches(Terrain pTerrain)
 {
 	if (!pTerrain)
 	{
+		syserr("No Terrain Allocated")
 		return (false);
 	}
 
-	if (pTerrain->bIsReady)
 	for (int32_t iPatchNumZ = 0; iPatchNumZ < PATCH_ZCOUNT; iPatchNumZ++)
 	{
 		for (int32_t iPatchNumX = 0; iPatchNumX < PATCH_XCOUNT; iPatchNumX++)
@@ -142,7 +126,11 @@ bool Terrain_InitializePatches(Terrain pTerrain)
 			Matrix4 finalMat = Matrix4_Mul(terrainMat, patchMat);								// parent * local
 
 			pTerrain->patchesMetrices[iPatchNum] = finalMat;
-			Vector_PushBack(&pTerrain->terrainPatches, &terrainPatch);
+			if (!Vector_PushBack(&pTerrain->terrainPatches, &terrainPatch))
+			{
+				syserr("Failed to Push Terrain Patch");
+				return (false);
+			}
 		}
 	}
 

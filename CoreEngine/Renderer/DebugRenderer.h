@@ -1,7 +1,7 @@
 #ifndef __DEBUG_RENDERER_H__
 #define __DEBUG_RENDERER_H__
 
-#include "Shader.h"
+#include "../PipeLine/Shader.h"
 #include "../Buffers/Buffer.h"
 #include "../Buffers/IndirectBufferObject.h"
 #include "../Buffers/ShaderStorageBufferObject.h"
@@ -65,7 +65,7 @@ void RenderDebugRendererLegacy(DebugRenderer pDebugRenderer, EDebugPrimitiveType
 
 void DebugRenderer_SetLineMeshPosition(DebugRenderer pDebugRenderer, int meshIndex, Vector3 v3NewPos);
 
-void DebugRenderer_UpdateSunPosition(DebugRenderer pDebugRenderer, Mesh3D sunSphere);
+void DebugRenderer_UpdateSunPosition(DebugRenderer pDebugRenderer);
 void DebugRenderer_UpdateDirtyMeshes(DebugRenderer pDebugRenderer);
 
 void SetRenderColor(DebugRenderer pDebugRenderer, Vector4 v4Color);

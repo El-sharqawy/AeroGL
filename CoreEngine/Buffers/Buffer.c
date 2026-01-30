@@ -2,7 +2,7 @@
 #include "../Core/CoreUtils.h"
 #include <memory.h>
 #include <stddef.h> // Required for offsetof
-#include "../Renderer/StateManager.h"
+#include "../PipeLine/StateManager.h"
 #include "GLBuffer.h"
 
 typedef struct SGLBuffer
@@ -464,7 +464,7 @@ bool GLBuffer_Reallocate(GLBuffer pBuffer, GLsizeiptr newVboCapacity, GLsizeiptr
 	GLenum error = glGetError();
 	if (error != GL_NO_ERROR)
 	{
-		syserr("TerrainBuffer_AllocateGPUStorage failed with GL error: 0x%X", error);
+		syserr("GLBuffer_Reallocate failed with GL error: 0x%X", error);
 		return (false);
 	}
 #endif
@@ -641,6 +641,7 @@ void Mesh3DGLBuffer_AllocateVertexBuffer(GLBuffer buffer)
 		numFloats += 4; // we add 4 floats for alignment (x,y,z,w)
 		
 		// We will Apply 16 Bytes on all components as (4 floats) since we are using SIMD .. 
+		glEnableVertexAttribArray(iNormals);
 		glVertexAttribPointer(iNormals, 3, GL_FLOAT, GL_FALSE, sizeof(SVertex3D), (const void*)(numFloats * sizeof(GLfloat))); // 3 floats (x,y,w)
 		numFloats += 4; // we add 4 floats for alignment (x,y,z,w)
 
@@ -862,6 +863,15 @@ bool Mesh3DGLBuffer_Initialize(GLBuffer* ppBuffer)
 
 bool Mesh3DGLBuffer_Reallocate(GLBuffer pBuffer, GLsizeiptr newVboCapacity, GLsizeiptr newEboCapacity, bool copyOldData)
 {
+#ifdef _DEBUG
+	GLenum error = glGetError();
+	if (error != GL_NO_ERROR)
+	{
+		syserr("Mesh3DGLBuffer_Reallocate failed with GL error: 0x%X", error);
+		// return (false);
+	}
+#endif
+
 	if (!pBuffer)
 	{
 		return (false);
@@ -901,15 +911,6 @@ bool Mesh3DGLBuffer_Reallocate(GLBuffer pBuffer, GLsizeiptr newVboCapacity, GLsi
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, newBuffers[1]);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, pBuffer->eboSize, NULL, pBuffer->bufferStorageType);
 	}
-
-#ifdef _DEBUG
-	GLenum error = glGetError();
-	if (error != GL_NO_ERROR)
-	{
-		syserr("TerrainBuffer_AllocateGPUStorage failed with GL error: 0x%X", error);
-		return (false);
-	}
-#endif
 
 	// 1. Keep track of how much valid data we actually have right now
 	GLsizeiptr currentVertexCount = pBuffer->vertexOffset;
@@ -1005,7 +1006,7 @@ void Mesh3DGLBuffer_RenderBuffer(GLBuffer buffer, GLenum renderMode)
 
 	// Bind the 'Boss' (The VAO)
 	// In OpenGL, the VAO already knows about the VBO and EBO because of our LinkBuffers call
-	BindBufferVAO(GetStateManager(), buffer);
+	StateManager_BindBufferVAO(GetStateManager(), buffer);
 
 	// Perform the draw
 	// indexCount was set to indexCount in our Update function

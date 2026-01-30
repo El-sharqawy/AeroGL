@@ -8,7 +8,6 @@
 #include "../../Lib/Vector.h"
 #include "../../Math/Matrix/Matrix4.h"
 #include "../../Math/Transform.h"
-#include "../../Math/FloatGrid.h"
 
 typedef struct STerrain
 {
@@ -23,7 +22,7 @@ typedef struct STerrain
 	int32_t baseGlobalPatchIndex;
 
 	struct STerrainMap* pParentMap;
-	FloatGrid heightMap;
+	struct SFloatGrid* heightMap;
 } STerrain;
 
 typedef struct STerrain* Terrain;
@@ -49,5 +48,8 @@ float GetHeightMapValue(Terrain pTerrain, int32_t x, int32_t z);
 // Terrains Loading And Creating
 bool Terrain_CreateFiles(struct STerrainMap* pParentMap, int32_t iTerrainX, int32_t iTerrainZ);
 bool Terrain_CreateHeightMap(Terrain pTerrain, const char* szTerrainsFolder);
+
+bool Terrain_LoadHeightMap(Terrain pTerrain, const char* szTerrainsFolder);
+bool Terrain_SaveHeightMap(Terrain pTerrain, const char* szTerrainsFolder);
 
 #endif // __TERRAIN_H__

@@ -1,15 +1,13 @@
 #ifndef __TERRAIN_RENDERER_H__
 #define __TERRAIN_RENDERER_H__
 
-#include "Shader.h"
+#include "../PipeLine/Shader.h"
 #include "../Buffers/TerrainBuffer.h"
 #include "../Buffers/IndirectBufferObject.h"
 #include "../Buffers/ShaderStorageBufferObject.h"
 #include "../Core/Camera.h"
 #include "../Terrain/Terrain/Terrain.h"
 #include "../Terrain/TerrainMap/TerrainMap.h"
-
-#define INITIALIZE_TERRAIN 10
 
 typedef struct STerrainRenderer
 {
@@ -31,13 +29,13 @@ typedef struct STerrainRenderer
 
 typedef struct STerrainRenderer* TerrainRenderer;
 
-bool TerrainRenderer_Initialize(TerrainRenderer* ppTerrainRenderer, GLCamera pCamera, const char* szRendererName);
+bool TerrainRenderer_Initialize(TerrainRenderer* ppTerrainRenderer, const char* szRendererName, int32_t iTerrainX, int32_t iTerrainZ);
 void TerrainRenderer_Destroy(TerrainRenderer* pTerrainRenderer);
 bool TerrainRenderer_InitGLBuffers(TerrainRenderer pTerrainRenderer, GLenum glType, GLsizeiptr capacity);
 void TerrainRenderer_DestroyGLBuffers(TerrainRenderer pTerrainRenderer);
 
-void TerrainRenderer_UploadGPUData(TerrainRenderer pTerrainRenderer, TerrainMap pTerrainMap);
-void TerrainRenderer_Render(TerrainRenderer pTerrainRenderer, TerrainMap pTerrainMap);
+void TerrainRenderer_UploadGPUData(TerrainRenderer pTerrainRenderer);
+void TerrainRenderer_Render(TerrainRenderer pTerrainRenderer);
 void TerrainRenderer_RenderIndirect(TerrainRenderer pTerrainRenderer);
 void TerrainRenderer_RenderLegacy(TerrainRenderer pTerrainRenderer);
 

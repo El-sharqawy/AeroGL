@@ -2,13 +2,24 @@
 #include "Core/CoreUtils.h"
 #include "Lib/Vector.h"
 #include "UserInterface/Interface_imgui.h"
-#include <assert.h>
+#include <time.h>
 
 static Engine s_Instance = NULL; // Hidden from other files
 
+void APIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
+	GLsizei length, const GLchar* message, const void* userParam)
+{
+	if (type == GL_DEBUG_TYPE_ERROR) {
+		syserr("GL ERROR: %s", message);
+		__debugbreak(); // Automatically pauses your debugger on the exact line!
+	}
+}
+
 bool InitializeEngine(Engine pEngine)
 {
-	srand(0);
+	uint32_t startSeed = (uint32_t)time(NULL);
+	srand(startSeed);
+	syslog("Engine started with Seed: %u", startSeed);
 
 	s_Instance = pEngine;
 
@@ -47,7 +58,7 @@ bool InitializeEngine(Engine pEngine)
 		return (false);
 	}
 
-	if (!InitializeStateManager(&pEngine->stateManager))
+	if (!StateManager_Initialize(&pEngine->stateManager))
 	{
 		DestroyEngine(pEngine);
 		return (false);
@@ -69,6 +80,7 @@ bool InitializeEngine(Engine pEngine)
 	glFrontFace(GL_CCW);
 	glCullFace(GL_BACK);
 
+
 	// Set the window pointer
 	glfwSetWindowUserPointer(GetGLWindow(pEngine->window), pEngine);
 
@@ -79,6 +91,11 @@ bool InitializeEngine(Engine pEngine)
 
 	glfwSetKeyCallback(GetGLWindow(pEngine->window), keyboard_callback);
 	glfwSetMouseButtonCallback(GetGLWindow(pEngine->window), mousebutton_callback);
+
+	// Enable it
+	glEnable(GL_DEBUG_OUTPUT);
+	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS); // Makes sure the error happens on the line that caused it
+	glDebugMessageCallback(MessageCallback, 0);
 
 	ImGui_Init(GetGLWindow(pEngine->window));
 
@@ -134,8 +151,6 @@ void UpdateEngine(Engine pEngine)
 
 	// 4. Swap Window Buffers
 	glfwSwapBuffers(GetGLWindow(pEngine->window));
-
-	assert(GetStateDepth(GetStateManager()) == 0);
 }
 
 void RenderEngine(Engine pEngine)
@@ -153,7 +168,7 @@ void DestroyEngine(Engine pEngine)
 
 	TerrainManager_Destroy(&pEngine->terrainManager);
 
-	DestroyStateManager(&pEngine->stateManager);
+	StateManager_Destroy(&pEngine->stateManager);
 
 	DestroyCamera(&pEngine->camera);
 
@@ -177,17 +192,6 @@ void OnEngineKeyButton(Engine pEngine, int key, int action)
 	if (key > GLFW_KEY_LAST || key < 0)
 	{
 		return;
-	}
-
-	if (key == GLFW_KEY_1 && action == GLFW_PRESS)
-	{
-		TerrainManager_Clear(pEngine->terrainManager);
-	}
-	if (key == GLFW_KEY_2 && action == GLFW_PRESS)
-	{
-		TerrainManager_SetMapName(pEngine->terrainManager, "AnubisCity");
-		TerrainManager_SetMapDeminsions(pEngine->terrainManager, 1, 1);
-		TerrainManager_CreateMap(pEngine->terrainManager);
 	}
 
 	OnKeyButton(pEngine->Input, key, action);
@@ -214,7 +218,7 @@ void framebuffer_size_callback(GLFWwindow* window, GLint iWidth, GLint iHeight)
 	UpdateWindowDeminsions(pEngine->window, iWidth, iHeight);
 	UpdateCameraDeminsions(pEngine->camera, (float)iWidth, (float)iHeight);
 
-	syslog("Window Resized: (%d, %d)", GetWindowWidth(pEngine->window), GetWindowHeight(pEngine->window));
+	// syslog("Window Resized: (%d, %d)", GetWindowWidth(pEngine->window), GetWindowHeight(pEngine->window));
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, iWidth, iHeight);

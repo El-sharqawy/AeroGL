@@ -1,4 +1,6 @@
 #include "TerrainManager.h"
+#include "../TerrainMap/TerrainMap.h"
+#include "../../Renderer/TerrainRenderer.h"
 #include "../../Engine.h"
 
 bool TerrainManager_Initialize(TerrainManager* ppTerrainManager)
@@ -13,14 +15,6 @@ bool TerrainManager_Initialize(TerrainManager* ppTerrainManager)
 
 	psTerrainManager = *ppTerrainManager;
 
-	// Initialize Renderer
-	if (!TerrainRenderer_Initialize(&psTerrainManager->terarinRenderer, GetEngine()->camera, "Terrain Renderer"))
-	{
-		syserr("Failed to Create Terrain Renderer");
-		TerrainManager_Destroy(ppTerrainManager);
-		return (false);
-	}
-
 	// Create an empty map
 	if (!TerrainMap_Initialize(&psTerrainManager->pTerrainMap))
 	{
@@ -29,20 +23,7 @@ bool TerrainManager_Initialize(TerrainManager* ppTerrainManager)
 		return (false);  // Cleanup everything above
 	}
 
-	// Upload GPU Data
-	// TerrainRenderer_UploadGPUData(psTerrainManager->terarinRenderer, psTerrainManager->pTerrainMap);
-
-	TerrainMap_SetDeminsions(psTerrainManager->pTerrainMap, 1, 1);
-
-	if (!TerrainMap_Load(psTerrainManager->pTerrainMap))
-	{
-		syserr("Failed to Load Map");
-		TerrainManager_Destroy(ppTerrainManager);
-		return (false);
-	}
-
-	psTerrainManager->isMapReady = true;
-	psTerrainManager->bNeedsUpdate = true;
+	psTerrainManager->isMapReady = false;
 
 	return (true);
 }
@@ -84,12 +65,17 @@ void TerrainManager_Clear(TerrainManager pTerrainManager)
 
 void TerrainManager_Update(TerrainManager pTerrainManager)
 {
+	if (!psTerrainManager->isMapReady)
+	{
+		return;
+	}
+
 	if (pTerrainManager->bNeedsUpdate)
 	{
 		if (psTerrainManager->pTerrainMap && psTerrainManager->pTerrainMap->isReady)
 		{
 			// Upload GPU Data
-			TerrainRenderer_UploadGPUData(psTerrainManager->terarinRenderer, psTerrainManager->pTerrainMap);
+			TerrainRenderer_UploadGPUData(psTerrainManager->terarinRenderer);
 			pTerrainManager->bNeedsUpdate = false;
 		}
 	}
@@ -99,7 +85,7 @@ void TerrainManager_Render(TerrainManager pTerrainManager)
 {
 	if (pTerrainManager->isMapReady)
 	{
-		TerrainRenderer_Render(pTerrainManager->terarinRenderer, pTerrainManager->pTerrainMap);
+		TerrainRenderer_Render(pTerrainManager->terarinRenderer);
 	}
 }
 
@@ -115,35 +101,60 @@ void TerrainManager_SetMapDeminsions(TerrainManager pTerrainManager, int32_t map
 	pTerrainManager->mapDepth = mapDepth;
 }
 
-void TerrainManager_CreateMap(TerrainManager pTerrainManager)
+bool TerrainManager_CreateMap(TerrainManager pTerrainManager)
 {
-	if (!pTerrainManager->pTerrainMap)
-	{
-		syserr("Failed to Initialize Terrain Map, There is no Map");
-		return;
-	}
-
 	if (pTerrainManager->szMapName == NULL)
 	{
 		syserr("You need to enter Map Name");
-		return;
+		return (false);
 	}
 
 	if (pTerrainManager->mapWidth == 0 || pTerrainManager->mapDepth == 0)
 	{
 		syserr("You need to enter Map Deminsions (x, z)");
-		return;
+		return (false);
 	}
 
 	// Create an empty map
 	if (!TerrainMap_CreateMap(pTerrainManager->szMapName, pTerrainManager->mapWidth, pTerrainManager->mapDepth))
 	{
 		syserr("Failed to Initialize Terrain Map");
-		return;  // Cleanup everything above
+		return (false);  // Cleanup everything above ?
 	}
 
-	pTerrainManager->isMapReady = true;
-	pTerrainManager->bNeedsUpdate = true;
+	return (true);
+}
+
+bool TerrainManager_LoadMap(TerrainManager pTerrainManager, char* szMapName)
+{
+	if (pTerrainManager->pTerrainMap)
+	{
+		TerrainMap_Clear(pTerrainManager->pTerrainMap);
+	}
+
+	if (!TerrainMap_LoadMap(pTerrainManager->pTerrainMap, szMapName))
+	{
+		syserr("Failed to Load Map %s", szMapName);
+		return (false);
+	}
+
+	if (pTerrainManager->pTerrainMap == NULL)
+	{
+		syserr("Failed to Load Map");
+		return (false);
+	}
+
+	// Initialize Renderer
+	if (!TerrainRenderer_Initialize(&psTerrainManager->terarinRenderer, "Terrain Renderer", pTerrainManager->pTerrainMap->terrainsXCount, pTerrainManager->pTerrainMap->terrainsZCount))
+	{
+		syserr("Failed to Create Terrain Renderer");
+		return (false);
+	}
+
+	psTerrainManager->isMapReady = true;
+	psTerrainManager->bNeedsUpdate = true;
+
+	return (true);
 }
 
 const TerrainManager GetTerrainManager()

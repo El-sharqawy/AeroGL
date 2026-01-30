@@ -34,8 +34,9 @@ bool InitializeUniformBufferObject(UniformBufferObject* ppUniBufObj, GLsizeiptr 
 	}
 
 	buffer->bufferFlags = GL_MAP_WRITE_BIT |
-						  GL_MAP_PERSISTENT_BIT |
-						  GL_MAP_COHERENT_BIT;  // CPU writes immediately visible to GPU
+		GL_MAP_PERSISTENT_BIT |
+		GL_MAP_COHERENT_BIT;  // CPU writes immediately visible to GPU
+
 
 
 	if (IsGLVersionHigher(4, 5))

@@ -78,7 +78,7 @@ bool InitializeWindow(GLWindow pWindow)
 	}
 
 	// check if glfwCreateWindow Fail
-	if (pWindow->m_pGLWindow == nullptr)
+	if (pWindow->m_pGLWindow == NULL)
 	{
 		syserr("failed to Initialize GLFW Library");
 		return (GLFW_FALSE);

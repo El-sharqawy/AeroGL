@@ -478,7 +478,7 @@ void UpdateUniformBufferObject(GLCamera pCamera)
 			memcpy(pCamera->cameraUBO->pBufferData, &pCamera->cameraSUBO, sizeof(SCameraUBO));
 
 			// Optional: Flush range (modern drivers auto with COHERENT_BIT)
-			glFlushMappedNamedBufferRange(pCamera->cameraUBO->bufferID, 0, sizeof(SCameraUBO));
+			// glFlushMappedNamedBufferRange(pCamera->cameraUBO->bufferID, 0, sizeof(SCameraUBO));
 		}
 		else
 		{

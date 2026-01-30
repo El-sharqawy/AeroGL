@@ -34,6 +34,9 @@ typedef enum ETerrainData
 
 } ETerrainData;
 
-#define MAP_ASSET_PATH "Assets/Maps/"
+static const char terrainMapsFolder[] = "Assets/Maps/";
+static const char terrainMapScriptType[] = "AnubisMapSettings";
+static const uint32_t TERRAIN_MAGIC_NUMBER = 0x47726964;
+static const uint32_t TERRAIN_VERSION_NUMBER = 1;
 
 #endif // __TERRAIN_DATA_H__

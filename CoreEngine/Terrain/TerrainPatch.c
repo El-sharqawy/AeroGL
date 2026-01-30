@@ -42,6 +42,10 @@ void TerrainPatch_GenerateGeometry(TerrainPatch patch, int32_t patchX, int32_t p
     // Clear any existing geometry
     Vector_Clear(mesh->pVertices);
     Vector_Clear(mesh->pIndices);
+
+    Vector_Reserve(mesh->pVertices, (width + 1) * (depth + 1));
+    Vector_Reserve(mesh->pIndices, (width * depth * 6));
+
     mesh->vertexCount = 0;
     mesh->indexCount = 0;
 

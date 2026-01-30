@@ -2,6 +2,9 @@
 #define __MATH_UTILS_H__
 
 #include <math.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 #if defined(_WIN32) || defined(_WIN64)
 #define M_E        2.71828182845904523536   // e
@@ -65,5 +68,55 @@ typedef enum EAxis
 	AXIS_Z,
 	AXIS_UNDEFINED
 } EAxis;
+
+static inline float clampf(float val, float min, float max)
+{
+	if (val > max)
+	{
+		return max;
+	}
+	if (val < min)
+	{
+		return min;
+	}
+	return val;
+}
+
+static inline float random_float()
+{
+	// Returns a random real in [0,1).
+	return (float)rand() / ((float)RAND_MAX + 1.0f);
+}
+
+static inline float random_float_range(float min, float max)
+{
+	// Returns a random real in [min,max).
+	return min + (max - min) * random_float();
+}
+
+static inline int32_t clampi(int32_t val, int32_t min, int32_t max)
+{
+	if (val > max)
+	{
+		return max;
+	}
+	if (val < min)
+	{
+		return min;
+	}
+	return val;
+}
+
+static inline int32_t random_int()
+{
+	// Returns a random real in [0,1).
+	return (int32_t)rand() / ((int32_t)RAND_MAX + 1);
+}
+
+static inline int32_t random_int_range(int32_t min, int32_t max)
+{
+	// Returns a random real in [min,max).
+	return min + (max - min) * random_int();
+}
 
 #endif // __MATH_UTILS_H__

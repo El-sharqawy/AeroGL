@@ -1,7 +1,7 @@
 #include "DebugRenderer.h"
 #include <memory.h>
 #include <glad/glad.h>
-#include "StateManager.h"
+#include "../PipeLine/StateManager.h"
 #include "../Core/Camera.h"
 #include "../Math/Transform.h"
 #include "../Engine.h"
@@ -31,6 +31,7 @@ bool CreateDebugRenderer(DebugRenderer* ppDebugRenderer, GLCamera pCamera, const
 		return (false);
 	}
 
+	Shader_SetInjection(pDebugRenderer->pShader, true);
 	Shader_AttachShader(pDebugRenderer->pShader, "Assets/Shaders/debug_shader.vert");
 	Shader_AttachShader(pDebugRenderer->pShader, "Assets/Shaders/debug_shader.frag");
 	Shader_LinkProgram(pDebugRenderer->pShader);
@@ -200,8 +201,15 @@ void InitializeDebuggingMeshes(DebugRenderer pDebugRenderer, EDebugPrimitiveType
 		// Upload mesh data (advances buffer offsets)
 		Mesh3DGLBuffer_UploadData(pDebugRenderer->pDynamicGeometryBuffer, mesh);
 
-		// Store Model Matrix in the CPU Array
-		gpuMatrices[mesh->meshMatrixIndex] = TransformGetMatrix(&mesh->transform);
+		if (pDebugRenderer->pRendererSSBO->isPersistent)
+		{
+			// Store Model Matrix in the CPU Array
+			gpuMatrices[mesh->meshMatrixIndex] = TransformGetMatrix(&mesh->transform);
+		}
+		else
+		{
+			pDebugRenderer->modelsMetrices[mesh->meshMatrixIndex] = TransformGetMatrix(&mesh->transform);
+		}
 
 		// Add indirect command with correct offsets
 		IndirectBufferObject_AddCommand(
@@ -230,29 +238,20 @@ void InitializeDebuggingMeshes(DebugRenderer pDebugRenderer, EDebugPrimitiveType
 
 void RenderDebugRenderer(DebugRenderer pDebugRenderer)
 {
-	PushState(GetStateManager());
+	StateManager_PushState(GetStateManager());
 
-	BindBufferVAO(GetStateManager(), pDebugRenderer->pDynamicGeometryBuffer);
-	BindShader(GetStateManager(), pDebugRenderer->pShader);
-	SetCapability(GetStateManager(), CAP_DEPTH_TEST, true);
-	SetCapability(GetStateManager(), CAP_CULL_FACE, true);
-	glFrontFace(GL_CCW);
-	glCullFace(GL_BACK);
+	StateManager_BindBufferVAO(GetStateManager(), pDebugRenderer->pDynamicGeometryBuffer);
+	StateManager_BindShader(GetStateManager(), pDebugRenderer->pShader);
+	StateManager_SetCapability(GetStateManager(), CAP_DEPTH_TEST, true);
+	StateManager_SetCapability(GetStateManager(), CAP_CULL_FACE, true);
+	StateManager_SetFrontFace(GetStateManager(), GL_CCW);
+	StateManager_SetCullFace(GetStateManager(), GL_BACK);
 
-	SetCapability(GetStateManager(), CAP_BLEND, false);
-	SetBlendFunc(GetStateManager(), GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	StateManager_SetCapability(GetStateManager(), CAP_BLEND, false);
+	StateManager_SetBlendFunc(GetStateManager(), GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// 1) First update transforms on CPU that depend on time / logic
-	if (IsGLVersionHigher(4, 5))
-	{
-		// Option A: only update sun transform here
-		SDebugRendererPrimitiveGroup* group = &pDebugRenderer->groups[DEBUG_TRIANGLES];
-		Mesh3D sunSphere = VECTOR_GET(group->meshes, 0, Mesh3D);
-		if (sunSphere)
-		{
-			DebugRenderer_UpdateSunPosition(pDebugRenderer, sunSphere);
-		}
-	}
+	DebugRenderer_UpdateSunPosition(pDebugRenderer);
 
 	// 2) Then upload all dirty matrices to SSBO
 	DebugRenderer_UpdateDirtyMeshes(pDebugRenderer);
@@ -269,7 +268,7 @@ void RenderDebugRenderer(DebugRenderer pDebugRenderer)
 		RenderDebugRendererLegacy(pDebugRenderer, DEBUG_LINES);
 	}
 
-	PopState(GetStateManager());
+	StateManager_PopState(GetStateManager());
 }
 
 void RenderDebugRendererIndirect(DebugRenderer pDebugRenderer, EDebugPrimitiveType type)
@@ -294,6 +293,17 @@ void RenderDebugRendererLegacy(DebugRenderer pDebugRenderer, EDebugPrimitiveType
 {
 	SDebugRendererPrimitiveGroup* group = &pDebugRenderer->groups[type];
 
+	if (type == DEBUG_TRIANGLES)
+	{
+		Mesh3D sunSphere = VECTOR_GET(group->meshes, 0, Mesh3D);  // Sun Sphere
+		if (sunSphere)
+		{
+			Vector3 lightColor = Vector3D(sunSphere->meshColor.x, sunSphere->meshColor.y, sunSphere->meshColor.z);
+			Shader_SetVec3(pDebugRenderer->pShader, "u_lightPos", sunSphere->transform.v3Position);
+			Shader_SetVec3(pDebugRenderer->pShader, "u_lightColor", lightColor);
+		}
+	}
+
 	for (int i = 0; i < group->meshes->count; i++)
 	{
 		Mesh3D* pMeshPtr = Vector_Get(group->meshes, i);  // Mesh3D* from vector
@@ -311,8 +321,8 @@ void RenderDebugRendererLegacy(DebugRenderer pDebugRenderer, EDebugPrimitiveType
 		}
 
 		// Set model matrix as uniform (instead of SSBO)
-		Matrix4 modelMatrix = pDebugRenderer->modelsMetrices[i];
-		Shader_SetMat4(pDebugRenderer->pShader, "u_matModel", modelMatrix);
+		Shader_SetMat4(pDebugRenderer->pShader, "u_matModel", pDebugRenderer->modelsMetrices[mesh->meshMatrixIndex]);
+		Shader_SetInt(pDebugRenderer->pShader, "u_vertex_DrawID", mesh->meshMatrixIndex);
 
 		// Draw this mesh
 		glDrawElementsBaseVertex(
@@ -337,8 +347,12 @@ void DebugRenderer_SetLineMeshPosition(DebugRenderer pDebugRenderer, int meshInd
 	TransformSetPositionV(&lineMesh->transform, v3NewPos);
 }
 
-void DebugRenderer_UpdateSunPosition(DebugRenderer pDebugRenderer, Mesh3D sunSphere)
+void DebugRenderer_UpdateSunPosition(DebugRenderer pDebugRenderer)
 {
+	// Option A: only update sun transform here
+	SDebugRendererPrimitiveGroup* group = &pDebugRenderer->groups[DEBUG_TRIANGLES];
+	Mesh3D sunSphere = VECTOR_GET(group->meshes, 0, Mesh3D);
+
 	static float angle = 0.0f;
 	float orbitRadius = 15.0f;
 	float orbitSpeed = 0.5f; // Radians per second
@@ -388,7 +402,6 @@ void DebugRenderer_UpdateDirtyMeshes(DebugRenderer pDebugRenderer)
 			{
 				ShaderStorageBufferObject_Update(pDebugRenderer->pRendererSSBO, &newMatrix, sizeof(Matrix4), iMatIndex * sizeof(Matrix4), false);
 			}
-
 			pDebugRenderer->modelsMetrices[iMatIndex] = newMatrix;
 			mesh->bDirty = false;
 		}

@@ -5,9 +5,8 @@
 #include "Core/Camera.h"
 #include "Core/Input.h"
 #include "Buffers/Buffer.h"
-#include "Renderer/Shader.h"
 #include "Renderer/DebugRenderer.h"
-#include "Renderer/StateManager.h"
+#include "PipeLine/StateManager.h"
 #include "Terrain/TerrainManager/TerrainManager.h"
 
 typedef struct SEngine

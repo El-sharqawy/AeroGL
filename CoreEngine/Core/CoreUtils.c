@@ -7,6 +7,8 @@
 
 size_t allocation_count = 0;
 size_t bytes_allocated = 0;
+GLint glMajorVersion = 0;
+GLint glMinorVersion = 0;
 
 // #define ENABLE_MEMORY_LOGS
 
@@ -224,9 +226,6 @@ const char* get_filename(const char* filepath)
 
 bool IsGLVersionHigher(GLint MajorVer, GLint MinorVer)
 {
-	static GLint glMajorVersion = 0;
-	static GLint glMinorVersion = 0;
-
 	// Only query once for performance
 	if (glMajorVersion == 0)
 	{
@@ -247,31 +246,6 @@ bool IsGLVersionHigher(GLint MajorVer, GLint MinorVer)
 	}
 
 	return false;
-}
-
-float clampf(float val, float min, float max)
-{
-	if (val > max)
-	{
-		return max;
-	}
-	if (val < min)
-	{
-		return min;
-	}
-	return val;
-}
-
-float random_float()
-{
-	// Returns a random real in [0,1).
-	return (float)rand() / ((float)RAND_MAX + 1.0f);
-}
-
-float random_float_range(float min, float max)
-{
-	// Returns a random real in [min,max).
-	return min + (max - min) * random_float();
 }
 
 bool MakeDirectory(const char* fullPath)
@@ -304,11 +278,16 @@ bool MakeDirectory(const char* fullPath)
 
 bool IsDirectoryExists(const char* path)
 {
+	if (!path)
+	{
+		return (false);
+	}
+
 	struct stat stats;
 	// Get file/directory information
 	if (stat(path, &stats) == 0 && S_ISDIR(stats.st_mode)) 
 	{
-		return 1; // Directory exists
+		return (true); // Directory exists
 	}
-	return 0; // Directory does not exist
+	return (false); // Directory does not exist
 }

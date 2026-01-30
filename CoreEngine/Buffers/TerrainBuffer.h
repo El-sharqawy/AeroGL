@@ -36,7 +36,7 @@ void TerrainBuffer_Delete(TerrainGLBuffer buffer);
 void TerrainBuffer_Reset(TerrainGLBuffer buffer);
 void TerrainBuffer_Clear(TerrainGLBuffer buffer);
 
-bool TerrainBuffer_Initialize(TerrainGLBuffer* ppTerrainBuffer);
+bool TerrainBuffer_Initialize(TerrainGLBuffer* ppTerrainBuffer, GLsizeiptr capacity);
 void TerrainBuffer_Destroy(TerrainGLBuffer* ppTerrainBuffer);
 
 bool TerrainBuffer_AllocateGPUStorage(TerrainGLBuffer pTerrainBuffer);

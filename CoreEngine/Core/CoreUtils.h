@@ -9,7 +9,6 @@
 #include <errno.h>
 #include <sys/stat.h>
 
-#define nullptr NULL
 #define syserr(...) fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); fflush(stderr);
 #define syslog(...) fprintf(stdout, __VA_ARGS__); fprintf(stdout, "\n"); fflush(stdout);
 
@@ -60,12 +59,19 @@ typedef struct SMemoryBlockHeader
     char padding[4];  // Ensure the whole struct is 32 bytes
 } SMemoryBlockHeader;
 
+#ifdef __cplusplus
+static_assert(sizeof(SMemoryBlockHeader) % 16 == 0, "Memory header must be 16-byte aligned!");
+#else
 _Static_assert(sizeof(SMemoryBlockHeader) % 16 == 0, "Memory header must be 16-byte aligned!");
+#endif
 
 // "extern" tells other files: "The real variable exists somewhere else."
 static const size_t header_size = 16;
 extern size_t allocation_count;
 extern size_t bytes_allocated;
+
+extern GLint glMajorVersion;
+extern GLint glMinorVersion;
 
 void* tracked_malloc_internal(size_t size, const char* file, int line);
 void* tracked_calloc_internal(size_t count, size_t size, const char* file, int line);
@@ -87,20 +93,20 @@ const char* get_filename(const char* filepath);
 
 bool IsGLVersionHigher(GLint MajorVer, GLint MinorVer);
 
-float clampf(float val, float min, float max);
-float random_float();
-float random_float_range(float min, float max);
-
 bool MakeDirectory(const char* fullPath);
 bool IsDirectoryExists(const char* path);
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <direct.h>  // For _mkdir on Windows
+#include <io.h>
 #define MKDIR(path) _mkdir(path)
+#undef access
+#define access _access
 #else
 #include <sys/stat.h> // For mkdir on Linux/Unix
 #include <sys/types.h>
 #define MKDIR(path) mkdir(path, 0755) // rwxr-xr-x permissions
+#define _stricmp(__dst, __src) strcasecmp(__dst, __src)
 #endif
 
 #endif // __CORE_UTILS_H__

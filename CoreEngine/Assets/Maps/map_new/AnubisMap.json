@@ -3,10 +3,10 @@
 	"Version":	1,
 	"MapData":	{
 		"MapSize":	{
-			"x":	1,
-			"z":	1
+			"x":	2,
+			"z":	2
 		},
-		"MapName":	"AnubisCity",
-		"MapDir":	"Assets/Maps/AnubisCity"
+		"MapName":	"map_new",
+		"MapDir":	"Assets/Maps/map_new"
 	}
 }

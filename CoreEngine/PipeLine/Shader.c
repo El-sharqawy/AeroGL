@@ -11,6 +11,7 @@ typedef struct SGLShader
 	char* szProgramName;	// Program name for debugging
 	bool IsInitialized;	// Program object created
 	bool IsLinked;			// Shaders linked successfully
+	bool injection;			// inject the comment 
 	GLint shadersNum;		// Number of shaders in the current program
 	GLuint shaders[MAX_ATTACHED_SHADERS];		// Temporary storage for shader IDs
 } SGLShader;
@@ -54,6 +55,8 @@ void Shader_AttachShader(GLShader pShader, const char* szShaderFile)
 	if (shaderSource == NULL)
 	{
 		syserr("Failde to Load Shader %s", szShaderFile);
+		// free allocated space for shader source code
+		tracked_free(shaderSource);
 		return;
 	}
 
@@ -62,18 +65,40 @@ void Shader_AttachShader(GLShader pShader, const char* szShaderFile)
 	if (shaderType == GL_INVALID_ENUM)
 	{
 		syserr("Failed to Find Shader %s Type", szShaderFile);
+		// free allocated space for shader source code
+		tracked_free(shaderSource);
 		return;
 	}
 
 	// Create and Compile
 	GLuint uiShaderID = glCreateShader(shaderType);
-	glShaderSource(uiShaderID, 1, (const GLchar**)&shaderSource, nullptr);
+
+	// add injection 
+	if (pShader->injection)
+	{
+		char headerBuffer[256]; // Allocate a small buffer for the header
+		snprintf(headerBuffer, sizeof(headerBuffer),
+			"#version %d%d0 core\n"
+			"#extension GL_ARB_shading_language_420pack : enable\n",
+			glMajorVersion, glMinorVersion);
+
+		const char* sources[2] = { headerBuffer, shaderSource };
+
+		glShaderSource(uiShaderID, 2, sources, NULL);
+	}
+	else
+	{
+		glShaderSource(uiShaderID, 1, (const GLchar**)&shaderSource, NULL);
+	}
+
 	glCompileShader(uiShaderID);
 
 	// Check for compilation errors
 	if (CheckCompileErrors(uiShaderID, szShaderFile, false) == false)
 	{
 		glDeleteShader(uiShaderID);
+		// free allocated space for shader source code
+		tracked_free(shaderSource);
 		syserr("Failed Compiling shader %s", szShaderFile);
 		return;
 	}
@@ -169,6 +194,16 @@ void Shader_Destroy(GLShader* ppShader)
 	tracked_free(pShader);
 
 	*ppShader = NULL; // Reach back to the caller and set it to NULL
+}
+
+void Shader_SetInjection(GLShader pShader, bool bAllow)
+{
+	if (!pShader)
+	{
+		return;
+	}
+
+	pShader->injection = bAllow;
 }
 
 char* LoadFromFile(const char* szShaderFile)
@@ -276,7 +311,7 @@ bool CheckCompileErrors(GLuint uiID, const char* szShaderFile, bool IsProgram)
 		glGetProgramiv(uiID, GL_LINK_STATUS, &iSuccess);
 		if (iSuccess == 0)
 		{
-			glGetProgramInfoLog(uiID, 1024, nullptr, szInfoLog);
+			glGetProgramInfoLog(uiID, 1024, NULL, szInfoLog);
 			syserr("Linking the program %s Failed, Error: %s", szShaderFile, szInfoLog);
 		}
 	}
@@ -285,7 +320,7 @@ bool CheckCompileErrors(GLuint uiID, const char* szShaderFile, bool IsProgram)
 		glGetShaderiv(uiID, GL_COMPILE_STATUS, &iSuccess);
 		if (iSuccess == 0)
 		{
-			glGetShaderInfoLog(uiID, 1024, nullptr, szInfoLog);
+			glGetShaderInfoLog(uiID, 1024, NULL, szInfoLog);
 			syserr("Compiling the Shader %s Failed, Error: %s", szShaderFile, szInfoLog);
 		}
 	}
@@ -316,7 +351,7 @@ void Shader_SetBool(GLShader pShader, const char* szUniformName, bool bValue)
 	}
 }
 
-void Shader_SetInt(GLShader pShader, const char* szUniformName, GLint iInt)
+void Shader_SetInt(GLShader pShader, const char* szUniformName, GLint iValue)
 {
 	if (!pShader)
 	{
@@ -332,11 +367,35 @@ void Shader_SetInt(GLShader pShader, const char* szUniformName, GLint iInt)
 
 	if (IsGLVersionHigher(4, 1))
 	{
-		glProgramUniform1i(pShader->programID, iIntIndex, iInt);
+		glProgramUniform1i(pShader->programID, iIntIndex, iValue);
 	}
 	else
 	{
-		glUniform1i(iIntIndex, iInt);
+		glUniform1i(iIntIndex, iValue);
+	}
+}
+
+void Shader_SetFloat(GLShader pShader, const char* szUniformName, float fValue)
+{
+	if (!pShader)
+	{
+		return;
+	}
+
+	GLint iFloatIndex = glGetUniformLocation(pShader->programID, szUniformName);
+	if (iFloatIndex == -1)
+	{
+		syserr("Failed to Find Uniform %s", szUniformName);
+		return;
+	}
+
+	if (IsGLVersionHigher(4, 1))
+	{
+		glProgramUniform1f(pShader->programID, iFloatIndex, fValue);
+	}
+	else
+	{
+		glUniform1f(iFloatIndex, fValue);
 	}
 }
 

@@ -1,13 +1,13 @@
-#version 460 core
 
+#if __VERSION__ >= 420
 #extension GL_ARB_shader_draw_parameters : enable
+#define MODERN_OPENGL_PATH
+#endif
 
 layout (location = 0) in vec3 m_v3Position;
 layout (location = 1) in vec3 m_v3Normals;
 layout (location = 2) in vec2 m_v2TexCoord;
 layout (location = 3) in vec4 m_v4Color;
-
-#define MODERN_OPENGL_PATH
 
 #ifdef MODERN_OPENGL_PATH
 // BINDING 1: The "World" (All Object Positions)
@@ -19,6 +19,7 @@ layout(std430, binding = 0) readonly buffer MatrixBuffer
 };
 #else
 uniform mat4 u_matModel = mat4(1.0f);
+uniform int u_vertex_DrawID;
 #endif
 
 // Camera UBO (works on OpenGL 3.1+)
@@ -56,8 +57,13 @@ void main()
 
     // v3Normals = transpose(inverse(mat3(model))) * m_v3Normals;
     v3Normals = m_v3Normals;
+    // v3Normals = mat3(model) * m_v3Normals;
 	v2TexCoord = m_v2TexCoord;
 	v4Color = m_v4Color;
 
+#ifdef MODERN_OPENGL_PATH
     vertex_DrawID = gl_BaseInstance;
+#else
+    vertex_DrawID = u_vertex_DrawID;
+#endif
 }

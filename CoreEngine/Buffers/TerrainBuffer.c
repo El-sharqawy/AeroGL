@@ -107,7 +107,7 @@ void TerrainBuffer_Clear(TerrainGLBuffer buffer)
 #endif
 }
 
-bool TerrainBuffer_Initialize(TerrainGLBuffer* ppTerrainBuffer)
+bool TerrainBuffer_Initialize(TerrainGLBuffer* ppTerrainBuffer, GLsizeiptr capacity)
 {
 	*ppTerrainBuffer = (TerrainGLBuffer)tracked_calloc(1, sizeof(STerrainGLBuffer));
 
@@ -124,15 +124,20 @@ bool TerrainBuffer_Initialize(TerrainGLBuffer* ppTerrainBuffer)
 		return (false);
 	}
 
-	buffer->vboCapacity = TERRAIN_PATCH_COUNT * 1024;
-	buffer->eboCapacity = TERRAIN_PATCH_COUNT * 1536;
+	buffer->vboCapacity = capacity * 1024;
+	buffer->eboCapacity = capacity * 1536;
 
 	buffer->vboSize = buffer->vboCapacity * sizeof(STerrainVertex);
 	buffer->eboSize = buffer->eboCapacity * sizeof(GLuint);
 
 	if (IsGLVersionHigher(4, 5))
 	{
-		buffer->bufferStorageType = GL_DYNAMIC_STORAGE_BIT;
+		// Adding MAP_READ/WRITE and CLIENT_STORAGE makes the buffer 
+		// much more flexible for reallocations and debugging.
+		buffer->bufferStorageType = GL_DYNAMIC_STORAGE_BIT |
+			GL_MAP_READ_BIT |
+			GL_MAP_WRITE_BIT |
+			GL_CLIENT_STORAGE_BIT;
 	}
 	else
 	{
@@ -362,6 +367,7 @@ bool TerrainBuffer_Reallocate(TerrainGLBuffer pTerrainBuffer, GLsizeiptr newVboC
 	pTerrainBuffer->vboSize = newVboCapacity * sizeof(STerrainVertex);
 	pTerrainBuffer->eboSize = newEboCapacity * sizeof(GLuint);
 
+
 	if (IsGLVersionHigher(4, 5))
 	{
 		// Immutable Storage !
@@ -376,15 +382,6 @@ bool TerrainBuffer_Reallocate(TerrainGLBuffer pTerrainBuffer, GLsizeiptr newVboC
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, newBuffers[1]);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, pTerrainBuffer->eboSize, NULL, pTerrainBuffer->bufferStorageType);
 	}
-
-#ifdef _DEBUG
-	GLenum error = glGetError();
-	if (error != GL_NO_ERROR)
-	{
-		syserr("TerrainBuffer_Reallocate failed with GL error: 0x%X", error);
-		return (false);
-	}
-#endif
 
 	// 1. Keep track of how much valid data we actually have right now
 	GLsizeiptr currentVertexCount = pTerrainBuffer->vertexOffset;
@@ -450,6 +447,14 @@ bool TerrainBuffer_Reallocate(TerrainGLBuffer pTerrainBuffer, GLsizeiptr newVboC
 
 bool TerrainBuffer_UploadData(TerrainGLBuffer pTerrainBuffer, TerrainMesh pTerrainMesh)
 {
+#ifdef _DEBUG
+	GLenum error = glGetError();
+	if (error != GL_NO_ERROR)
+	{
+		syserr("TerrainBuffer_Reallocate failed with GL error: 0x%X", error);
+	}
+#endif
+
 	if (!pTerrainBuffer || !pTerrainMesh || !pTerrainMesh->pVertices || !pTerrainMesh->pIndices)
 	{
 		syserr("Terrain Buffer or Data is NULL");
@@ -477,7 +482,7 @@ bool TerrainBuffer_UploadData(TerrainGLBuffer pTerrainBuffer, TerrainMesh pTerra
 		if (!TerrainBuffer_Reallocate(pTerrainBuffer, newVboCapacity, newEboCapacity, true))
 		{
 			syserr("Failed to Reallocate Terrain Buffer");
-			return (true);
+			return (false);
 		}
 		else
 		{

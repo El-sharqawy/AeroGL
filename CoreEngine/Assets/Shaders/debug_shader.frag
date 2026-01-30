@@ -1,4 +1,3 @@
-#version 460 core
 
 // Required for your MakeTextureResident logic
 #ifdef USE_BINDLESS

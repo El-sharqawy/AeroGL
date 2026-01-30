@@ -1,4 +1,3 @@
-#version 460 core
 
 #extension GL_ARB_shader_draw_parameters : enable
 
@@ -7,7 +6,9 @@ layout (location = 1) in vec3 m_v3Normals;
 layout (location = 2) in vec2 m_v2TexCoord;
 layout (location = 3) in vec4 m_v4Color;
 
+#if __VERSION__ >= 420
 #define MODERN_OPENGL_PATH
+#endif
 
 #ifdef MODERN_OPENGL_PATH
 // BINDING 1: The "World" (All Object Positions)
@@ -19,6 +20,7 @@ layout(std430, binding = 0) readonly buffer MatrixBuffer
 };
 #else
 uniform mat4 u_matModel = mat4(1.0f);
+uniform int u_vertex_DrawID;
 #endif
 
 // Camera UBO (works on OpenGL 3.1+)
@@ -39,10 +41,16 @@ out flat int vertex_DrawID;
 
 void main()
 {
-    int index = int(gl_BaseInstance);
-
     // 1. Get the matrix for THIS patch
     mat4 model;
+    int index = 0;
+
+#ifdef MODERN_OPENGL_PATH
+    index = int(gl_BaseInstance);
+#else
+    index = u_vertex_DrawID;
+#endif
+
 #ifdef MODERN_OPENGL_PATH
     // gl_BaseInstance is the "magic" index for MultiDrawIndirect
     model = modelMatrices[index];
