@@ -23,6 +23,7 @@ typedef struct STerrain
 
 	struct STerrainMap* pParentMap;
 	struct SFloatGrid* heightMap;
+	struct STexture* pHeightMapTexture;
 } STerrain;
 
 typedef struct STerrain* Terrain;
@@ -31,7 +32,6 @@ bool Terrain_Initialize(Terrain* ppTerrain);
 void Terrain_Destroy(Terrain* ppTerrain);
 void Terrain_DestroyPtr(Terrain pTerrain);
 
-bool Terrain_Load(Terrain pTerrain);
 void Terrain_SetTerrainCoords(Terrain pTerrain, int32_t iTerrX, int32_t iTerrZ);
 void Terrain_SetTerrainIndex(Terrain pTerrain, int32_t iTerrainIndex);
 
@@ -51,5 +51,8 @@ bool Terrain_CreateHeightMap(Terrain pTerrain, const char* szTerrainsFolder);
 
 bool Terrain_LoadHeightMap(Terrain pTerrain, const char* szTerrainsFolder);
 bool Terrain_SaveHeightMap(Terrain pTerrain, const char* szTerrainsFolder);
+
+bool Terrain_Load(Terrain pTerrain);
+bool Terrain_LoadHeightMapTexture(Terrain pTerrain);
 
 #endif // __TERRAIN_H__

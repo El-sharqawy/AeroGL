@@ -9,6 +9,14 @@
 #include "../Terrain/Terrain/Terrain.h"
 #include "../Terrain/TerrainMap/TerrainMap.h"
 
+typedef struct SPatchData
+{
+    Matrix4 modelMatrix;
+    uint64_t heightMapHandle;       // The Bindless Texture Handle
+    float heightScale;              // Specific height scale for this terrain
+    int32_t terrainCoords[2];       // Maintain 16-byte alignment for GLSL
+} SPatchData;
+
 typedef struct STerrainRenderer
 {
     // GPU Resources

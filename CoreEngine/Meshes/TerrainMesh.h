@@ -60,7 +60,6 @@ TerrainMesh TerrainMesh_Create(GLenum primitiveType);
 TerrainMesh TerrainMesh_CreateWithCapacity(GLenum primitiveType, GLsizeiptr vertexHint, GLsizeiptr indexHint);
 void TerrainMesh_Destroy(TerrainMesh* ppMesh);
 void TerrainMesh_PtrDestroy(TerrainMesh pTerrainMesh);
-void TerrainMesh_MakeQuad3D(TerrainMesh TerrainMesh, Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, Vector4 color);
 
 void TerrainMesh_AddVertex(TerrainMesh TerrainMesh, const STerrainVertex vertex);
 void TerrainMesh_AddIndex(TerrainMesh TerrainMesh, const GLuint index);

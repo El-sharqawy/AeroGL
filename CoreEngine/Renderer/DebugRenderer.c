@@ -8,6 +8,12 @@
 
 bool CreateDebugRenderer(DebugRenderer* ppDebugRenderer, GLCamera pCamera, const char* szRendererName)
 {
+	if (ppDebugRenderer == NULL)
+	{
+		syserr("ppDebugRenderer is NULL (invalid address)");
+		return false;
+	}
+
 	*ppDebugRenderer = (DebugRenderer)tracked_malloc(sizeof(SDebugRenderer));
 
 	DebugRenderer pDebugRenderer = *ppDebugRenderer;
@@ -84,14 +90,14 @@ bool DebugRenderer_InitGroup(DebugRenderer pDebugRenderer, EDebugPrimitiveType t
 		return (false);
 	}
 
-	if (!Vector_Init(&group->meshes, sizeof(Mesh3D)))
+	if (!Vector_Init(&group->meshes, sizeof(Mesh3D), false))
 	{
-		syserr("NewVectorInit failed for meshes!");
+		syserr("VectorInit failed for meshes!");
 		DestroyDebugRenderer(&pDebugRenderer);
 		return (false);  // Cleanup buffers above
 	}
 
-	group->meshes->destructor = Mesh3D_PtrDestroy;
+	group->meshes->destructor = Mesh3D_Destroy;
 
 	// Initialize Meshes
 	if (type == DEBUG_LINES)
@@ -99,16 +105,16 @@ bool DebugRenderer_InitGroup(DebugRenderer pDebugRenderer, EDebugPrimitiveType t
 		Mesh3D mesh1 = Mesh3D_Create(glType);
 		// Mesh3D mesh2 = Mesh3D_Create(glType);
 
-		Vector_PushBack(&group->meshes, &mesh1);
+		Vector_PushBack(group->meshes, mesh1);
 		// Vector_PushBack(&group->meshes, &mesh2);
 	}
 	else
 	{
 		Mesh3D sunlightMesh = Mesh3D_Create(glType);
-		Vector_PushBack(&group->meshes, &sunlightMesh);
+		Vector_PushBack(group->meshes, sunlightMesh);
 
 		Mesh3D sphereModel = Mesh3D_Create(glType);
-		Vector_PushBack(&group->meshes, &sphereModel);
+		Vector_PushBack(group->meshes, sphereModel);
 	}
 
 	group->primitiveType = glType;
@@ -157,7 +163,7 @@ void InitializeDebuggingMeshes(DebugRenderer pDebugRenderer, EDebugPrimitiveType
 
 	if (type == DEBUG_LINES)
 	{
-		Mesh3D mesh1 = VECTOR_GET(group->meshes, 0, Mesh3D);  // Dereference: Mesh3D* -> actual struct ptr
+		Mesh3D mesh1 = Vector_GetPtr(group->meshes, 0);  // Dereference: Mesh3D* -> actual struct ptr
 		Mesh3D_MakeAxis(mesh1, Vector3F(0.0f), 10.0f);
 
 		// Mesh3D mesh2 = VECTOR_GET(group->meshes, 1, Mesh3D);  // Dereference: Mesh3D* -> actual struct ptr
@@ -166,12 +172,12 @@ void InitializeDebuggingMeshes(DebugRenderer pDebugRenderer, EDebugPrimitiveType
 	else
 	{
 		Vector3 sunPos = Vector3D(0.0f, 10.0f, 0.0f); // this will be light position
-		Mesh3D sunlightMesh = VECTOR_GET(group->meshes, 0, Mesh3D);  // Dereference: Mesh3D* -> actual struct ptr
+		Mesh3D sunlightMesh = Vector_GetPtr(group->meshes, 0);  // Dereference: Mesh3D* -> actual struct ptr
 		Mesh3D_MakeSphere3D(sunlightMesh, sunPos, 1.0f, 64, 64, pDebugRenderer->v4DiffuseColor);
 		Mesh3D_SetName(sunlightMesh, "TheSun");
 
 		Vector3 sphereModelPos = Vector3D(0.0f, 1.0f, 0.0f); // this will be model position
-		Mesh3D sphereModel = VECTOR_GET(group->meshes, 1, Mesh3D);  // Dereference: Mesh3D* -> actual struct ptr
+		Mesh3D sphereModel = Vector_GetPtr(group->meshes, 1);  // Dereference: Mesh3D* -> actual struct ptr
 
 		SetRenderColor(pDebugRenderer, Vector4D(0.5f, 0.5f, 1.0f, 1.0f));
 		Mesh3D_MakeSphere3D(sphereModel, sphereModelPos, 1.0f, 64, 64, pDebugRenderer->v4DiffuseColor);
@@ -185,7 +191,7 @@ void InitializeDebuggingMeshes(DebugRenderer pDebugRenderer, EDebugPrimitiveType
 	// One single upload to the GPU
 	for (int i = 0; i < group->meshes->count; i++)
 	{
-		Mesh3D mesh = VECTOR_GET(group->meshes, i, Mesh3D);  // Single line!
+		Mesh3D mesh = Vector_GetPtr(group->meshes, i);  // Single line!
 
 		if (!mesh || mesh->vertexCount == 0)
 		{
@@ -277,7 +283,7 @@ void RenderDebugRendererIndirect(DebugRenderer pDebugRenderer, EDebugPrimitiveTy
 
 	if (type == DEBUG_TRIANGLES)
 	{
-		Mesh3D sunSphere = VECTOR_GET(group->meshes, 0, Mesh3D);  // Sun Sphere
+		Mesh3D sunSphere = Vector_GetPtr(group->meshes, 0);  // Sun Sphere
 		if (sunSphere)
 		{
 			Vector3 lightColor = Vector3D(sunSphere->meshColor.x, sunSphere->meshColor.y, sunSphere->meshColor.z);
@@ -295,7 +301,7 @@ void RenderDebugRendererLegacy(DebugRenderer pDebugRenderer, EDebugPrimitiveType
 
 	if (type == DEBUG_TRIANGLES)
 	{
-		Mesh3D sunSphere = VECTOR_GET(group->meshes, 0, Mesh3D);  // Sun Sphere
+		Mesh3D sunSphere = Vector_GetPtr(group->meshes, 0);  // Sun Sphere
 		if (sunSphere)
 		{
 			Vector3 lightColor = Vector3D(sunSphere->meshColor.x, sunSphere->meshColor.y, sunSphere->meshColor.z);
@@ -351,7 +357,7 @@ void DebugRenderer_UpdateSunPosition(DebugRenderer pDebugRenderer)
 {
 	// Option A: only update sun transform here
 	SDebugRendererPrimitiveGroup* group = &pDebugRenderer->groups[DEBUG_TRIANGLES];
-	Mesh3D sunSphere = VECTOR_GET(group->meshes, 0, Mesh3D);
+	Mesh3D sunSphere = Vector_GetPtr(group->meshes, 0);
 
 	static float angle = 0.0f;
 	float orbitRadius = 15.0f;
@@ -387,7 +393,7 @@ void DebugRenderer_UpdateDirtyMeshes(DebugRenderer pDebugRenderer)
 
 	for (int32_t i = 0; i < pDebugRenderer->groups[DEBUG_TRIANGLES].meshes->count; i++)
 	{
-		Mesh3D mesh = VECTOR_GET(pDebugRenderer->groups[DEBUG_TRIANGLES].meshes, i, Mesh3D);  // Sun Sphere
+		Mesh3D mesh = Vector_GetPtr(pDebugRenderer->groups[DEBUG_TRIANGLES].meshes, i);  // Sun Sphere
 		if (mesh->bDirty)
 		{
 			int32_t iMatIndex = mesh->meshMatrixIndex;
@@ -409,7 +415,7 @@ void DebugRenderer_UpdateDirtyMeshes(DebugRenderer pDebugRenderer)
 
 	for (int32_t i = 0; i < pDebugRenderer->groups[DEBUG_LINES].meshes->count; i++)
 	{
-		Mesh3D mesh = VECTOR_GET(pDebugRenderer->groups[DEBUG_LINES].meshes, i, Mesh3D);  // Sun Sphere
+		Mesh3D mesh = Vector_GetPtr(pDebugRenderer->groups[DEBUG_LINES].meshes, i);  // Sun Sphere
 		if (mesh->bDirty)
 		{
 			int32_t iMatIndex = mesh->meshMatrixIndex;

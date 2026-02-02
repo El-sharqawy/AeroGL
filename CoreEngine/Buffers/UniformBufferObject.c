@@ -1,12 +1,18 @@
 #include "UniformBufferObject.h"
 #include "../Core/CoreUtils.h"
-#include "GLBuffer.h"
+#include "../PipeLine/Utils.h"
 #include <memory.h>
 
 static GLint siMaxUBOSize = 0;
 
 bool InitializeUniformBufferObject(UniformBufferObject* ppUniBufObj, GLsizeiptr bufferSize, GLuint bindingPt, const char* szBufferName)
 {
+	if (ppUniBufObj == NULL)
+	{
+		syserr("ppUniBufObj is NULL (invalid address)");
+		return false;
+	}
+
 	if (siMaxUBOSize == 0)
 	{
 		glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &siMaxUBOSize);
@@ -26,7 +32,7 @@ bool InitializeUniformBufferObject(UniformBufferObject* ppUniBufObj, GLsizeiptr 
 
 	buffer->szBufferName = tracked_strdup(szBufferName);
 
-	if (!CreateBuffer(&buffer->bufferID))
+	if (!GL_CreateBuffer(&buffer->bufferID))
 	{
 		DestroyUniformBufferObject(&buffer);
 		syserr("Failed to Create GPU Uniform Buffers!");
@@ -98,7 +104,7 @@ void DestroyUniformBufferObject(UniformBufferObject* ppUniBufObj)
 		tracked_free(buffer->szBufferName);
 	}
 
-	DeleteBuffer(&buffer->bufferID); // Clear UP GPU Resources
+	GL_DeleteBuffer(&buffer->bufferID); // Clear UP GPU Resources
 
 	tracked_free(buffer);
 
@@ -191,7 +197,7 @@ void UniformBufferObject_Reallocate(UniformBufferObject pUniBufObj, GLsizeiptr n
 	GLsizeiptr oldUBOSize = pUniBufObj->bufferSize;
 
 	GLuint newUBO;
-	CreateBuffer(&newUBO);
+	GL_CreateBuffer(&newUBO);
 
 	if (IsGLVersionHigher(4, 5))
 	{
@@ -227,7 +233,7 @@ void UniformBufferObject_Reallocate(UniformBufferObject pUniBufObj, GLsizeiptr n
 	}
 
 	// Delete old buffer
-	DeleteBuffer(&oldUBO);
+	GL_DeleteBuffer(&oldUBO);
 
 	// Assign new data
 	pUniBufObj->bufferID = newUBO;

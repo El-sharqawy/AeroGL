@@ -81,7 +81,6 @@ void Mesh3D_MakeCircle2D(Mesh3D pMesh, Vector3 center, float radius, int step, V
 void Mesh3D_MakeWireSphere3D(Mesh3D pMesh, Vector3 center, float radius, int segments, int slices, Vector4 color, bool drawHorizontal);
 void Mesh3D_MakeTriangle3D(Mesh3D pMesh, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 center, Vector4 color);
 void Mesh3D_MakeSphere3D(Mesh3D pMesh, Vector3 center, float radius, int segments, int slices, Vector4 color);
-void Mesh3D_MakePyramid(Mesh3D pMesh, float baseSize, float height, Vector4 baseColor, Vector4 sideColor);
 void Mesh3D_MakeQuad3D(Mesh3D pMesh, Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, Vector4 color);
 
 void Mesh3D_SetName(Mesh3D pMesh, const char* szName);
@@ -95,6 +94,5 @@ void Mesh3D_SetName(Mesh3D pMesh, const char* szName);
  */
 void Mesh3D_Destroy(Mesh3D* ppMesh);
 void Mesh3D_Free(Mesh3D pMesh);
-void Mesh3D_PtrDestroy(Mesh3D pMesh);
 
 #endif // __MESH_3D_H__

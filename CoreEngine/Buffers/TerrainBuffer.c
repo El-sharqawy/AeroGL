@@ -1,6 +1,6 @@
 #include "TerrainBuffer.h"
 #include "../Core/CoreUtils.h"
-#include "GLBuffer.h"
+#include "../PipeLine/Utils.h"
 #include "../Terrain/TerrainData.h"
 
 bool TerrainBuffer_Create(TerrainGLBuffer buffer)
@@ -13,14 +13,14 @@ bool TerrainBuffer_Create(TerrainGLBuffer buffer)
 
 	TerrainBuffer_Delete(buffer); // Prevent Duplication and Leaks
 
-	if (!CreateVertexArray(&buffer->uiVAO))
+	if (!GL_CreateVertexArray(&buffer->uiVAO))
 	{
 		syserr("Failed to Create Terrain Vertex Arrays");
 		return (false);
 	}
 
 	GLuint buffers[2] = { 0, 0 };
-	if (!CreateBuffers(buffers, 2))
+	if (!GL_CreateBuffers(buffers, 2))
 	{
 		syserr("Failed to Create Terrain Buffers");
 		return (false);
@@ -48,9 +48,9 @@ void TerrainBuffer_Delete(TerrainGLBuffer buffer)
 		return;
 	}
 
-	DeleteVertexArray(&buffer->uiVAO);
-	DeleteBuffer(&buffer->uiVBO);
-	DeleteBuffer(&buffer->uiEBO);
+	GL_DeleteVertexArray(&buffer->uiVAO);
+	GL_DeleteBuffer(&buffer->uiVBO);
+	GL_DeleteBuffer(&buffer->uiEBO);
 
 	buffer->bIsInitialized = false; // Reset the engine state flag
 }
@@ -109,7 +109,13 @@ void TerrainBuffer_Clear(TerrainGLBuffer buffer)
 
 bool TerrainBuffer_Initialize(TerrainGLBuffer* ppTerrainBuffer, GLsizeiptr capacity)
 {
-	*ppTerrainBuffer = (TerrainGLBuffer)tracked_calloc(1, sizeof(STerrainGLBuffer));
+	if (ppTerrainBuffer == NULL)
+	{
+		syserr("ppTerrainBuffer is NULL (invalid address)");
+		return false;
+	}
+
+	*ppTerrainBuffer = tracked_calloc(1, sizeof(STerrainGLBuffer));
 
 	TerrainGLBuffer buffer = *ppTerrainBuffer;
 	if (!buffer)
@@ -358,7 +364,7 @@ bool TerrainBuffer_Reallocate(TerrainGLBuffer pTerrainBuffer, GLsizeiptr newVboC
 
 	// New GPU Buffers
 	GLuint newBuffers[2] = { 0, 0 }; // 0 -> VBO , 1 -> EBO
-	if (!CreateBuffers(newBuffers, 2))
+	if (!GL_CreateBuffers(newBuffers, 2))
 	{
 		return (false); // Failed to Create GPU Buffers
 	}
@@ -422,8 +428,8 @@ bool TerrainBuffer_Reallocate(TerrainGLBuffer pTerrainBuffer, GLsizeiptr newVboC
 	}
 
 	// Clear Up Old Buffer
-	DeleteBuffer(&oldVBO);
-	DeleteBuffer(&oldEBO);
+	GL_DeleteBuffer(&oldVBO);
+	GL_DeleteBuffer(&oldEBO);
 
 	// assign new Data
 	pTerrainBuffer->uiVBO = newBuffers[0];

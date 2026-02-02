@@ -7,6 +7,7 @@
 // Use forward declarations if possible to prevent circular includes
 typedef struct STerrainMap* TerrainMap;
 typedef struct STerrainRenderer* TerrainRenderer;
+typedef struct STexture* Texture;
 
 typedef struct STerrainManager
 {
@@ -20,6 +21,7 @@ typedef struct STerrainManager
 
 	// renderer
 	TerrainRenderer terarinRenderer;
+	Texture terrainTex;
 	bool bNeedsUpdate;
 } STerrainManager;
 
@@ -42,6 +44,7 @@ bool TerrainManager_CreateMap(TerrainManager pTerrainManager);
 
 // Map Load
 bool TerrainManager_LoadMap(TerrainManager pTerrainManager, char* szMapName);
+bool TerrainManager_SaveMap(TerrainManager pTerrainManager);
 
 // Singleton ~
 const TerrainManager GetTerrainManager();

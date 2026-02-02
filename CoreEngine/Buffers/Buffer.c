@@ -3,7 +3,7 @@
 #include <memory.h>
 #include <stddef.h> // Required for offsetof
 #include "../PipeLine/StateManager.h"
-#include "GLBuffer.h"
+#include "../PipeLine/Utils.h"
 
 typedef struct SGLBuffer
 {
@@ -35,11 +35,11 @@ void GLBuffer_Delete(GLBuffer buffer)
 		return;
 	}
 
-	DeleteVertexArray(&buffer->uiVAO);
+	GL_DeleteVertexArray(&buffer->uiVAO);
 
 	// Explicitly delete both to be safe against future struct changes
-	DeleteBuffer(&buffer->uiVBO);
-	DeleteBuffer(&buffer->uiEBO);
+	GL_DeleteBuffer(&buffer->uiVBO);
+	GL_DeleteBuffer(&buffer->uiEBO);
 
 	buffer->bIsInitialized = false; // Reset the engine state flag
 }
@@ -56,7 +56,7 @@ bool GLBuffer_Create(GLBuffer buffer)
 	GLBuffer_Delete(buffer);
 
 	// 1. VAO is a separate type - Create it first
-	if (!CreateVertexArray(&buffer->uiVAO))
+	if (!GL_CreateVertexArray(&buffer->uiVAO))
 	{
 		syserr("Failed to Create Buffer Vertex Array");
 		return (false);
@@ -66,7 +66,7 @@ bool GLBuffer_Create(GLBuffer buffer)
 	GLuint ids[2] = { 0, 0 };
 
 	// Create VBO and EBO
-	CreateBuffers(ids, 2);
+	GL_CreateBuffers(ids, 2);
 
 	// 3. Assign them back to the struct
 	buffer->uiVBO = ids[0];
@@ -352,6 +352,12 @@ void GLBuffer_UploadDataPtr(GLBuffer buffer, const SVertex* pVertices, GLsizeipt
 
 bool GLBuffer_Initialize(GLBuffer* ppBuffer)
 {
+	if (ppBuffer == NULL)
+	{
+		syserr("ppBuffer is NULL (invalid address)");
+		return false;
+	}
+
 	*ppBuffer = (GLBuffer)tracked_malloc(sizeof(SGLBuffer));
 
 	GLBuffer pGLBuffer = *ppBuffer;
@@ -436,7 +442,7 @@ bool GLBuffer_Reallocate(GLBuffer pBuffer, GLsizeiptr newVboCapacity, GLsizeiptr
 
 	// New GPU Buffers
 	GLuint newBuffers[2] = { 0, 0 }; // 0 -> VBO , 1 -> EBO
-	if (!CreateBuffers(newBuffers, 2))
+	if (!GL_CreateBuffers(newBuffers, 2))
 	{
 		return (false); // Failed to Create GPU Buffers
 	}
@@ -508,8 +514,8 @@ bool GLBuffer_Reallocate(GLBuffer pBuffer, GLsizeiptr newVboCapacity, GLsizeiptr
 	}
 
 	// Clear Up Old Buffer
-	DeleteBuffer(&oldVBO);
-	DeleteBuffer(&oldEBO);
+	GL_DeleteBuffer(&oldVBO);
+	GL_DeleteBuffer(&oldEBO);
 
 	// assign new Data
 	pBuffer->uiVBO = newBuffers[0];
@@ -730,7 +736,7 @@ void Mesh3DGLBuffer_UploadData(GLBuffer buffer, Mesh3D mesh)
 	if (!buffer || !mesh || !mesh->pVertices || !mesh->pVertices->pData ||
 		!mesh->pIndices || !mesh->pIndices->pData || mesh->vertexCount == 0)
 	{
-		syslog("UpdateBufferMesh3DData: Invalid mesh! vCount=%zu pDataV=%p pDataI=%p",
+		syslog("Mesh3DGLBuffer_UploadData: Invalid mesh! vCount=%zu pDataV=%p pDataI=%p",
 			mesh->vertexCount, mesh->pVertices ? mesh->pVertices->pData : NULL,
 			mesh->pIndices ? mesh->pIndices->pData : NULL);
 		return;
@@ -806,7 +812,14 @@ void Mesh3DGLBuffer_UploadData(GLBuffer buffer, Mesh3D mesh)
 
 bool Mesh3DGLBuffer_Initialize(GLBuffer* ppBuffer)
 {
-	*ppBuffer = (GLBuffer)tracked_malloc(sizeof(SGLBuffer));
+	if (ppBuffer == NULL)
+	{
+		syserr("ppBuffer is NULL (invalid address)");
+		return false;
+	}
+
+	*ppBuffer = tracked_malloc(sizeof(SGLBuffer));
+
 	GLBuffer pGLBuffer = *ppBuffer;
 
 	if (!pGLBuffer)
@@ -888,7 +901,7 @@ bool Mesh3DGLBuffer_Reallocate(GLBuffer pBuffer, GLsizeiptr newVboCapacity, GLsi
 
 	// New GPU Buffers
 	GLuint newBuffers[2] = { 0, 0 }; // 0 -> VBO , 1 -> EBO
-	if (!CreateBuffers(newBuffers, 2))
+	if (!GL_CreateBuffers(newBuffers, 2))
 	{
 		return (false); // Failed to Create GPU Buffers
 	}
@@ -951,8 +964,8 @@ bool Mesh3DGLBuffer_Reallocate(GLBuffer pBuffer, GLsizeiptr newVboCapacity, GLsi
 	}
 
 	// Clear Up Old Buffer
-	DeleteBuffer(&oldVBO);
-	DeleteBuffer(&oldEBO);
+	GL_DeleteBuffer(&oldVBO);
+	GL_DeleteBuffer(&oldEBO);
 
 	// assign new Data
 	pBuffer->uiVBO = newBuffers[0];

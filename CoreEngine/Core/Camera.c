@@ -102,7 +102,13 @@ typedef struct SGLCamera
 
 bool InitializeCamera(GLCamera *ppCamera, float Width, float Height)
 {
-	*ppCamera = (GLCamera)tracked_malloc(sizeof(SGLCamera));
+	if (ppCamera == NULL)
+	{
+		syserr("ppCamera is NULL (invalid address)");
+		return false;
+	}
+
+	*ppCamera = tracked_malloc(sizeof(SGLCamera));
 
 	GLCamera pCamera = *ppCamera;
 

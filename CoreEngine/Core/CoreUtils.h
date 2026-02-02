@@ -95,6 +95,11 @@ bool IsGLVersionHigher(GLint MajorVer, GLint MinorVer);
 
 bool MakeDirectory(const char* fullPath);
 bool IsDirectoryExists(const char* path);
+bool File_IsFileExists(const char* filePath);
+bool File_GetInfo(const char* szPath, size_t* pOutSize);
+const char* File_GetExtension(const char* szPath);
+const char* File_GetFileName(const char* szPath);
+void File_GetFileNameNoExtension(const char* szPath, char* pOutBuffer, size_t bufferSize);
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <direct.h>  // For _mkdir on Windows
@@ -102,6 +107,10 @@ bool IsDirectoryExists(const char* path);
 #define MKDIR(path) _mkdir(path)
 #undef access
 #define access _access
+
+// F_OK checks for the existence of the file
+#define F_OK 0
+
 #else
 #include <sys/stat.h> // For mkdir on Linux/Unix
 #include <sys/types.h>

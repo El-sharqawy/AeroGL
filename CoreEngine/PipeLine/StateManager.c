@@ -5,6 +5,12 @@
 
 bool StateManager_Initialize(StateManager* ppStateManager)
 {
+	if (ppStateManager == NULL)
+	{
+		syserr("ppStateManager is NULL (invalid address)");
+		return false;
+	}
+
 	*ppStateManager = (StateManager)tracked_malloc(sizeof(SStateManager));
 
 	StateManager stateManager = *ppStateManager;

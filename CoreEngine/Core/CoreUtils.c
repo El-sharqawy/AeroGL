@@ -291,3 +291,90 @@ bool IsDirectoryExists(const char* path)
 	}
 	return (false); // Directory does not exist
 }
+
+bool File_IsFileExists(const char* filePath)
+{
+	if (access(filePath, F_OK) != -1)
+	{
+		return (true); // Don't overwrite without asking!
+	}
+
+	return (false);
+}
+
+bool File_GetInfo(const char* szPath, size_t* pOutSize)
+{
+	struct stat buffer;
+	if (stat(szPath, &buffer) == 0)
+	{
+		if (pOutSize)
+		{
+			*pOutSize = buffer.st_size;
+		}
+		return true;
+	}
+	return false;
+}
+
+const char* File_GetExtension(const char* szPath)
+{
+	if (szPath == NULL) return NULL;
+
+	// Find the last occurrence of '.'
+	const char* dot = strrchr(szPath, '.');
+
+	// If no dot is found, or if the dot is the very last character, return an empty string
+	if (!dot || dot == szPath + strlen(szPath) - 1)
+	{
+		return "";
+	}
+
+	// Return the string starting one character after the dot
+	return dot + 1;
+}
+
+const char* File_GetFileName(const char* szPath)
+{
+	if (!szPath) return NULL;
+
+	// Find the last occurrence of both types of slashes
+	const char* lastSlash = strrchr(szPath, '/');
+	const char* lastBackslash = strrchr(szPath, '\\');
+
+	// Determine which one appears later in the string
+	const char* lastSeparator = (lastSlash > lastBackslash) ? lastSlash : lastBackslash;
+
+	// If no separator is found, the path is already just the filename
+	if (!lastSeparator)
+	{
+		return szPath;
+	}
+
+	// Return the string starting one character after the slash
+	return lastSeparator + 1;
+}
+
+void File_GetFileNameNoExtension(const char* szPath, char* pOutBuffer, size_t bufferSize)
+{
+	const char* filename = File_GetFileName(szPath);
+	if (!filename)
+	{
+		return;
+	}
+
+	// Copy filename to buffer
+#if defined(_WIN32) || defined(_WIN64)
+	strncpy_s(pOutBuffer, bufferSize, filename, bufferSize - 1);
+#else
+	strncpy(pOutBuffer, filename, bufferSize - 1);
+#endif
+
+	pOutBuffer[bufferSize - 1] = '\0';
+
+	// Find the last dot in the result and null-terminate there
+	char* dot = strrchr(pOutBuffer, '.');
+	if (dot)
+	{
+		*dot = '\0';
+	}
+}

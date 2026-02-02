@@ -24,8 +24,14 @@ typedef struct SGLWindow
 	GLint m_iFullScreenHeight;
 } SGLWindow;
 
+void error_callback(int error, const char* description) {
+	fprintf(stderr, "Error: %s\n", description);
+}
+
 bool InitializeWindow(GLWindow pWindow)
 {
+	glfwSetErrorCallback(error_callback);
+
 	if (!glfwInit())
 	{
 		syserr("Failed to Initialize GLFW Library");

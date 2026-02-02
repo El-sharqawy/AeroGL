@@ -2,6 +2,8 @@
 #include "../TerrainMap/TerrainMap.h"
 #include "../../Core/CoreUtils.h"
 #include "../../Math/Grids/FloatGrid.h"
+#include "../TerrainPatch.h"
+#include "../../PipeLine/Texture.h"
 
 bool Terrain_CreateFiles(STerrainMap* pParentMap, int32_t iTerrainX, int32_t iTerrainZ)
 {
@@ -27,8 +29,6 @@ bool Terrain_CreateFiles(STerrainMap* pParentMap, int32_t iTerrainX, int32_t iTe
 		syserr("Path name is too long.");
 		return false;
 	}
-
-	syslog("TerrainFolder: %s", szTerrainPath);
 
 	if (!MakeDirectory(szTerrainPath))
 	{
@@ -62,7 +62,7 @@ bool Terrain_CreateHeightMap(Terrain pTerrain, const char* szTerrainsFolder)
 
 	// Safety for overwriting
 
-	if (access(szHeightMapFile, 0) != -1)
+	if (access(szHeightMapFile, F_OK) != -1)
 	{
 		syserr("Aborting Create: A heightmap already exists at %s", szHeightMapFile);
 		// return false; // Don't overwrite without asking!
@@ -226,6 +226,13 @@ bool Terrain_LoadHeightMap(Terrain pTerrain, const char* szTerrainsFolder)
 	}
 
 	fclose(fHeightMap);
+
+
+	for (int32_t i = 0; i < 5; i++)
+	{
+		pTerrain->heightMap->pArray[i] = 10.0f;
+	}
+
 	return (success);
 }
 
@@ -320,4 +327,50 @@ bool Terrain_SaveHeightMap(Terrain pTerrain, const char* szTerrainsFolder)
 	}
 
 	return success;
+}
+
+bool Terrain_Load(Terrain pTerrain)
+{
+	if (pTerrain->terrainXCoord < 0 || pTerrain->terrainZCoord < 0)
+	{
+		syserr("You need to set Terrain coords")
+			return (false);
+	}
+
+	if (!Vector_InitCapacity(&pTerrain->terrainPatches, sizeof(TerrainPatch), TERRAIN_PATCH_COUNT, false))
+	{
+		syserr("Failed to Initialize Terrain Patch Vector");
+		return (false);
+	}
+
+	pTerrain->terrainPatches->destructor = TerrainPatch_Destroy;
+
+	memcpy(pTerrain->patchesMetrices, &S_Matrix4_Identity, sizeof(pTerrain->patchesMetrices));
+
+	// Initialize transform to identity
+	pTerrain->transform = TransformInit();  // Position (0,0,0), Scale (1,1,1), No rotation
+
+	// Position the mesh in world space
+	Vector3 terrainStartPos = Vector3D(TERRAIN_XSIZE * pTerrain->terrainXCoord, 0.0f, pTerrain->terrainZCoord * TERRAIN_ZSIZE);
+	TransformSetPositionV(&pTerrain->transform, terrainStartPos);
+
+	pTerrain->isInitialized = true;
+	return (true);
+}
+
+bool Terrain_LoadHeightMapTexture(Terrain pTerrain)
+{
+	if (!Texture_Initialize(&pTerrain->pHeightMapTexture))
+	{
+		syserr("Failed to Initialize HeightMap Texture");
+		return (false);
+	}
+
+	if (!Texture_LoadHeightMap(pTerrain->pHeightMapTexture, "TerrainHeightMapTex", pTerrain->heightMap->pArray, pTerrain->heightMap->cols, pTerrain->heightMap->rows, GL_FLOAT, true))
+	{
+		syserr("Failed to Load HeightMap Texture");
+		return (false);
+	}
+
+	return (true);
 }

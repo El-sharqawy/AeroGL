@@ -1,12 +1,21 @@
 #include "Terrain.h"
 #include "../TerrainMap/TerrainMap.h"
-#include "../TerrainPatch.h"
 #include "../TerrainData.h"
+#include "../TerrainPatch.h"
 #include "../../Math/Grids/FloatGrid.h"
+#include "../../PipeLine/Texture.h"
+#include "../../Math/Matrix/Matrix3.h"
+
 #include <memory.h>
 
 bool Terrain_Initialize(Terrain* ppTerrain)
 {
+	if (ppTerrain == NULL)
+	{
+		syserr("ppTerrain is NULL (invalid address)");
+		return false;
+	}
+
 	*ppTerrain = (Terrain)tracked_calloc(1, sizeof(STerrain));
 
 	Terrain pTerrain = *ppTerrain;
@@ -34,6 +43,8 @@ void Terrain_Destroy(Terrain* ppTerrain)
 
 	FloatGrid_Destroy(&pTerrain->heightMap);
 
+	Texture_Destroy(&pTerrain->pHeightMapTexture);
+
 	tracked_free(pTerrain);
 
 	*ppTerrain = NULL;
@@ -46,35 +57,6 @@ void Terrain_DestroyPtr(Terrain pTerrain)
 	{
 		Terrain_Destroy(ppTerrain);
 	}
-}
-
-bool Terrain_Load(Terrain pTerrain)
-{
-	if (pTerrain->terrainXCoord < 0 || pTerrain->terrainZCoord < 0)
-	{
-		syserr("You need to set Terrain coords")
-		return (false);
-	}
-
-	if (!Vector_InitCapacity(&pTerrain->terrainPatches, sizeof(TerrainPatch), TERRAIN_PATCH_COUNT))
-	{
-		syserr("Failed to Initialize Terrain Patch Vector");
-		return (false);
-	}
-
-	pTerrain->terrainPatches->destructor = TerrainPatch_DestroyPtr;
-
-	memcpy(pTerrain->patchesMetrices, &S_Matrix4_Identity, sizeof(pTerrain->patchesMetrices));
-
-	// Initialize transform to identity
-	pTerrain->transform = TransformInit();  // Position (0,0,0), Scale (1,1,1), No rotation
-
-	// Position the mesh in world space
-	Vector3 terrainStartPos = Vector3D(TERRAIN_XSIZE * pTerrain->terrainXCoord, 0.0f, pTerrain->terrainZCoord * TERRAIN_ZSIZE);
-	TransformSetPositionV(&pTerrain->transform, terrainStartPos);
-
-	pTerrain->isInitialized = true;
-	return (true);
 }
 
 void Terrain_SetTerrainCoords(Terrain pTerrain, int32_t iTerrX, int32_t iTerrZ)
@@ -111,26 +93,75 @@ bool Terrain_InitializePatches(Terrain pTerrain)
 		for (int32_t iPatchNumX = 0; iPatchNumX < PATCH_XCOUNT; iPatchNumX++)
 		{
 			GLint iPatchNum = iPatchNumZ * PATCH_XCOUNT + iPatchNumX;
+			Vector4 color;
+			color.r = (float)(iPatchNum % 8) / 8.0f;      // Red: 0,0.125,0.25...
+			color.g = (float)(iPatchNum / 8 % 8) / 8.0f;  // Green: cycles every 8
+			color.b = 0.5f + 0.5f * sinf(iPatchNum * 0.3f);  // Blue: rainbow
+			color.a = 1.0f;
 
-			Vector3 worldPos = Vector3D(iPatchNumX * PATCH_XSIZE * PATCH_CELL_SIZE, 0.0f, iPatchNumZ * PATCH_ZSIZE * PATCH_CELL_SIZE);
-			TerrainPatch terrainPatch = TerrainPatch_Create(pTerrain, iPatchNum, iPatchNumX, iPatchNumZ, worldPos, PATCH_CELL_SIZE);
-
-			if (terrainPatch == NULL)
+			TerrainPatch pTerrainPatch = NULL;
+			if (!TerrainPatch_Initialize(&pTerrainPatch, pTerrain->pParentMap, iPatchNum))
 			{
-				syserr("Failed to Generate Terrain %d Patch %d", pTerrain->terrainIndex, iPatchNum);
-				break;
-			}
-
-			Matrix4 terrainMat = TransformGetMatrix(&pTerrain->transform);						// parent
-			Matrix4 patchMat = TransformGetMatrix(&terrainPatch->terrainMesh->transform);		// local patch
-			Matrix4 finalMat = Matrix4_Mul(terrainMat, patchMat);								// parent * local
-
-			pTerrain->patchesMetrices[iPatchNum] = finalMat;
-			if (!Vector_PushBack(&pTerrain->terrainPatches, &terrainPatch))
-			{
-				syserr("Failed to Push Terrain Patch");
+				syserr("Failed to Initialize Patch %d", iPatchNum)
 				return (false);
 			}
+
+			// ex: 1 * 32 = 32 .. 2 * 32 = 64 .. etc
+			int32_t iPatchStartX = iPatchNumX * PATCH_XSIZE;
+			int32_t iPatchStartZ = iPatchNumZ * PATCH_ZSIZE;
+
+			float fPatchXSizeMeters = PATCH_XSIZE * PATCH_CELL_SIZE;
+			float fPatchZSizeMeters = PATCH_ZSIZE * PATCH_CELL_SIZE;
+
+			float fPatchStartX = (float)(pTerrain->terrainXCoord * XSIZE * PATCH_CELL_SIZE) + (float)(iPatchStartX * PATCH_CELL_SIZE);
+			float fPatchStartZ = (float)(pTerrain->terrainZCoord * ZSIZE * PATCH_CELL_SIZE) + (float)(iPatchStartZ * PATCH_CELL_SIZE);
+
+			float fOriginalPatchStartX = fPatchStartX;
+			float fOriginalPatchStartZ = fPatchStartZ;
+
+			TerrainMesh mesh = pTerrainPatch->terrainMesh;
+			int32_t width = pTerrainPatch->patchWidth;
+			int32_t depth = pTerrainPatch->patchDepth;
+
+			Vector_Reserve(mesh->pVertices, (width + 1) * (depth + 1));
+			Vector_Reserve(mesh->pIndices, (width * depth * 6));
+
+			// Normals Calculations
+			Matrix4 model = TransformGetMatrix(&pTerrainPatch->terrainMesh->transform);
+			Matrix3 mat3Model = Matrix3_InitMatrix4(model);
+			Matrix3 invModel = Matrix3_Inverse(mat3Model);
+			Matrix3 normalMatrix = Matrix3_TransposeN(invModel);
+
+			// loop through each vertices
+			for (GLint iZ = iPatchStartZ; iZ <= iPatchStartZ + PATCH_ZSIZE; iZ++)
+			{
+				fPatchStartX = fOriginalPatchStartX;
+
+				for (GLint iX = iPatchStartX; iX <= iPatchStartX + PATCH_XSIZE; iX++)
+				{
+					STerrainVertex vertex = { 0 };
+
+					vertex.v3Position = Vector3D(fPatchStartX, 0.0f, fPatchStartZ);
+					vertex.v2TexCoords = Vector2D((fPatchStartX - fOriginalPatchStartX) / fPatchXSizeMeters, (fPatchStartZ - fOriginalPatchStartZ) / fPatchZSizeMeters);
+					vertex.v3Normals = Vector3D(0.0f, 1.0f, 0.0f);
+					vertex.v4Color = color;
+
+					TerrainMesh_AddVertex(mesh, vertex);
+
+					fPatchStartX++;
+				}
+
+				fPatchStartZ++;
+			}
+
+			syslog("Initialized %zu vertices", pTerrainPatch->terrainMesh->pVertices->count);
+			TerrainPatch_InitializeIndices(pTerrainPatch);
+			
+			// Since we are baking the worldPos into the vertices, 
+			// the matrix for the shader must be Identity.
+			pTerrain->patchesMetrices[iPatchNum] = S_Matrix4_Identity;
+
+			Vector_PushBack(pTerrain->terrainPatches, pTerrainPatch);
 		}
 	}
 
@@ -173,12 +204,15 @@ void Terrain_UpdatePatch(Terrain pTerrain, int32_t iPatchNumX, int32_t iPatchNum
 
 
 	// Terrain Patch
-	TerrainPatch pTerrainPatch = VECTOR_GET(pTerrain->terrainPatches, iPatchNum, TerrainPatch);
+	TerrainPatch pTerrainPatch = Vector_GetPtr(pTerrain->terrainPatches, iPatchNum);
 	if (pTerrainPatch == NULL)
 	{
 		syserr("Patch %d not Initialized", iPatchNum);
 		return;
 	}
+
+	// Clear Elements
+	Vector_Clear(pTerrain->terrainPatches);
 
 	// loop through each vertices
 	for (GLint iZ = iPatchStartZ; iZ <= iPatchStartZ + PATCH_ZSIZE; iZ++)
@@ -186,8 +220,25 @@ void Terrain_UpdatePatch(Terrain pTerrain, int32_t iPatchNumX, int32_t iPatchNum
 		fPatchStartX = fOriginalPatchStartX;
 
 		for (GLint iX = iPatchStartX; iX <= iPatchStartX + PATCH_XSIZE; iX++)
-		{
+		{	
 			// syslog("iPatchIndex: %d, fX: %f, fZ: %f", iPatchNum, fPatchStartX, fPatchStartZ);
+			Vector3 worldPos = Vector3D(fPatchStartX, 0.0f, fPatchStartZ);
+			TerrainPatch terrainPatch = TerrainPatch_Create(pTerrain, iPatchNum, iPatchNumX, iPatchNumZ, worldPos, PATCH_CELL_SIZE);
+
+			if (terrainPatch == NULL)
+			{
+				syserr("Failed to Generate Terrain %d Patch %d", pTerrain->terrainIndex, iPatchNum);
+				break;
+			}
+
+			terrainPatch->terrainMesh->pVertices;
+
+			// Since we are baking the worldPos into the vertices, 
+			// the matrix for the shader must be Identity.
+			pTerrain->patchesMetrices[iPatchNum] = S_Matrix4_Identity;
+
+			Vector_PushBack(pTerrain->terrainPatches, terrainPatch);
+
 			fPatchStartX += (GLfloat)PATCH_CELL_SIZE;
 		}
 

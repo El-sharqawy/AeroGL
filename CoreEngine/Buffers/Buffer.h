@@ -8,6 +8,9 @@
 
 typedef struct SGLBuffer* GLBuffer;
 
+#define INITIAL_VERTEX_CAPACITY 8190	// Start with 8k vertices
+#define INITIAL_INDEX_CAPACITY 16384	// Start with 16k indices
+
 // GL Buffer Functions
 void GLBuffer_Delete(GLBuffer buffer);
 bool GLBuffer_Create(GLBuffer buffer);

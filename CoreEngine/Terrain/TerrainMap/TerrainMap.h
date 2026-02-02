@@ -2,12 +2,15 @@
 #define __TERRAIN_MAP_H__
 
 #include "../Terrain/Terrain.h"
+#include "../../Lib/Vector.h"
 
 typedef struct STerrainMap
 {
 	Vector terrains;
 	int32_t terrainsXCount; // number of terrains among X Axis
 	int32_t terrainsZCount; // Number of Terrains Among Z Axis
+	int32_t mapPositionX;	// Map Coords
+	int32_t mapPositionZ;	// Map Coords
 	bool isReady; // is the map ready to render
 
 	char* szMapName;
@@ -35,5 +38,9 @@ bool TerrainMap_LoadMap(TerrainMap pTerrainMap, char* szMapName);
 bool TerrainMap_LoadSettingsFile(TerrainMap pTerrainMap, const char* szMapPath);
 bool TerrainMap_LoadTerrain(TerrainMap pTerrainMap, int32_t iTerrainX, int32_t iTerrainZ);
 bool TerrainMap_IsTerrainLoaded(TerrainMap pTerrainMap, int32_t iTerrainX, int32_t iTerrainZ);
+
+bool TerrainMap_SaveMap(TerrainMap pTerrainMap);
+bool TerrainMap_SaveSettingsFile(TerrainMap pTerrainMap);
+bool TerrainMap_SaveTerrain(TerrainMap pTerrainMap, int32_t iTerrainX, int32_t iTerrainZ);
 
 #endif // __TERRAIN_MAP_H__

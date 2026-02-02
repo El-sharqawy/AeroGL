@@ -2,6 +2,12 @@
 
 bool TerrainMap_Initialize(TerrainMap* ppTerrainMap)
 {
+	if (ppTerrainMap == NULL)
+	{
+		syserr("ppTerrainMap is NULL (invalid address)");
+		return false;
+	}
+
 	// Avoid Memory Leaks
 	if (*ppTerrainMap == NULL)
 	{

@@ -10,6 +10,12 @@ bool FloatGrid_Initialize(FloatGrid* ppFloatGrid, int32_t width, int32_t height)
 		return false;
 	}
 
+	if (ppFloatGrid == NULL)
+	{
+		syserr("ppFloatGrid is NULL (invalid address)");
+		return false;
+	}
+
 	*ppFloatGrid = (FloatGrid)tracked_calloc(1, sizeof(SFloatGrid));
 
 	if (!(*ppFloatGrid)) // Check immediately

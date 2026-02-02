@@ -1,11 +1,13 @@
 #include "Engine.h"
+#include "Lib/Vector.h"
+#include "PipeLine/Texture.h"
 
 #pragma comment(lib, "glfw3.lib")
 // #pragma comment(lib, "Debug\\assimp-vc143-mtd.lib")
 
 int main(int argc, char* argv[])
 {
-	Engine engine = (Engine)tracked_calloc(1, sizeof(SEngine));
+	Engine engine = tracked_calloc(1, sizeof(SEngine));
 
 	if (!InitializeEngine(engine))
 	{
@@ -18,9 +20,8 @@ int main(int argc, char* argv[])
 	}
 
 	DestroyEngine(engine);
-
 	tracked_free(engine);
 
-	printf("Leaks: %zu\n", allocation_count);
+	printf("Leaked: %zu objects with: %zu bytes (%zu KB)\n", allocation_count, bytes_allocated, bytes_allocated / 1024);
 	return (EXIT_SUCCESS);
 }

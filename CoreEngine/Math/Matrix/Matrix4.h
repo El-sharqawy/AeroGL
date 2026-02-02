@@ -267,6 +267,25 @@ static inline Vector4 Matrix4_Mul_Vec4(const Matrix4 mat, const Vector4 vec4)
 	return result;
 }
 
+static inline Vector3 Matrix4_Mul_Vec3(const Matrix4 mat, const Vector3 vec3)
+{
+	Vector3 result;
+
+	// 1. Splat components of Matrix2's column i
+	__m128 vec_x = _mm_set1_ps(vec3.x);
+	__m128 vec_y = _mm_set1_ps(vec3.y);
+	__m128 vec_z = _mm_set1_ps(vec3.z);
+	__m128 vec_w = _mm_set1_ps(1.0f); // Implicit w = 1.0
+
+	// 2. Linear combination: (Col0 * x) + (Col1 * y) + (Col2 * z) + (Col3 * w)
+	result.reg = _mm_mul_ps(mat.cols[0].reg, vec_x);
+	result.reg = _mm_add_ps(result.reg, _mm_mul_ps(mat.cols[1].reg, vec_y));
+	result.reg = _mm_add_ps(result.reg, _mm_mul_ps(mat.cols[2].reg, vec_z));
+	result.reg = _mm_add_ps(result.reg, _mm_mul_ps(mat.cols[3].reg, vec_w));
+
+	return result;
+}
+
 static inline Matrix4 Matrix4_Identity(void)
 {
 	return S_Matrix4_Identity;

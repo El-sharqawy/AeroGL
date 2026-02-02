@@ -1,10 +1,16 @@
 #include "IndirectBufferObject.h"
 #include "../Core/CoreUtils.h"
-#include "GLBuffer.h"
+#include "../PipeLine/Utils.h"
 
 bool IndirectBufferObject_Initialize(IndirectBufferObject* ppIndirectBuffer, GLsizeiptr initialCapacity)
 {
-	*ppIndirectBuffer = (IndirectBufferObject)tracked_calloc(1, sizeof(SIndirectBufferObject));
+	if (ppIndirectBuffer == NULL)
+	{
+		syserr("ppIndirectBuffer is NULL (invalid address)");
+		return false;
+	}
+
+	*ppIndirectBuffer = tracked_calloc(1, sizeof(SIndirectBufferObject));
 	IndirectBufferObject pIndirectBuf = *ppIndirectBuffer;
 
 	if (!pIndirectBuf)
@@ -13,7 +19,7 @@ bool IndirectBufferObject_Initialize(IndirectBufferObject* ppIndirectBuffer, GLs
 		return (false);
 	}
 
-	if (!Vector_InitCapacity(&pIndirectBuf->commands, sizeof(SIndirectDrawCommand), initialCapacity))
+	if (!Vector_InitCapacity(&pIndirectBuf->commands, sizeof(SIndirectDrawCommand), initialCapacity, false))
 	{
 		syserr("Failed to create command vector");
 		IndirectBufferObject_Destroy(&pIndirectBuf);
@@ -32,11 +38,11 @@ void IndirectBufferObject_GenerateGL(IndirectBufferObject pIndirectBuf, GLsizeip
 	// Delete if Already Existing
 	if (pIndirectBuf->bufferID != 0)
 	{
-		DeleteBuffer(&pIndirectBuf->bufferID);
+		GL_DeleteBuffer(&pIndirectBuf->bufferID);
 	}
 
 	// Create Buffer
-	CreateBuffer(&pIndirectBuf->bufferID);
+	GL_CreateBuffer(&pIndirectBuf->bufferID);
 
 	if (IsGLVersionHigher(4, 5))
 	{
@@ -69,7 +75,7 @@ void IndirectBufferObject_AddCommand(IndirectBufferObject pIndirectBuf, GLuint c
 	size_t oldCapacity = pIndirectBuf->commands->capacity;
 
 	// Push to vector (auto-grows if needed)
-	Vector_PushBack(&pIndirectBuf->commands, &cmd);
+	Vector_PushBackValue(pIndirectBuf->commands, cmd);
 
 	// Check if vector grew
 	size_t newCapacity = pIndirectBuf->commands->capacity;
@@ -214,7 +220,7 @@ void IndirectBufferObject_Destroy(IndirectBufferObject* ppIndirectBuffer)
 
 	IndirectBufferObject pBuf = *ppIndirectBuffer;
 
-	DeleteBuffer(&pBuf->bufferID); // Clear GPU Resources
+	GL_DeleteBuffer(&pBuf->bufferID); // Clear GPU Resources
 
 	Vector_Destroy(&pBuf->commands); // Clear CPU Resources
 

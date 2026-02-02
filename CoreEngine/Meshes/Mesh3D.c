@@ -1,5 +1,6 @@
 #include "Mesh3D.h"
 #include "../Math/EngineMath.h"
+#include "../Math/Matrix/Matrix3.h"
 
 Mesh3D Mesh3D_Create(GLenum primitiveType)
 {
@@ -12,14 +13,16 @@ Mesh3D Mesh3D_Create(GLenum primitiveType)
 	}
 
 	// 2. Initialize dynamic arrays (Vector)
-	if (!Vector_Init(&mesh->pVertices, sizeof(SVertex3D)))
+	if (!Vector_Init(&mesh->pVertices, sizeof(SVertex3D), false))
 	{
+		syserr("Failed to Initialize Mesh Vector Vertices");
 		tracked_free(mesh);
 		return NULL;
 	}
 
-	if (!Vector_Init(&mesh->pIndices, sizeof(GLuint)))
+	if (!Vector_Init(&mesh->pIndices, sizeof(GLuint), false))
 	{
+		syserr("Failed to Initialize Mesh Vector Indices");
 		Vector_Destroy(&mesh->pVertices);
 		tracked_free(mesh);
 		return NULL;
@@ -56,8 +59,18 @@ Mesh3D Mesh3D_CreateWithCapacity(GLenum primitiveType, GLsizeiptr vertexHint, GL
 	}
 
 	// 2. Initialize dynamic arrays (Vector)
-	Vector_InitCapacity(&mesh->pVertices, sizeof(SVertex3D), vertexHint);  // Initial capacity
-	Vector_InitCapacity(&mesh->pIndices, sizeof(GLuint), indexHint);    // Initial capacity
+	if (!Vector_InitCapacity(&mesh->pVertices, sizeof(SVertex3D), vertexHint, false))  // Initial capacity
+	{
+		syserr("Failed to Initialize Mesh Vector Vertices");
+		Mesh3D_Destroy(&mesh);  // Cleanup on failure
+		return NULL;
+	}
+	if (!Vector_InitCapacity(&mesh->pIndices, sizeof(GLuint), indexHint, false))    // Initial capacity
+	{
+		syserr("Failed to Initialize Mesh Vector Indices");
+		Mesh3D_Destroy(&mesh);  // Cleanup on failure
+		return NULL;
+	}
 
 	if (!mesh->pVertices || !mesh->pIndices)
 	{
@@ -125,33 +138,16 @@ void Mesh3D_AddLine3D(Mesh3D pMesh, Vector3 start, Vector3 end, Vector4 color)
 	SVertex3D endVertex = { .m_v3Position = end, .m_v4Color = color };
 
 	// Initialize Vertices
-	if (!Vector_PushBack(&pMesh->pVertices, &startVertex))
-	{
-		syserr("Failed to push start vertex");
-		return;
-	}
+	Vector_PushBackValue(pMesh->pVertices, startVertex);
 
-	if (!Vector_PushBack(&pMesh->pVertices, &endVertex))
-	{
-		syserr("Failed to push end vertex");
-		return;
-	}
+	Vector_PushBackValue(pMesh->pVertices, endVertex);
 
 	// Initialize Indices
 	GLuint index1 = offset;
 	GLuint index2 = offset + 1;
 
-	if (!Vector_PushBack(&pMesh->pIndices, &index1))
-	{
-		syserr("Failed to push index 1");
-		return;
-	}
-
-	if (!Vector_PushBack(&pMesh->pIndices, &index2))
-	{
-		syserr("Failed to push index 2");
-		return;
-	}
+	Vector_PushBackValue(pMesh->pIndices, index1);
+	Vector_PushBackValue(pMesh->pIndices, index2);
 
 	// Update metadata
 	pMesh->vertexCount += 2;
@@ -176,8 +172,9 @@ void Mesh3D_MakeAxis(Mesh3D pMesh, Vector3 position, float length)
 	Mesh3D_AddLine3D(pMesh, Vector3F(0.0f), Vector3D(0.0f, length, 0.0f), Vector4D(0.0f, 1.0f, 0.0f, 0.0f)); // Y - Axis
 	Mesh3D_AddLine3D(pMesh, Vector3F(0.0f), Vector3D(0.0f, 0.0f, length), Vector4D(0.0f, 0.0f, 1.0f, 0.0f)); // Z - Axis
 
-	// Update metadata
 	TransformSetPositionV(&pMesh->transform, position); // Update Transformation Matrix
+
+	// Update metadata
 	pMesh->vertexCount = pMesh->pVertices->count;
 	pMesh->indexCount = pMesh->pIndices->count;
 	pMesh->bDirty = true;				// Needs GPU upload
@@ -233,6 +230,8 @@ void Mesh3D_MakeCircle2D(Mesh3D pMesh, Vector3 center, float radius, int step, V
 		Mesh3D_AddLine3D(pMesh, startPoint, currentPoint, color);
 		startPoint = currentPoint;
 	}
+
+	pMesh->bDirty = true;				// Needs GPU upload
 }
 
 void Mesh3D_MakeWireSphere3D(Mesh3D pMesh, Vector3 center, float radius, int segments, int slices, Vector4 color, bool drawHorizontal)
@@ -303,33 +302,75 @@ void Mesh3D_MakeWireSphere3D(Mesh3D pMesh, Vector3 center, float radius, int seg
 			}
 		}
 	}
+
+	pMesh->bDirty = true;				// Needs GPU upload
 }
 
 void Mesh3D_MakeTriangle3D(Mesh3D pMesh, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 center, Vector4 color)
 {
+	// 1. Get Transformation Matrices
+	Matrix4 model = TransformGetMatrix(&pMesh->transform);
+	Matrix3 mat3Model = Matrix3_InitMatrix4(model);
+	Matrix3 invModel = Matrix3_Inverse(mat3Model);
+	Matrix3 normalMatrix = Matrix3_TransposeN(invModel);
+
 	GLuint baseOffset = (GLuint)pMesh->pVertices->count;
-	GLuint baseOffset1 = (GLuint)pMesh->pVertices->count + 1;
-	GLuint baseOffset2 = (GLuint)pMesh->pVertices->count + 2;
 
-	SVertex3D vertex1 = { .m_v3Position = p1, .m_v3Normals = Vector3_Normalized(Vector3_Sub(p1, center)), .m_v2TexCoords = {0.0f, 0.0f}, .m_v4Color = color };
-	SVertex3D vertex2 = { .m_v3Position = p2, .m_v3Normals = Vector3_Normalized(Vector3_Sub(p2, center)), .m_v2TexCoords = {0.0f, 0.0f}, .m_v4Color = color };
-	SVertex3D vertex3 = { .m_v3Position = p3, .m_v3Normals = Vector3_Normalized(Vector3_Sub(p3, center)), .m_v2TexCoords = {0.0f, 0.0f}, .m_v4Color = color };
+	// 2. Calculate the "Face Normal" (Flat Surface)
+	// Edge vectors
+	Vector3 e1 = Vector3_Sub(p2, p1);
+	Vector3 e2 = Vector3_Sub(p3, p1);
 
-	Vector_PushBack(&pMesh->pVertices, &vertex1);
-	Vector_PushBack(&pMesh->pVertices, &vertex2);
-	Vector_PushBack(&pMesh->pVertices, &vertex3);
+	// Cross product gives the perpendicular direction
+	Vector3 localNormal = Vector3_Normalized(Vector3_Cross(e1, e2));
 
-	pMesh->vertexCount += 3;
+	// 3. Transform Normal to World Space
+	Vector3 worldNormal = Vector3_Normalized(Matrix3_Mul_Vec3(normalMatrix, localNormal));
 
-	Vector_PushBack(&pMesh->pIndices, &baseOffset);
-	Vector_PushBack(&pMesh->pIndices, &baseOffset1);
-	Vector_PushBack(&pMesh->pIndices, &baseOffset2); // Triangle Face
+	// 4. Generate and Push Vertices
+	Vector3 positions[3] = { p1, p2, p3 };
+	for (int i = 0; i < 3; i++)
+	{
+		SVertex3D vtx = { 0 };
 
-	pMesh->indexCount += 3;
+		// Position: Transform by Model Matrix
+		vtx.m_v3Position = Matrix4_Mul_Vec3(model, positions[i]);
+
+		// Normal: Use the calculated flat worldNormal
+		vtx.m_v3Normals = worldNormal;
+
+		vtx.m_v2TexCoords = (Vector2){ 0.0f, 0.0f }; // Or custom UVs
+		vtx.m_v4Color = color;
+
+		Vector_PushBackValue(pMesh->pVertices, vtx);
+	}
+
+	// 5. Generate and Push Indices
+	for (GLuint i = 0; i < 3; i++)
+	{
+		GLuint idx = baseOffset + i;
+		Vector_PushBackValue(pMesh->pIndices, idx);
+	}
+
+	// Sync metadata
+	pMesh->vertexCount = (GLuint)pMesh->pVertices->count;
+	pMesh->indexCount = (GLuint)pMesh->pIndices->count;
+
+	pMesh->bDirty = true;				// Needs GPU upload
 }
 
 void Mesh3D_MakeSphere3D(Mesh3D pMesh, Vector3 center, float radius, int segments, int slices, Vector4 color)
 {
+	// Update metadata
+	TransformSetPositionV(&pMesh->transform, center); // Update Transformation Matrix
+
+	// 1. Calculate the Normal Matrix: transpose(inverse(mat3(model)))
+	Matrix4 model = TransformGetMatrix(&pMesh->transform);
+
+	Matrix3 mat3Model = Matrix3_InitMatrix4(model);
+	Matrix3 invModel = Matrix3_Inverse(mat3Model);
+	Matrix3 normalMatrix = Matrix3_TransposeN(invModel);
+
 	GLint index = 0;
 	// Generate Vertices (Poles and Rings)
 	for (int i = 0; i <= segments; ++i) // Iterate through stacks (latitude) - iSegments
@@ -344,21 +385,25 @@ void Mesh3D_MakeSphere3D(Mesh3D pMesh, Vector3 center, float radius, int segment
 			float u = (float)j / (float)slices;
 
 			// Calculate the 4 corners of the "quad" patch
-			// Vector3 pos = GetSpherePos(center.x, center.y, center.z, radius, phi, theta);
-			Vector3 pos = GetSpherePos(0.0f, 0.0f, 0.0f, radius, phi, theta);
+			Vector3 localPos = GetSpherePos(0.0f, 0.0f, 0.0f, radius, phi, theta);
+
+			// 2. Transform Position to World Space
+			// Use the full Matrix4 for position to include translation/rotation/scale
+			Vector3 worldPos = Matrix4_Mul_Vec3(model, localPos);
 
 			// Vector3 normal = Vector3_Normalized(Vector3_Sub(center, pos));
-			Vector3 normal = Vector3_Normalized(pos);
+			Vector3 localNormal = { localPos.x / radius, localPos.y / radius, localPos.z / radius };
+			Vector3 worldNormal = Vector3_Normalized(Matrix3_Mul_Vec3(normalMatrix, localNormal));
 
 			index = i * (slices + 1) + j;
 
 			SVertex3D vtx = { 0 };
-			vtx.m_v3Position = pos;
-			vtx.m_v3Normals = normal;
+			vtx.m_v3Position = worldPos;
+			vtx.m_v3Normals = worldNormal;
 			vtx.m_v2TexCoords = (Vector2){ u, v };
 			vtx.m_v4Color = color;
 
-			Vector_PushBack(&pMesh->pVertices, &vtx);
+			Vector_PushBackValue(pMesh->pVertices, vtx);
 		}
 	}
 
@@ -372,75 +417,20 @@ void Mesh3D_MakeSphere3D(Mesh3D pMesh, Vector3 center, float radius, int segment
 			GLuint i2 = i0 + (slices + 1);		// (top-left)
 			GLuint i3 = i2 + 1;					// (top-right)
 
-			Vector_PushBack(&pMesh->pIndices, &i0);
-			Vector_PushBack(&pMesh->pIndices, &i1);
-			Vector_PushBack(&pMesh->pIndices, &i2);
+			Vector_PushBackValue(pMesh->pIndices, i0);
+			Vector_PushBackValue(pMesh->pIndices, i1);
+			Vector_PushBackValue(pMesh->pIndices, i2);
 
-			Vector_PushBack(&pMesh->pIndices, &i1);
-			Vector_PushBack(&pMesh->pIndices, &i3);
-			Vector_PushBack(&pMesh->pIndices, &i2);
+			Vector_PushBackValue(pMesh->pIndices, i1);
+			Vector_PushBackValue(pMesh->pIndices, i3);
+			Vector_PushBackValue(pMesh->pIndices, i2);
 		}
 	}
 
 	pMesh->vertexCount = (GLuint)pMesh->pVertices->count;
 	pMesh->indexCount = (GLuint)pMesh->pIndices->count;
 	pMesh->meshColor = color;
-
-	// Update metadata
-	TransformSetPositionV(&pMesh->transform, center); // Update Transformation Matrix
-}
-
-void Mesh3D_MakePyramid(Mesh3D pMesh, float baseSize, float height, Vector4 baseColor, Vector4 sideColor)
-{
-	float hs = baseSize * 0.5f;
-	SVertex3D base_sw;
-	base_sw.m_v3Position = Vector3D(-hs, -hs, 0);
-	base_sw.m_v4Color = baseColor;
-
-	SVertex3D base_se;
-	base_se.m_v3Position = Vector3D(hs, -hs, 0);
-	base_se.m_v4Color = baseColor;
-
-	SVertex3D base_ne;
-	base_ne.m_v3Position = Vector3D(hs, hs, 0);
-	base_ne.m_v4Color = baseColor;
-
-	SVertex3D base_nw;
-	base_nw.m_v3Position = Vector3D(-hs, hs, 0);
-	base_nw.m_v4Color = baseColor;
-
-	SVertex3D apex;
-	apex.m_v3Position = Vector3D(0, 0, height);
-	apex.m_v4Color = sideColor;
-
-	// Vertex 0: base_sw
-	Vector_PushBack(&pMesh->pVertices, &base_sw);
-	// Vertex 1: base_se  
-	Vector_PushBack(&pMesh->pVertices, &base_se);
-	// Vertex 2: base_ne
-	Vector_PushBack(&pMesh->pVertices, &base_ne);
-	// Vertex 3: base_nw
-	Vector_PushBack(&pMesh->pVertices, &base_nw);
-	// Vertex 4: apex
-	Vector_PushBack(&pMesh->pVertices, &apex);
-
-	// 4 side faces (CCW triangles, front-facing)
-	// Front: base_sw(0), base_se(1), apex(4)
-	VECTOR_PUSH(pMesh->pIndices, 0);
-	VECTOR_PUSH(pMesh->pIndices, 1);
-	VECTOR_PUSH(pMesh->pIndices, 4);
-	// Right: base_se(1), base_ne(2), apex(4)
-	VECTOR_PUSH(pMesh->pIndices, 1);
-	VECTOR_PUSH(pMesh->pIndices, 2);
-	VECTOR_PUSH(pMesh->pIndices, 4);
-	// Back: base_ne(2), base_nw(3), apex(4) 
-	VECTOR_PUSH(pMesh->pIndices, 2);
-	VECTOR_PUSH(pMesh->pIndices, 3);
-	VECTOR_PUSH(pMesh->pIndices, 4);
-	// Left: base_nw(3), base_sw(0), apex(4)
-	VECTOR_PUSH(pMesh->pIndices, 3);
-	VECTOR_PUSH(pMesh->pIndices, 0);
-	VECTOR_PUSH(pMesh->pIndices, 4);
+	pMesh->bDirty = true;				// Needs GPU upload
 }
 
 void Mesh3D_MakeQuad3D(Mesh3D pMesh, Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, Vector4 color)
@@ -463,10 +453,10 @@ void Mesh3D_MakeQuad3D(Mesh3D pMesh, Vector3 topLeft, Vector3 topRight, Vector3 
 	v2.m_v3Normals = normal;
 	v3.m_v3Normals = normal;
 
-	Vector_PushBack(&pMesh->pVertices, &v0);
-	Vector_PushBack(&pMesh->pVertices, &v1);
-	Vector_PushBack(&pMesh->pVertices, &v2);
-	Vector_PushBack(&pMesh->pVertices, &v3);
+	Vector_PushBackValue(pMesh->pVertices, v0);
+	Vector_PushBackValue(pMesh->pVertices, v1);
+	Vector_PushBackValue(pMesh->pVertices, v2);
+	Vector_PushBackValue(pMesh->pVertices, v3);
 
 	pMesh->vertexCount += 4;
 
@@ -477,14 +467,14 @@ void Mesh3D_MakeQuad3D(Mesh3D pMesh, Vector3 topLeft, Vector3 topRight, Vector3 
 	GLuint idx3 = baseOffset + 3;
 
 	// First triangle (counter-clockwise)
-	Vector_PushBack(&pMesh->pIndices, &idx0);  // topLeft
-	Vector_PushBack(&pMesh->pIndices, &idx2);  // bottomLeft
-	Vector_PushBack(&pMesh->pIndices, &idx1);  // topRight
+	Vector_PushBackValue(pMesh->pIndices, idx0);  // topLeft
+	Vector_PushBackValue(pMesh->pIndices, idx2);  // bottomLeft
+	Vector_PushBackValue(pMesh->pIndices, idx1);  // topRight
 
 	// Second triangle (counter-clockwise)
-	Vector_PushBack(&pMesh->pIndices, &idx1);  // topRight
-	Vector_PushBack(&pMesh->pIndices, &idx2);  // bottomLeft
-	Vector_PushBack(&pMesh->pIndices, &idx3);  // bottomRight
+	Vector_PushBackValue(pMesh->pIndices, idx1);  // topRight
+	Vector_PushBackValue(pMesh->pIndices, idx2);  // bottomLeft
+	Vector_PushBackValue(pMesh->pIndices, idx3);  // bottomRight
 
 	pMesh->indexCount += 6;
 }
@@ -518,6 +508,7 @@ void Mesh3D_Destroy(Mesh3D* ppMesh)
 	if (mesh->szMeshName)
 	{
 		tracked_free(mesh->szMeshName);
+		mesh->szMeshName = NULL;
 	}
 
 	// 1. Free dynamic arrays
@@ -571,11 +562,3 @@ void Mesh3D_Free(Mesh3D pMesh)
 	tracked_free(pMesh);
 }
 
-void Mesh3D_PtrDestroy(Mesh3D pMesh)
-{
-	Mesh3D* ppMesh = *(Mesh3D**)pMesh;  // Deref void* -> Mesh3D*
-	if (ppMesh)
-	{
-		Mesh3D_Destroy(ppMesh);  // Pass address of local pointer
-	}
-}

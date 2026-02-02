@@ -1,6 +1,7 @@
 #include "Interface_imgui.h"
 
 #include "../../LibImageUI/Stdafx.h"
+#include "../PipeLine/Texture.h"
 
 void ImGui_Init(GLFWwindow* window)
 {
@@ -115,6 +116,41 @@ void ImGui_RenderEngineDataUI()
 	ImGui::Text("Build Time: %s", __TIME__);
 	ImGui::Separator();
 
+	ImGui::BeginGroup(); // Group 2: Preview & Info
+	{
+		Texture pTex = GetTerrainManager()->terrainTex;
+		if (pTex && glIsTexture(pTex->textureID))
+		{
+			// Draw Checkerboard Background
+			ImVec2 pos = ImGui::GetCursorScreenPos();
+			ImVec2 size = ImVec2(128, 128);
+			ImDrawList* drawList = ImGui::GetWindowDrawList();
+
+			// Simple checkerboard pattern using rects
+			float checkSize = 16.0f;
+			for (float y = 0; y < size.y; y += checkSize) {
+				for (float x = 0; x < size.x; x += checkSize) {
+					bool isGray = (static_cast<int>(x / checkSize) + static_cast<int>(y / checkSize)) % 2 == 0;
+					ImU32 col = isGray ? IM_COL32(50, 50, 50, 255) : IM_COL32(100, 100, 100, 255);
+					drawList->AddRectFilled(ImVec2(pos.x + x, pos.y + y),
+						ImVec2(pos.x + x + checkSize, pos.y + y + checkSize), col);
+				}
+			}
+
+			// Draw the actual image over the checkerboard
+			ImGui::Image((ImTextureID)(intptr_t)pTex->textureID, size,
+				ImVec2(0, 0), ImVec2(1, 1),
+				ImVec4(1, 1, 1, 1), ImVec4(0, 0, 0, 0)); // Border color 0
+
+			ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Res: %dx%d", pTex->imageData.width, pTex->imageData.height);
+		}
+		else {
+			ImGui::Dummy(ImVec2(128, 128));
+			ImGui::Text("Invalid Texture");
+		}
+	}
+	ImGui::EndGroup();
+
 	ImGui::Separator();
 }
 
@@ -144,6 +180,12 @@ void ImGui_RenderMapsUI()
 	}
 	ImGui_RenderLoadMapPopUP(&showLoadMapPopup);
 
+	ImGui::SameLine();
+	// "Save Map" button to save map with popup
+	if (ImGui::Button("Save Map", buttonSize))
+	{
+		TerrainManager_SaveMap(pTerrainManager);
+	}
 }
 
 void ImGui_RenderCreateNewMapPopUP(bool* showPopup)

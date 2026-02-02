@@ -18,7 +18,13 @@ typedef struct SGLShader
 
 bool Shader_Initialize(GLShader* ppShader, const char* szName)
 {
-	*ppShader = (GLShader)tracked_malloc(sizeof(SGLShader));
+	if (ppShader == NULL)
+	{
+		syserr("ppShader is NULL (invalid address)");
+		return false;
+	}
+
+	*ppShader = tracked_malloc(sizeof(SGLShader));
 
 	GLShader pShader = *ppShader;
 	if (pShader == NULL)

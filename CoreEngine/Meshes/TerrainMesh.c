@@ -29,8 +29,8 @@ TerrainMesh TerrainMesh_CreateWithCapacity(GLenum primitiveType, GLsizeiptr vert
     }
 
     // 2. Initialize dynamic arrays (Vector)
-    Vector_InitCapacity(&mesh->pVertices, sizeof(STerrainVertex), vertexHint);  // Initial capacity
-    Vector_InitCapacity(&mesh->pIndices, sizeof(GLuint), indexHint);    // Initial capacity
+    Vector_InitCapacity(&mesh->pVertices, sizeof(STerrainVertex), vertexHint, false);  // Initial capacity
+    Vector_InitCapacity(&mesh->pIndices, sizeof(GLuint), indexHint, false);    // Initial capacity
 
     if (!mesh->pVertices || !mesh->pIndices)
     {
@@ -88,62 +88,16 @@ void TerrainMesh_PtrDestroy(TerrainMesh pTerrainMesh)
     }
 }
 
-void TerrainMesh_MakeQuad3D(TerrainMesh TerrainMesh, Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, Vector4 color)
-{
-    GLuint baseOffset = (GLuint)TerrainMesh->pVertices->count;
-
-    // Add 4 vertices
-    STerrainVertex v0 = { .v3Position = topLeft, .v4Color = color };
-    STerrainVertex v1 = { .v3Position = topRight, .v4Color = color };
-    STerrainVertex v2 = { .v3Position = bottomLeft, .v4Color = color };
-    STerrainVertex v3 = { .v3Position = bottomRight, .v4Color = color };
-
-    // Calculate normal for the quad
-    Vector3 edge1 = Vector3_Sub(topRight, topLeft);
-    Vector3 edge2 = Vector3_Sub(bottomLeft, topLeft);
-    Vector3 normal = Vector3_Normalized(Vector3_Cross(edge1, edge2));
-
-    v0.v3Normals = normal;
-    v1.v3Normals = normal;
-    v2.v3Normals = normal;
-    v3.v3Normals = normal;
-
-    Vector_PushBack(&TerrainMesh->pVertices, &v0);
-    Vector_PushBack(&TerrainMesh->pVertices, &v1);
-    Vector_PushBack(&TerrainMesh->pVertices, &v2);
-    Vector_PushBack(&TerrainMesh->pVertices, &v3);
-
-    TerrainMesh->vertexCount += 4;
-
-    // Add 6 indices (2 triangles)
-    GLuint idx0 = baseOffset;
-    GLuint idx1 = baseOffset + 1;
-    GLuint idx2 = baseOffset + 2;
-    GLuint idx3 = baseOffset + 3;
-
-    // First triangle (counter-clockwise)
-    Vector_PushBack(&TerrainMesh->pIndices, &idx0);  // topLeft
-    Vector_PushBack(&TerrainMesh->pIndices, &idx2);  // bottomLeft
-    Vector_PushBack(&TerrainMesh->pIndices, &idx1);  // topRight
-
-    // Second triangle (counter-clockwise)
-    Vector_PushBack(&TerrainMesh->pIndices, &idx1);  // topRight
-    Vector_PushBack(&TerrainMesh->pIndices, &idx2);  // bottomLeft
-    Vector_PushBack(&TerrainMesh->pIndices, &idx3);  // bottomRight
-
-    TerrainMesh->indexCount += 6;
-}
-
 void TerrainMesh_AddVertex(TerrainMesh TerrainMesh, const STerrainVertex vertex)
 {
     TerrainMesh->vertexCount += 1;
 
-    Vector_PushBack(&TerrainMesh->pVertices, &vertex);
+    Vector_PushBackValue(TerrainMesh->pVertices, vertex);
 }
 
 void TerrainMesh_AddIndex(TerrainMesh TerrainMesh, const GLuint index)
 {
     TerrainMesh->indexCount += 1;
 
-    Vector_PushBack(&TerrainMesh->pIndices, &index);
+    Vector_PushBackValue(TerrainMesh->pIndices, index);
 }

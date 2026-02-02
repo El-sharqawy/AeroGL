@@ -27,9 +27,14 @@ typedef struct STerrainPatch
 
 typedef struct STerrainPatch* TerrainPatch;
 
-TerrainPatch TerrainPatch_Create(struct STerrain* pParentTerrain, int32_t index, int32_t patchX, int32_t patchZ, Vector3 worldPos, float cellSize);
-void TerrainPatch_GenerateGeometry(TerrainPatch patch, int32_t patchX, int32_t patchZ, float cellSize, Vector4 color);
+bool TerrainPatch_Initialize(TerrainPatch* ppTerrainPatch, struct STerrain* pParentTerrain, int32_t index);
 void TerrainPatch_Destroy(TerrainPatch* ppTerrainPatch);
 void TerrainPatch_DestroyPtr(TerrainPatch elem);
+void TerrainPatch_Clear(TerrainPatch pTerrainPatch);
+bool TerrainPatch_InitializeIndices(TerrainPatch pTerrainPatch);
+
+TerrainPatch TerrainPatch_Create(struct STerrain* pParentTerrain, int32_t index, int32_t patchX, int32_t patchZ, Vector3 worldPos, float cellSize);
+void TerrainPatch_GenerateGeometry(TerrainPatch patch, int32_t patchX, int32_t patchZ, float cellSize, Vector4 color);
+
 
 #endif // __TERRAIN_PATCH__

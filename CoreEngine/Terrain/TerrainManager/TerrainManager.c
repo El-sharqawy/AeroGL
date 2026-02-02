@@ -2,9 +2,16 @@
 #include "../TerrainMap/TerrainMap.h"
 #include "../../Renderer/TerrainRenderer.h"
 #include "../../Engine.h"
+#include "../../PipeLine/Texture.h"
 
 bool TerrainManager_Initialize(TerrainManager* ppTerrainManager)
 {
+	if (ppTerrainManager == NULL)
+	{
+		syserr("ppTerrainManager is NULL (invalid address)");
+		return false;
+	}
+
 	*ppTerrainManager = tracked_calloc(1, sizeof(STerrainManager));
 
 	if (!(*ppTerrainManager))
@@ -21,6 +28,22 @@ bool TerrainManager_Initialize(TerrainManager* ppTerrainManager)
 		syserr("Failed to Initialize Terrain Map");
 		TerrainManager_Destroy(ppTerrainManager);
 		return (false);  // Cleanup everything above
+	}
+
+	if (!Texture_Initialize(&psTerrainManager->terrainTex))
+	{
+		TerrainManager_Destroy(ppTerrainManager);
+		syserr("Failed to Initialize terrain texture");
+		return (false);
+	}
+
+	psTerrainManager->terrainTex->isBindless = true;
+
+	if (!Texture_Load(psTerrainManager->terrainTex, "Assets/Textures/grass01.png"))
+	{
+		TerrainManager_Destroy(ppTerrainManager);
+		syserr("Failed to Load terrain texture");
+		return (false);
 	}
 
 	psTerrainManager->isMapReady = false;
@@ -45,6 +68,8 @@ void TerrainManager_Destroy(TerrainManager* ppTerrainManager)
 	TerrainRenderer_Destroy(&pManager->terarinRenderer);
 	
 	TerrainMap_Destroy(&pManager->pTerrainMap);
+
+	Texture_Destroy(&pManager->terrainTex);
 
 	// Destroy Manager
 	tracked_free(pManager);
@@ -155,6 +180,23 @@ bool TerrainManager_LoadMap(TerrainManager pTerrainManager, char* szMapName)
 	psTerrainManager->bNeedsUpdate = true;
 
 	return (true);
+}
+
+bool TerrainManager_SaveMap(TerrainManager pTerrainManager)
+{
+	if (!pTerrainManager)
+	{
+		/// ????? not sure if this condition is useful .. maybe if the code is part of the game (still need terrain manager to load maps)
+		return (false);
+	}
+
+	if (pTerrainManager->isMapReady == false)
+	{
+		syserr("Map is not Ready, you Need Map Ready to Save");
+		return (false);
+	}
+
+	return (TerrainMap_SaveMap(pTerrainManager->pTerrainMap));
 }
 
 const TerrainManager GetTerrainManager()

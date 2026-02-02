@@ -114,6 +114,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalOptions>/VERBOSE:LIB %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -133,7 +134,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Buffers\Buffer.c" />
-    <ClCompile Include="Buffers\GLBuffer.c" />
     <ClCompile Include="Buffers\IndirectBufferObject.c" />
     <ClCompile Include="Buffers\ShaderStorageBufferObject.c" />
     <ClCompile Include="Buffers\TerrainBuffer.c" />
@@ -167,8 +167,11 @@
     <ClCompile Include="OpenGLUtils\stb_image_write.c" />
     <ClCompile Include="PipeLine\Shader.c" />
     <ClCompile Include="PipeLine\StateManager.c" />
+    <ClCompile Include="PipeLine\Texture.c" />
+    <ClCompile Include="PipeLine\Utils.c" />
     <ClCompile Include="Renderer\DebugRenderer.c" />
     <ClCompile Include="Renderer\TerrainRenderer.c" />
+    <ClCompile Include="Resources\TexturesManager.c" />
     <ClCompile Include="Terrain\TerrainManager\TerrainManager.c" />
     <ClCompile Include="Terrain\TerrainMap\TerrainMap.c" />
     <ClCompile Include="Terrain\TerrainMap\TerrainMapLoad.c" />
@@ -180,7 +183,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffers\Buffer.h" />
-    <ClInclude Include="Buffers\GLBuffer.h" />
     <ClInclude Include="Buffers\IndirectBufferObject.h" />
     <ClInclude Include="Buffers\ShaderStorageBufferObject.h" />
     <ClInclude Include="Buffers\TerrainBuffer.h" />
@@ -210,8 +212,11 @@
     <ClInclude Include="Meshes\TerrainMesh.h" />
     <ClInclude Include="PipeLine\Shader.h" />
     <ClInclude Include="PipeLine\StateManager.h" />
+    <ClInclude Include="PipeLine\Texture.h" />
+    <ClInclude Include="PipeLine\Utils.h" />
     <ClInclude Include="Renderer\DebugRenderer.h" />
     <ClInclude Include="Renderer\TerrainRenderer.h" />
+    <ClInclude Include="Resources\TexturesManager.h" />
     <ClInclude Include="Terrain\TerrainData.h" />
     <ClInclude Include="Terrain\TerrainManager\TerrainManager.h" />
     <ClInclude Include="Terrain\TerrainMap\TerrainMap.h" />

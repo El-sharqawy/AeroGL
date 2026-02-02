@@ -8,7 +8,13 @@ static Input ms_Input = NULL;
 
 bool Input_Initialize(Input* ppInput)
 {
-    *ppInput = (Input)tracked_malloc(sizeof(SInput));
+    if (ppInput == NULL)
+    {
+        syserr("ppInput is NULL (invalid address)");
+        return false;
+    }
+
+    *ppInput = tracked_malloc(sizeof(SInput));
     
     // Capture the dereferenced pointer for easier use in this function
     Input pInput = *ppInput;

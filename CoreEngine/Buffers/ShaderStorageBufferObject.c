@@ -1,12 +1,18 @@
 #include "ShaderStorageBufferObject.h"
 #include "../Core/CoreUtils.h"
-#include "GLBuffer.h"
+#include "../PipeLine/Utils.h"
 #include <memory.h>
 
 static GLint siMaxSSBOSize = 0;
 
 bool ShaderStorageBufferObject_Initialize(ShaderStorageBufferObject* ppSSBO, GLsizeiptr bufferSize, GLuint bindingPt, const char* name)
 {
+    if (ppSSBO == NULL)
+    {
+        syserr("ppSSBO is NULL (invalid address)");
+        return false;
+    }
+
     if (siMaxSSBOSize == 0)
     {
         glGetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &siMaxSSBOSize);
@@ -24,7 +30,7 @@ bool ShaderStorageBufferObject_Initialize(ShaderStorageBufferObject* ppSSBO, GLs
         return (false);
     }
 
-    *ppSSBO = (ShaderStorageBufferObject)tracked_malloc(sizeof(SShaderStorageBufferObject));
+    *ppSSBO = tracked_malloc(sizeof(SShaderStorageBufferObject));
 
     ShaderStorageBufferObject pSSBO = *ppSSBO;
 
@@ -38,7 +44,7 @@ bool ShaderStorageBufferObject_Initialize(ShaderStorageBufferObject* ppSSBO, GLs
 
     pSSBO->szBufferName = tracked_strdup(name);
 
-    if (!CreateBuffer(&pSSBO->bufferID))
+    if (!GL_CreateBuffer(&pSSBO->bufferID))
     {
         ShaderStorageBufferObject_Destroy(&pSSBO);
         syserr("Failed to Create GPU Buffers!");
@@ -115,7 +121,7 @@ void ShaderStorageBufferObject_Destroy(ShaderStorageBufferObject* ppSSBO)
         pSSBO->isPersistent = false;
     }
 
-    DeleteBuffer(&pSSBO->bufferID);
+    GL_DeleteBuffer(&pSSBO->bufferID);
 
     tracked_free(pSSBO);
 
@@ -185,7 +191,7 @@ void ShaderStorageBufferObject_Reallocate(ShaderStorageBufferObject pSSBO, GLsiz
     GLsizeiptr oldSSBOSize = pSSBO->bufferSize;
 
     GLuint newSSBO;
-    CreateBuffer(&newSSBO);
+    GL_CreateBuffer(&newSSBO);
 
     if (IsGLVersionHigher(4, 5))
     {
@@ -222,7 +228,7 @@ void ShaderStorageBufferObject_Reallocate(ShaderStorageBufferObject pSSBO, GLsiz
     }
 
     // Delete Old Buffer
-    DeleteBuffer(&oldSSBO);
+    GL_DeleteBuffer(&oldSSBO);
 
     pSSBO->bufferID = newSSBO;
     pSSBO->bufferSize = newSize;

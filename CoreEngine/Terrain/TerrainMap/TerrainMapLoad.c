@@ -90,7 +90,7 @@ bool TerrainMap_CreateSettingsFile(TerrainMap pTerrainMap)
 		return (false);
 	}
 
-	if (cJSON_AddStringToObject(mainObject, "ScriptType", "AnubisMapSettings") == NULL)
+	if (cJSON_AddStringToObject(mainObject, "ScriptType", terrainMapScriptType) == NULL)
 	{
 		syserr("Failed to Allocate Memory for Settings String");
 		cJSON_Delete(mainObject);
@@ -270,13 +270,13 @@ bool TerrainMap_LoadMap(TerrainMap pTerrainMap, char* szMapName)
 	}
 
 	// Setup Terrains Vector with size of given map?
-	if (!Vector_InitCapacity(&pTerrainMap->terrains, sizeof(Terrain), pTerrainMap->terrainsXCount * pTerrainMap->terrainsZCount))
+	if (!Vector_InitCapacity(&pTerrainMap->terrains, sizeof(Terrain), pTerrainMap->terrainsXCount * pTerrainMap->terrainsZCount, false))
 	{
 		syserr("Failed to Initialize Terrain Map Vector");
 		return (false);
 	}
 
-	pTerrainMap->terrains->destructor = Terrain_DestroyPtr;
+	pTerrainMap->terrains->destructor = Terrain_Destroy;
 
 	// Create Terrains Among X-Z Axis
 	for (int32_t iTerrZ = 0; iTerrZ < pTerrainMap->terrainsZCount; iTerrZ++)
@@ -514,6 +514,14 @@ bool TerrainMap_LoadTerrain(TerrainMap pTerrainMap, int32_t iTerrainX, int32_t i
 		Terrain_Destroy(&pTerrain);
 		return (false);
 	}
+	
+	// Initialize Terrain HeightMap Tex
+	if (!Terrain_LoadHeightMapTexture(pTerrain))
+	{
+		Terrain_Destroy(&pTerrain);
+		syserr("Failed to Initialize Terrain HeightMap Texture");
+		return (false);
+	}
 
 	// Initialize Patches after HeightMap
 	if (!Terrain_InitializePatches(pTerrain))
@@ -525,8 +533,7 @@ bool TerrainMap_LoadTerrain(TerrainMap pTerrainMap, int32_t iTerrainX, int32_t i
 
 	pTerrain->bIsReady = true;
 
-	syslog("Loaded Terrain: %dx%d", iTerrainX, iTerrainZ);
-	Vector_PushBack(&pTerrainMap->terrains, &pTerrain);
+	Vector_PushBack(pTerrainMap->terrains, pTerrain);
 	return (true);
 }
 
@@ -546,7 +553,7 @@ bool TerrainMap_IsTerrainLoaded(TerrainMap pTerrainMap, int32_t iTerrainX, int32
 
 	for (int32_t i = 0; i < pTerrainMap->terrains->count; i++)
 	{
-		Terrain pSearchTerrain = VECTOR_GET(pTerrainMap->terrains, i, Terrain);
+		Terrain pSearchTerrain = Vector_GetPtr(pTerrainMap->terrains, i);
 
 		if (pSearchTerrain->terrainXCoord == iTerrainX && pSearchTerrain->terrainZCoord == iTerrainZ)
 		{
@@ -555,4 +562,207 @@ bool TerrainMap_IsTerrainLoaded(TerrainMap pTerrainMap, int32_t iTerrainX, int32
 	}
 
 	return (false);
+}
+
+bool TerrainMap_SaveMap(TerrainMap pTerrainMap)
+{
+	if (!pTerrainMap)
+	{
+		return (false); // ??
+	}
+
+	if (pTerrainMap->szMapDir == NULL)
+	{
+		syserr("TerrainMap_SaveMap: Map Directory is NULL!");
+		return (false);
+	}
+
+	if (!IsDirectoryExists(pTerrainMap->szMapDir))
+	{
+		syserr("TerrainMap_SaveMap: Map Directory doesn't exist!");
+		return (false);
+	}
+
+	if (!TerrainMap_SaveSettingsFile(pTerrainMap))
+	{
+		syserr("Failed to Save Map %s Settings File", pTerrainMap->szMapName);
+		return (false);
+	}
+
+	// Create Terrains Among X-Z Axis
+	for (int32_t iTerrZ = 0; iTerrZ < pTerrainMap->terrainsZCount; iTerrZ++)
+	{
+		for (int32_t iTerrX = 0; iTerrX < pTerrainMap->terrainsXCount; iTerrX++)
+		{
+			if (!TerrainMap_SaveTerrain(pTerrainMap, iTerrX, iTerrZ))
+			{
+				syserr("Failed to Save Terrain At (%d, %d)", iTerrX, iTerrZ);
+				return (false);
+			}
+		}
+	}
+
+	syslog("Saved Map %s Size %dx%d", pTerrainMap->szMapName, pTerrainMap->terrainsXCount, pTerrainMap->terrainsZCount);
+	return (true);
+}
+
+bool TerrainMap_SaveSettingsFile(TerrainMap pTerrainMap)
+{
+	if (!pTerrainMap->isReady)
+	{
+		syserr("Map is not Ready");
+		return (false);
+	}
+
+	//  Create a buffer large enough for the full path
+	char fullPath[MAX_STRING_LEN] = { 0 };
+
+	// Use snprintf to combine the path and name safely
+	int32_t written = snprintf(fullPath, sizeof(fullPath), "%s/%s", pTerrainMap->szMapDir, "AnubisMap.json");
+	// Check if the name was truncated
+	if (written >= sizeof(fullPath))
+	{
+		syserr("Path name is too long.");
+		return false;
+	}
+
+	// Create 
+	cJSON* mainObject = cJSON_CreateObject();
+	if (mainObject == NULL)
+	{
+		return (false);
+	}
+
+	// Write Script Type
+	if (cJSON_AddStringToObject(mainObject, "ScriptType", terrainMapScriptType) == NULL)
+	{
+		syserr("Failed to Allocate Memory for Settings String");
+		cJSON_Delete(mainObject);
+		return (false);
+	}
+
+	// Write Version
+	if (cJSON_AddNumberToObject(mainObject, "Version", TERRAIN_VERSION_NUMBER) == NULL)
+	{
+		syserr("Failed to Add Terrain Version");
+		cJSON_Delete(mainObject);
+		return (false);
+	}
+
+	// Write Map Data
+	cJSON* mapDataArr = cJSON_AddObjectToObject(mainObject, "MapData");
+	if (mapDataArr == NULL)
+	{
+		syserr("Failed to Allocate Memory for Map Settings Object");
+		cJSON_Delete(mainObject);
+		return (false);
+	}
+
+	// Write Map Size
+	cJSON* mapSizeArr = cJSON_AddObjectToObject(mapDataArr, "MapSize");
+	if (mapSizeArr == NULL)
+	{
+		syserr("Failed to Allocate Memory for Map Size Object");
+		cJSON_Delete(mainObject);
+		return (false);
+	}
+
+	// Write Map Size Width
+	if (cJSON_AddNumberToObject(mapSizeArr, "x", pTerrainMap->terrainsXCount) == NULL)
+	{
+		syserr("Failed to Add Map Size X");
+		cJSON_Delete(mainObject);
+		return (false);
+	}
+
+	// Write Map Size Depth
+	if (cJSON_AddNumberToObject(mapSizeArr, "z", pTerrainMap->terrainsZCount) == NULL)
+	{
+		syserr("Failed to Add Map Size Z");
+		cJSON_Delete(mainObject);
+		return (false);
+	}
+
+	// Write Map Name
+	if (cJSON_AddStringToObject(mapDataArr, "MapName", pTerrainMap->szMapName) == NULL)
+	{
+		syserr("Failed to Add Map Name");
+		cJSON_Delete(mainObject);
+		return (false);
+	}
+
+	// Write Map Dir
+	if (cJSON_AddStringToObject(mapDataArr, "MapDir", pTerrainMap->szMapDir) == NULL)
+	{
+		syserr("Failed to Add Map Directory");
+		cJSON_Delete(mainObject);
+		return (false);
+	}
+
+	// Write Into JSON File
+	char* string = cJSON_Print(mainObject);
+	if (string == NULL)
+	{
+		syserr("Failed to Allocate Memory for Settings Buffer");
+		cJSON_Delete(mainObject);
+		return (false);
+	}
+
+	FILE* pSettings = fopen(fullPath, "w");
+	if (pSettings == NULL)
+	{
+		syserr("Error opening Settings File %s (Check Path if valid)", fullPath);
+		cJSON_Delete(mainObject);
+		free(string);
+		return (false);
+	}
+
+	// Print contents and free string
+	fprintf(pSettings, string);
+	fclose(pSettings);
+
+	cJSON_Delete(mainObject);
+	free(string);
+
+	return (true);
+}
+
+bool TerrainMap_SaveTerrain(TerrainMap pTerrainMap, int32_t iTerrainX, int32_t iTerrainZ)
+{
+	if (TerrainMap_IsTerrainLoaded(pTerrainMap, iTerrainX, iTerrainZ) == false)
+	{
+		syserr("Terrain is not loaded!");
+		return (false);
+	}
+
+	Terrain pTerrain = Vector_GetPtr(pTerrainMap->terrains, iTerrainZ * pTerrainMap->terrainsXCount + iTerrainX);
+
+	if (pTerrain == NULL)
+	{
+		syserr("Failed to Find Terrain at coord (%d, %d)", iTerrainX, iTerrainZ);
+		return (false);
+	}
+
+
+	//  Create a buffer large enough for the full path
+	char fullTerrainPath[MAX_STRING_LEN] = { 0 };
+	
+	// Use snprintf to combine the path and name safely
+	int32_t iTerrainIndex = iTerrainZ * 1000 + iTerrainX;
+	int32_t written = snprintf(fullTerrainPath, sizeof(fullTerrainPath), "%s/%06d", pTerrainMap->szMapDir, iTerrainIndex);
+	// Check if the name was truncated
+	if (written >= sizeof(fullTerrainPath))
+	{
+		syserr("Path name is too long.");
+		return false;
+	}
+
+	// Load HeightMap
+	if (!Terrain_SaveHeightMap(pTerrain, fullTerrainPath))
+	{
+		syserr("Failed to Save HeightMap");
+		return (false);
+	}
+
+	return (true);
 }
