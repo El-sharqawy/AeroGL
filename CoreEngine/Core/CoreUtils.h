@@ -8,9 +8,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/stat.h>
-
-#define syserr(...) fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); fflush(stderr);
-#define syslog(...) fprintf(stdout, __VA_ARGS__); fprintf(stdout, "\n"); fflush(stdout);
+#include "Log.h"
 
 #define S_ISDIR(m)	(m & _S_IFDIR)
 #define MAX_STRING_LEN 256
@@ -73,17 +71,17 @@ extern size_t bytes_allocated;
 extern GLint glMajorVersion;
 extern GLint glMinorVersion;
 
-void* tracked_malloc_internal(size_t size, const char* file, int line);
-void* tracked_calloc_internal(size_t count, size_t size, const char* file, int line);
-void* tracked_realloc_internal(void* ptr, size_t new_size, const char* file, int line);
-char* tracked_strdup_internal(const char* szSource, const char* file, int line);
-void tracked_free_internal(void* pObject, const char* file, int line);
+void* old_tracked_malloc_internal(size_t size, const char* file, int line);
+void* old_tracked_calloc_internal(size_t count, size_t size, const char* file, int line);
+void* old_tracked_realloc_internal(void* ptr, size_t new_size, const char* file, int line);
+char* old_tracked_strdup_internal(const char* szSource, const char* file, int line);
+void old_tracked_free_internal(void* pObject, const char* file, int line);
 
-#define tracked_malloc(size) tracked_malloc_internal(size, __FILE__, __LINE__)
-#define tracked_calloc(count, size) tracked_calloc_internal(count, size, __FILE__, __LINE__)
-#define tracked_realloc(ptr, new_size) tracked_realloc_internal(ptr, new_size, __FILE__, __LINE__)
-#define tracked_strdup(szSource) tracked_strdup_internal(szSource,  __FILE__, __LINE__)
-#define tracked_free(pObject) tracked_free_internal(pObject, __FILE__, __LINE__)
+#define tracked_malloc(size) old_tracked_malloc_internal(size, __FILE__, __LINE__)
+#define tracked_calloc(count, size) old_tracked_calloc_internal(count, size, __FILE__, __LINE__)
+#define tracked_realloc(ptr, new_size) old_tracked_realloc_internal(ptr, new_size, __FILE__, __LINE__)
+#define tracked_strdup(szSource) old_tracked_strdup_internal(szSource,  __FILE__, __LINE__)
+#define tracked_free(pObject) old_tracked_free_internal(pObject, __FILE__, __LINE__)
 
 void* cjson_tracked_malloc(size_t size);
 void cjson_tracked_free(void* ptr);

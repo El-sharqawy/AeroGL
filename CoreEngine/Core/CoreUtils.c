@@ -12,7 +12,7 @@ GLint glMinorVersion = 0;
 
 // #define ENABLE_MEMORY_LOGS
 
-void* tracked_malloc_internal(size_t size, const char* file, int line)
+void* old_tracked_malloc_internal(size_t size, const char* file, int line)
 {
 	// 1. Align the header size to 16 bytes. 
 	// Even if size_t is 8, we reserve 16 to keep the user pointer aligned.
@@ -57,12 +57,12 @@ void* tracked_malloc_internal(size_t size, const char* file, int line)
 	return user_ptr;
 }
 
-void* tracked_calloc_internal(size_t count, size_t size, const char* file, int line)
+void* old_tracked_calloc_internal(size_t count, size_t size, const char* file, int line)
 {
 	size_t total_size = count * size; // actual size
 
 	// We still need our header for the tracker!
-	void* ptr = tracked_malloc_internal(total_size, file, line);
+	void* ptr = old_tracked_malloc_internal(total_size, file, line);
 	if (ptr)
 	{
 		memset(ptr, 0, total_size);
@@ -71,12 +71,12 @@ void* tracked_calloc_internal(size_t count, size_t size, const char* file, int l
 	return (ptr);
 }
 
-void* tracked_realloc_internal(void* ptr, size_t new_size, const char* file, int line)
+void* old_tracked_realloc_internal(void* ptr, size_t new_size, const char* file, int line)
 {
 	// If ptr is NULL, it's just a malloc
 	if (ptr == NULL)
 	{
-		return tracked_malloc_internal(new_size, file, line);
+		return old_tracked_malloc_internal(new_size, file, line);
 	}
 
 	// If size is 0, it's just a free
@@ -97,7 +97,7 @@ void* tracked_realloc_internal(void* ptr, size_t new_size, const char* file, int
 	}
 
 	// Allocate the NEW block
-	void* new_ptr = tracked_malloc_internal(new_size, file, line);
+	void* new_ptr = old_tracked_malloc_internal(new_size, file, line);
 	if (!new_ptr)
 	{
 		// Recovery: If realloc fails, the old pointer is still valid
@@ -116,16 +116,16 @@ void* tracked_realloc_internal(void* ptr, size_t new_size, const char* file, int
 #endif
 
 	// Free the old block
-	tracked_free_internal(ptr, file, line);
+	old_tracked_free_internal(ptr, file, line);
 
 	return new_ptr;
 }
 
-char* tracked_strdup_internal(const char* szSource, const char* file, int line)
+char* old_tracked_strdup_internal(const char* szSource, const char* file, int line)
 {
 	if (!szSource)
 	{
-		char* emptyStr = (char*)tracked_malloc_internal(1, file, line);
+		char* emptyStr = (char*)old_tracked_malloc_internal(1, file, line);
 		if (emptyStr)
 		{
 			emptyStr[0] = '\0';
@@ -134,7 +134,7 @@ char* tracked_strdup_internal(const char* szSource, const char* file, int line)
 	}
 
 	size_t len = strlen(szSource) + 1; // +1 for the null terminator '\0'
-	char* newStr = (char*)tracked_malloc_internal(len, file, line);
+	char* newStr = (char*)old_tracked_malloc_internal(len, file, line);
 
 	if (newStr)
 	{
@@ -144,7 +144,7 @@ char* tracked_strdup_internal(const char* szSource, const char* file, int line)
 	return (newStr);
 }
 
-void tracked_free_internal(void* pObject, const char* file, int line)
+void old_tracked_free_internal(void* pObject, const char* file, int line)
 {
 	if (pObject == NULL)
 	{
@@ -190,12 +190,12 @@ void tracked_free_internal(void* pObject, const char* file, int line)
 void* cjson_tracked_malloc(size_t size)
 {
 	// We manually pass "cJSON" as the file so you know where the leak originated
-	return tracked_malloc_internal(size, "cJSON_Internal", 0);
+	return old_tracked_malloc_internal(size, "cJSON_Internal", 0);
 }
 
 void cjson_tracked_free(void* ptr)
 {
-	tracked_free_internal(ptr, "cJSON_Internal", 0);
+	old_tracked_free_internal(ptr, "cJSON_Internal", 0);
 }
 
 const char* get_filename_ext(const char* filename)

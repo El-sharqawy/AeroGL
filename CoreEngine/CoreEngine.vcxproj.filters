@@ -273,6 +273,12 @@
     <ClCompile Include="Resources\TexturesManager.c">
       <Filter>Source Files\Resources</Filter>
     </ClCompile>
+    <ClCompile Include="Resources\MemoryManager.c">
+      <Filter>Source Files\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Log.c">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\CoreUtils.h">
@@ -400,6 +406,12 @@
     </ClInclude>
     <ClInclude Include="Resources\TexturesManager.h">
       <Filter>Header Files\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Resources\MemoryManager.h">
+      <Filter>Header Files\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Log.h">
+      <Filter>Header Files\Core</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
