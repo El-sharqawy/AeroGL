@@ -1,8 +1,8 @@
 #include "TerrainRenderer.h"
+#include "../Stdafx.h"
 #include "../Buffers/TerrainBuffer.h"
 #include "../PipeLine/StateManager.h"
 #include "../Terrain/TerrainPatch.h"
-#include "../Engine.h"
 #include "../PipeLine/Texture.h"
 
 bool TerrainRenderer_Initialize(TerrainRenderer* ppTerrainRenderer, const char* szRendererName, int32_t iTerrainX, int32_t iTerrainZ)
@@ -14,8 +14,8 @@ bool TerrainRenderer_Initialize(TerrainRenderer* ppTerrainRenderer, const char* 
 	}
 
 	// Initialize Renderer
-	*ppTerrainRenderer = (TerrainRenderer)tracked_calloc(1, sizeof(STerrainRenderer));
-	
+	*ppTerrainRenderer = engine_new_zero(STerrainRenderer, 1, MEM_TAG_RENDERING);
+
 	// Validity Check
 	TerrainRenderer pRenderer = *ppTerrainRenderer;
 	if (!pRenderer)
@@ -24,7 +24,7 @@ bool TerrainRenderer_Initialize(TerrainRenderer* ppTerrainRenderer, const char* 
 		return false;
 	}
 
-	pRenderer->szRendererName = tracked_strdup(szRendererName);
+	pRenderer->szRendererName = engine_strdup(szRendererName, MEM_TAG_STRINGS);
 	pRenderer->pCamera = GetEngine()->camera;
 
 	// will Initialize it to render Triangles, with TERRAIN_PATCH_COUNT meshes as base Num
@@ -51,12 +51,12 @@ void TerrainRenderer_Destroy(TerrainRenderer* ppTerrainRenderer)
 
 	if (pRenderer->szRendererName)
 	{
-		tracked_free(pRenderer->szRendererName);
+		engine_delete(pRenderer->szRendererName);
 	}
 
 	TerrainRenderer_DestroyGLBuffers(pRenderer);
 	
-	tracked_free(pRenderer);
+	engine_delete(pRenderer);
 
 	*ppTerrainRenderer = NULL;
 }

@@ -13,8 +13,8 @@ typedef struct SVector
 	size_t capacity;  // Allocated slots
 	size_t elemSize;  // Size of one element (e.g., sizeof(SVertex))
 	VectorDestructorFn destructor;  // NULL = raw copy, no free
-	bool isSinglePtr;
-	bool isSmartVec;
+	bool isSinglePtr;	// is destructor single PTR (no **)
+	bool isSmartVec;	// is this smart Vector
 } SVector;
 
 typedef struct SVector* Vector;

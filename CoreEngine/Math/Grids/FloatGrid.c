@@ -1,8 +1,8 @@
 #include "FloatGrid.h"
-#include "../../Core/CoreUtils.h"
-#include <memory.h>
+#include "../../Stdafx.h"
+#include "../../Resources/MemoryManager.h"
 
-bool FloatGrid_Initialize(FloatGrid* ppFloatGrid, int32_t width, int32_t height)
+bool FloatGrid_Initialize(FloatGrid* ppFloatGrid, int32_t width, int32_t height, EMemoryTag tag)
 {
 	if (width <= 0 || height <= 0)
 	{
@@ -16,7 +16,7 @@ bool FloatGrid_Initialize(FloatGrid* ppFloatGrid, int32_t width, int32_t height)
 		return false;
 	}
 
-	*ppFloatGrid = (FloatGrid)tracked_calloc(1, sizeof(SFloatGrid));
+	*ppFloatGrid = engine_new_zero(SFloatGrid, 1, tag);
 
 	if (!(*ppFloatGrid)) // Check immediately
 	{
@@ -29,7 +29,7 @@ bool FloatGrid_Initialize(FloatGrid* ppFloatGrid, int32_t width, int32_t height)
 	pFloatGrid->height = height;
 	pFloatGrid->size = width * height;
 
-	pFloatGrid->pArray = (float*)tracked_calloc(1, pFloatGrid->size * sizeof(float)); // [y][x]
+	pFloatGrid->pArray = engine_new_count_zero(float, pFloatGrid->size, tag);
 
 	if (!pFloatGrid->pArray)
 	{
@@ -51,10 +51,10 @@ void FloatGrid_Destroy(FloatGrid* ppFloatGrid)
 
 	FloatGrid pFloatGrid = *ppFloatGrid;
 
-	tracked_free(pFloatGrid->pArray);
+	engine_delete(pFloatGrid->pArray);
 	pFloatGrid->pArray = NULL;
 
-	tracked_free(pFloatGrid);
+	engine_delete(pFloatGrid);
 	*ppFloatGrid = NULL;
 }
 

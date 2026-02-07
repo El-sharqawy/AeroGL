@@ -1,5 +1,5 @@
 #include "TerrainBuffer.h"
-#include "../Core/CoreUtils.h"
+#include "../Stdafx.h"
 #include "../PipeLine/Utils.h"
 #include "../Terrain/TerrainData.h"
 
@@ -115,7 +115,8 @@ bool TerrainBuffer_Initialize(TerrainGLBuffer* ppTerrainBuffer, GLsizeiptr capac
 		return false;
 	}
 
-	*ppTerrainBuffer = tracked_calloc(1, sizeof(STerrainGLBuffer));
+	// make sure it's all elements set to zero bytes
+	*ppTerrainBuffer = engine_new_zero(STerrainGLBuffer, 1, MEM_TAG_GPU_BUFFER);
 
 	TerrainGLBuffer buffer = *ppTerrainBuffer;
 	if (!buffer)
@@ -170,7 +171,7 @@ void TerrainBuffer_Destroy(TerrainGLBuffer* ppTerrainBuffer)
 	// Free GPU Resources
 	TerrainBuffer_Delete(*ppTerrainBuffer);
 
-	tracked_free(*ppTerrainBuffer);
+	engine_delete(*ppTerrainBuffer);
 	*ppTerrainBuffer = NULL;
 }
 

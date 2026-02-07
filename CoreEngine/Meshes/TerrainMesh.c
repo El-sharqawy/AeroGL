@@ -1,4 +1,5 @@
 #include "TerrainMesh.h"
+#include "../Stdafx.h"
 
 /**
  * @brief Creates a 3D mesh with reasonable initial capacity.
@@ -21,7 +22,8 @@ TerrainMesh TerrainMesh_Create(GLenum primitiveType)
 TerrainMesh TerrainMesh_CreateWithCapacity(GLenum primitiveType, GLsizeiptr vertexHint, GLsizeiptr indexHint)
 {
     // 1. Allocate and zero-initialize the struct
-    TerrainMesh mesh = (TerrainMesh)tracked_calloc(1, sizeof(STerrainMesh));
+    TerrainMesh mesh = engine_new_zero(STerrainMesh, 1, MEM_TAG_RESOURCES);
+
     if (!mesh)
     {
         syserr("Failed to allocate TerrainMesh");
@@ -73,7 +75,7 @@ void TerrainMesh_Destroy(TerrainMesh* ppMesh)
     }
 
     // 2. Free the struct itself
-    tracked_free(mesh);
+    engine_delete(mesh);
 
     // 3. Set pointer to NULL (prevent double-free)
     *ppMesh = NULL;

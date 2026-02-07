@@ -7,9 +7,15 @@
 
 typedef struct STexturesManager
 {
-    Texture textures[MAX_ENGINE_TEXTURES]; // Pointers to our textures
-    uint32_t textureCount;
+    Texture* textures; // double Pointers to our textures (array)
+
+    // Tracking
+    uint32_t count;
+    uint32_t capacity;
     uint32_t activeResidentCount;
+
+    // Search (Optional but highly recommended)
+    // You could store a hash-map here later to find textures by name
 } STexturesManager;
 
 #endif 

@@ -1,5 +1,5 @@
 #include "UniformBufferObject.h"
-#include "../Core/CoreUtils.h"
+#include "../Stdafx.h"
 #include "../PipeLine/Utils.h"
 #include <memory.h>
 
@@ -24,13 +24,12 @@ bool InitializeUniformBufferObject(UniformBufferObject* ppUniBufObj, GLsizeiptr 
 		return (false);
 	}
 
-	*ppUniBufObj = (UniformBufferObject)tracked_malloc(sizeof(SUniformBufferObject));
+	// make sure it's all elements set to zero bytes
+	*ppUniBufObj = engine_new_zero(SUniformBufferObject, 1, MEM_TAG_GPU_BUFFER);
+
 	UniformBufferObject buffer = *ppUniBufObj;
 
-	// Init to Zeros
-	memset(buffer, 0, sizeof(SUniformBufferObject));
-
-	buffer->szBufferName = tracked_strdup(szBufferName);
+	buffer->szBufferName = engine_strdup(szBufferName, MEM_TAG_STRINGS);
 
 	if (!GL_CreateBuffer(&buffer->bufferID))
 	{
@@ -101,12 +100,12 @@ void DestroyUniformBufferObject(UniformBufferObject* ppUniBufObj)
 
 	if (buffer->szBufferName)
 	{
-		tracked_free(buffer->szBufferName);
+		engine_delete(buffer->szBufferName);
 	}
 
 	GL_DeleteBuffer(&buffer->bufferID); // Clear UP GPU Resources
 
-	tracked_free(buffer);
+	engine_delete(buffer);
 
 	*ppUniBufObj = NULL;
 }

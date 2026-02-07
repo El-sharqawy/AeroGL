@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "../../Resources/MemoryTags.h"
 
 typedef struct SFloatGrid
 {
@@ -23,7 +24,7 @@ typedef struct SFloatGrid
 
 typedef struct SFloatGrid* FloatGrid;
 
-bool FloatGrid_Initialize(FloatGrid* ppFloatGrid, int32_t width, int32_t height);
+bool FloatGrid_Initialize(FloatGrid* ppFloatGrid, int32_t width, int32_t height, EMemoryTag tag);
 void FloatGrid_Destroy(FloatGrid* ppFloatGrid);
 void FloatGrid_Clear(FloatGrid pFloatGrid);
 void FloatGrid_FillValue(FloatGrid pFloatGrid, float fValue);

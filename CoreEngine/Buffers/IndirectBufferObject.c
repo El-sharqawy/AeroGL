@@ -1,5 +1,5 @@
 #include "IndirectBufferObject.h"
-#include "../Core/CoreUtils.h"
+#include "../Stdafx.h"
 #include "../PipeLine/Utils.h"
 
 bool IndirectBufferObject_Initialize(IndirectBufferObject* ppIndirectBuffer, GLsizeiptr initialCapacity)
@@ -10,7 +10,9 @@ bool IndirectBufferObject_Initialize(IndirectBufferObject* ppIndirectBuffer, GLs
 		return false;
 	}
 
-	*ppIndirectBuffer = tracked_calloc(1, sizeof(SIndirectBufferObject));
+	// make sure it's all elements set to zero bytes
+	*ppIndirectBuffer = engine_new_zero(SIndirectBufferObject, 1, MEM_TAG_GPU_BUFFER);
+
 	IndirectBufferObject pIndirectBuf = *ppIndirectBuffer;
 
 	if (!pIndirectBuf)
@@ -224,7 +226,7 @@ void IndirectBufferObject_Destroy(IndirectBufferObject* ppIndirectBuffer)
 
 	Vector_Destroy(&pBuf->commands); // Clear CPU Resources
 
-	tracked_free(pBuf);
+	engine_delete(pBuf);
 
 	*ppIndirectBuffer = NULL;
 }

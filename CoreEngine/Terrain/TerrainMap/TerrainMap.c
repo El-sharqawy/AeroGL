@@ -1,4 +1,5 @@
 #include "TerrainMap.h"
+#include "../../Stdafx.h"
 
 bool TerrainMap_Initialize(TerrainMap* ppTerrainMap)
 {
@@ -11,7 +12,7 @@ bool TerrainMap_Initialize(TerrainMap* ppTerrainMap)
 	// Avoid Memory Leaks
 	if (*ppTerrainMap == NULL)
 	{
-		*ppTerrainMap = tracked_calloc(1, sizeof(STerrainMap));
+		*ppTerrainMap = engine_new_zero(STerrainMap, 1, MEM_TAG_TERRAIN);
 	}
 
 	if ((*ppTerrainMap) == NULL)
@@ -36,15 +37,15 @@ void TerrainMap_Destroy(TerrainMap* ppTerrainMap)
 
 	if (pTerrainMap->szMapName)
 	{
-		tracked_free(pTerrainMap->szMapName);
+		engine_delete(pTerrainMap->szMapName);
 	}
 
 	if (pTerrainMap->szMapDir)
 	{
-		tracked_free(pTerrainMap->szMapDir);
+		engine_delete(pTerrainMap->szMapDir);
 	}
 
-	tracked_free(pTerrainMap);
+	engine_delete(pTerrainMap);
 
 	*ppTerrainMap = NULL;
 }
@@ -59,12 +60,12 @@ void TerrainMap_Clear(TerrainMap pTerrainMap)
 		Vector_Destroy(&pTerrainMap->terrains);
 		if (pTerrainMap->szMapName)
 		{
-			tracked_free(pTerrainMap->szMapName);
+			engine_delete(pTerrainMap->szMapName);
 			pTerrainMap->szMapName = NULL;
 		}
 		if (pTerrainMap->szMapDir)
 		{
-			tracked_free(pTerrainMap->szMapDir);
+			engine_delete(pTerrainMap->szMapDir);
 			pTerrainMap->szMapDir = NULL;
 		}
 	}
@@ -80,20 +81,20 @@ void TerrainMap_SetMapName(TerrainMap pTerrainMap, const char* szMapName)
 {
 	if (pTerrainMap->szMapName)
 	{
-		tracked_free(pTerrainMap->szMapName);
+		engine_delete(pTerrainMap->szMapName);
 		pTerrainMap->szMapName = NULL;
 	}
 
-	pTerrainMap->szMapName = tracked_strdup(szMapName);
+	pTerrainMap->szMapName = engine_strdup(szMapName, MEM_TAG_STRINGS);
 }
 
 void TerrainMap_SetMapDir(TerrainMap pTerrainMap, const char* szMapDir)
 {
 	if (pTerrainMap->szMapDir)
 	{
-		tracked_free(pTerrainMap->szMapDir);
+		engine_delete(pTerrainMap->szMapDir);
 		pTerrainMap->szMapDir = NULL;
 	}
 
-	pTerrainMap->szMapDir = tracked_strdup(szMapDir);
+	pTerrainMap->szMapDir = engine_strdup(szMapDir, MEM_TAG_STRINGS);
 }

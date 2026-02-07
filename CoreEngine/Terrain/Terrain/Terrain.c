@@ -1,12 +1,11 @@
 #include "Terrain.h"
+#include "../../Stdafx.h"
 #include "../TerrainMap/TerrainMap.h"
 #include "../TerrainData.h"
 #include "../TerrainPatch.h"
 #include "../../Math/Grids/FloatGrid.h"
 #include "../../PipeLine/Texture.h"
 #include "../../Math/Matrix/Matrix3.h"
-
-#include <memory.h>
 
 bool Terrain_Initialize(Terrain* ppTerrain)
 {
@@ -16,7 +15,7 @@ bool Terrain_Initialize(Terrain* ppTerrain)
 		return false;
 	}
 
-	*ppTerrain = (Terrain)tracked_calloc(1, sizeof(STerrain));
+	*ppTerrain = engine_new_zero(STerrain, 1, MEM_TAG_TERRAIN);
 
 	Terrain pTerrain = *ppTerrain;
 	if (!pTerrain)
@@ -45,7 +44,7 @@ void Terrain_Destroy(Terrain* ppTerrain)
 
 	Texture_Destroy(&pTerrain->pHeightMapTexture);
 
-	tracked_free(pTerrain);
+	engine_delete(pTerrain);
 
 	*ppTerrain = NULL;
 }
@@ -100,7 +99,7 @@ bool Terrain_InitializePatches(Terrain pTerrain)
 			color.a = 1.0f;
 
 			TerrainPatch pTerrainPatch = NULL;
-			if (!TerrainPatch_Initialize(&pTerrainPatch, pTerrain->pParentMap, iPatchNum))
+			if (!TerrainPatch_Initialize(&pTerrainPatch, pTerrain, iPatchNum))
 			{
 				syserr("Failed to Initialize Patch %d", iPatchNum)
 				return (false);
@@ -154,7 +153,6 @@ bool Terrain_InitializePatches(Terrain pTerrain)
 				fPatchStartZ++;
 			}
 
-			syslog("Initialized %zu vertices", pTerrainPatch->terrainMesh->pVertices->count);
 			TerrainPatch_InitializeIndices(pTerrainPatch);
 			
 			// Since we are baking the worldPos into the vertices, 
@@ -223,21 +221,6 @@ void Terrain_UpdatePatch(Terrain pTerrain, int32_t iPatchNumX, int32_t iPatchNum
 		{	
 			// syslog("iPatchIndex: %d, fX: %f, fZ: %f", iPatchNum, fPatchStartX, fPatchStartZ);
 			Vector3 worldPos = Vector3D(fPatchStartX, 0.0f, fPatchStartZ);
-			TerrainPatch terrainPatch = TerrainPatch_Create(pTerrain, iPatchNum, iPatchNumX, iPatchNumZ, worldPos, PATCH_CELL_SIZE);
-
-			if (terrainPatch == NULL)
-			{
-				syserr("Failed to Generate Terrain %d Patch %d", pTerrain->terrainIndex, iPatchNum);
-				break;
-			}
-
-			terrainPatch->terrainMesh->pVertices;
-
-			// Since we are baking the worldPos into the vertices, 
-			// the matrix for the shader must be Identity.
-			pTerrain->patchesMetrices[iPatchNum] = S_Matrix4_Identity;
-
-			Vector_PushBack(pTerrain->terrainPatches, terrainPatch);
 
 			fPatchStartX += (GLfloat)PATCH_CELL_SIZE;
 		}

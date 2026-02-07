@@ -279,6 +279,15 @@
     <ClCompile Include="Core\Log.c">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
+    <ClCompile Include="Stdafx.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Lib\UnorderedMap.c">
+      <Filter>Source Files\Lib</Filter>
+    </ClCompile>
+    <ClCompile Include="Lib\Map.c">
+      <Filter>Source Files\Lib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\CoreUtils.h">
@@ -412,6 +421,18 @@
     </ClInclude>
     <ClInclude Include="Core\Log.h">
       <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resources\MemoryTags.h">
+      <Filter>Header Files\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Lib\UnorderedMap.h">
+      <Filter>Header Files\Lib</Filter>
+    </ClInclude>
+    <ClInclude Include="Lib\List.h">
+      <Filter>Header Files\Lib</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

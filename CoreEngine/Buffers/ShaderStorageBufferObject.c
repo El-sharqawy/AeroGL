@@ -1,5 +1,5 @@
 #include "ShaderStorageBufferObject.h"
-#include "../Core/CoreUtils.h"
+#include "../Stdafx.h"
 #include "../PipeLine/Utils.h"
 #include <memory.h>
 
@@ -30,7 +30,8 @@ bool ShaderStorageBufferObject_Initialize(ShaderStorageBufferObject* ppSSBO, GLs
         return (false);
     }
 
-    *ppSSBO = tracked_malloc(sizeof(SShaderStorageBufferObject));
+    // make sure it's all elements set to zero bytes
+    *ppSSBO = engine_new_zero(SShaderStorageBufferObject, 1, MEM_TAG_GPU_BUFFER);
 
     ShaderStorageBufferObject pSSBO = *ppSSBO;
 
@@ -42,7 +43,7 @@ bool ShaderStorageBufferObject_Initialize(ShaderStorageBufferObject* ppSSBO, GLs
 
     memset(pSSBO, 0, sizeof(SShaderStorageBufferObject));
 
-    pSSBO->szBufferName = tracked_strdup(name);
+    pSSBO->szBufferName = engine_strdup(name, MEM_TAG_STRINGS);
 
     if (!GL_CreateBuffer(&pSSBO->bufferID))
     {
@@ -111,7 +112,7 @@ void ShaderStorageBufferObject_Destroy(ShaderStorageBufferObject* ppSSBO)
 
     if (pSSBO->szBufferName)
     {
-        tracked_free(pSSBO->szBufferName);
+        engine_delete(pSSBO->szBufferName);
     }
 
     if (pSSBO->pBufferData)
@@ -123,7 +124,7 @@ void ShaderStorageBufferObject_Destroy(ShaderStorageBufferObject* ppSSBO)
 
     GL_DeleteBuffer(&pSSBO->bufferID);
 
-    tracked_free(pSSBO);
+    engine_delete(pSSBO);
 
     *ppSSBO = NULL;
 }

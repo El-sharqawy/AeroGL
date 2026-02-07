@@ -1,9 +1,6 @@
 #include "Texture.h"
-#include <glad/glad.h>
-#include <stb_image/stb_image.h>
-#include <math.h>
 #include "Utils.h"
-#include "../Core/CoreUtils.h"
+#include "../Stdafx.h"
 
 bool Texture_Initialize(Texture* ppTexture)
 {
@@ -15,8 +12,8 @@ bool Texture_Initialize(Texture* ppTexture)
 		return false;
 	}
 
-	// overwrite the NULL value inside your struct with new memory
-	*ppTexture = tracked_calloc(1, sizeof(STexture));
+	// overwrite the NULL value inside our struct with new memory
+	*ppTexture = engine_new_zero(STexture, 1, MEM_TAG_TEXTURE);
 
 	// Did the allocation actually work?
 	if (*ppTexture == NULL)
@@ -58,21 +55,21 @@ void Texture_Destroy(Texture* ppTexture)
 
 	if (pTexture->imageData.szTexturePath)
 	{
-		tracked_free(pTexture->imageData.szTexturePath);
+		engine_delete(pTexture->imageData.szTexturePath);
 		pTexture->imageData.szTexturePath = NULL;
 	}
 	if (pTexture->imageData.szTextureName)
 	{
-		tracked_free(pTexture->imageData.szTextureName);
+		engine_delete(pTexture->imageData.szTextureName);
 		pTexture->imageData.szTextureName = NULL;
 	}
 	if (pTexture->imageData.pData && pTexture->isRawTexture == false)
 	{
-		tracked_free(pTexture->imageData.pData);
+		engine_delete(pTexture->imageData.pData);
 		pTexture->imageData.pData = NULL;
 	}
 
-	tracked_free(pTexture);
+	engine_delete(pTexture);
 
 	*ppTexture = NULL;
 }
@@ -168,11 +165,11 @@ bool Texture_LoadImage(Texture pTexture, const char* szTexturePath)
 
 	// Ensure that images are not flipped vertically upon loading.
 	stbi_set_flip_vertically_on_load(false);
-	pTexture->imageData.szTexturePath = tracked_strdup(szTexturePath);
+	pTexture->imageData.szTexturePath = engine_strdup(szTexturePath, MEM_TAG_STRINGS);
 
 	char nameBuffer[MAX_STRING_LEN];
 	File_GetFileNameNoExtension(szTexturePath, nameBuffer, sizeof(nameBuffer));
-	pTexture->imageData.szTextureName = tracked_strdup(nameBuffer);
+	pTexture->imageData.szTextureName = engine_strdup(nameBuffer, MEM_TAG_STRINGS);
 
 	// Load the image, forcing 4 color channels (RGBA).
 	if (pTexture->texturePrecision == TEXTURE_PRECISION_FLOAT16 || pTexture->texturePrecision == TEXTURE_PRECISION_FLOAT32)
@@ -188,8 +185,8 @@ bool Texture_LoadImage(Texture pTexture, const char* szTexturePath)
 
 	if (pTexture->imageData.pData == NULL)
 	{
-		tracked_free(pTexture->imageData.szTexturePath);
-		tracked_free(pTexture->imageData.szTextureName);
+		engine_delete(pTexture->imageData.szTexturePath);
+		engine_delete(pTexture->imageData.szTextureName);
 
 		syserr("Failed to load stb image");
 		return (false);
@@ -452,8 +449,8 @@ bool Texture_LoadHeightMapImage(Texture pTexture, const char* szTexName, void* p
 	pTexture->imageData.width = width;
 	pTexture->imageData.height = height;
 	pTexture->imageData.channels = 1;
-	pTexture->imageData.szTexturePath = tracked_strdup("VirtualTexture");
-	pTexture->imageData.szTextureName = tracked_strdup(szTexName);
+	pTexture->imageData.szTexturePath = engine_strdup("VirtualTexture", MEM_TAG_STRINGS);
+	pTexture->imageData.szTextureName = engine_strdup(szTexName, MEM_TAG_STRINGS);
 	// Load the image, forcing 4 color channels (RGBA).
 	pTexture->imageData.pData = pImageData;
 	pTexture->imageData.dataSize = (size_t)pTexture->imageData.width * (size_t)pTexture->imageData.height * (size_t)pTexture->imageData.channels;

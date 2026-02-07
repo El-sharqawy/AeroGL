@@ -4,8 +4,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stdbool.h>
-#include <stdio.h>
-#include "../Math/Vectors/Vector2.h"
 
 typedef struct SGLWindow* GLWindow;
 
@@ -15,20 +13,21 @@ typedef enum EWinowMode
 	FULLSCREEN,
 } EWinowMode;
 
-bool AllocateWindow(GLWindow* ppWindow);
-void DeallocateWindow(GLWindow* pWindow);
-void SetWindowTitle(GLWindow pWindow, const char* szTitle);
-void SetWindowMode(GLWindow pWindow, EWinowMode windowMode);
+bool Window_Initialize(GLWindow* ppWindow);
+void Window_Deallocate(GLWindow* pWindow);
 
-bool InitializeWindow(GLWindow pWindow);
-bool DestroyGLWindow(GLWindow pWindow);
-GLFWwindow* GetGLWindow(GLWindow pWindow);
+bool Window_InitializeGLWindow(GLWindow pWindow);
 
-GLint GetWindowWidth(GLWindow pWindow);
-GLint GetWindowHeight(GLWindow pWindow);
-GLfloat GetWindowWidthF(GLWindow pWindow);
-GLfloat GetWindowHeightF(GLWindow pWindow);
+void Window_SetTitle(GLWindow pWindow, const char* szTitle);
+void Window_SetMode(GLWindow pWindow, EWinowMode windowMode);
+bool Window_DestroyGLWindow(GLWindow pWindow);
+GLFWwindow* Window_GetGLWindow(GLWindow pWindow);
 
-void UpdateWindowDeminsions(GLWindow pWindow, int width, int height);
+GLint Window_GetWidth(GLWindow pWindow);
+GLint Window_GetHeight(GLWindow pWindow);
+GLfloat Window_GetWidthF(GLWindow pWindow);
+GLfloat Window_GetHeightF(GLWindow pWindow);
+
+void Window_UpdateDeminsions(GLWindow pWindow, int width, int height);
 
 #endif // __WINDOW_H__

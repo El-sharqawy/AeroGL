@@ -1,11 +1,12 @@
 #include "Mesh3D.h"
+#include "../Stdafx.h"
 #include "../Math/EngineMath.h"
 #include "../Math/Matrix/Matrix3.h"
 
 Mesh3D Mesh3D_Create(GLenum primitiveType)
 {
 	// 1. Allocate and zero-initialize the struct
-	Mesh3D mesh = (Mesh3D)tracked_calloc(1, sizeof(SMesh3D));
+	Mesh3D mesh = engine_new_zero(SMesh3D, 1, MEM_TAG_RESOURCES);
 	if (!mesh)
 	{
 		syserr("Failed to allocate Mesh3D");
@@ -16,7 +17,7 @@ Mesh3D Mesh3D_Create(GLenum primitiveType)
 	if (!Vector_Init(&mesh->pVertices, sizeof(SVertex3D), false))
 	{
 		syserr("Failed to Initialize Mesh Vector Vertices");
-		tracked_free(mesh);
+		engine_delete(mesh);
 		return NULL;
 	}
 
@@ -24,7 +25,7 @@ Mesh3D Mesh3D_Create(GLenum primitiveType)
 	{
 		syserr("Failed to Initialize Mesh Vector Indices");
 		Vector_Destroy(&mesh->pVertices);
-		tracked_free(mesh);
+		engine_delete(mesh);
 		return NULL;
 	}
 
@@ -51,7 +52,7 @@ Mesh3D Mesh3D_Create(GLenum primitiveType)
 Mesh3D Mesh3D_CreateWithCapacity(GLenum primitiveType, GLsizeiptr vertexHint, GLsizeiptr indexHint)
 {
 	// 1. Allocate and zero-initialize the struct
-	Mesh3D mesh = (Mesh3D)tracked_calloc(1, sizeof(SMesh3D));
+	Mesh3D mesh = engine_new_zero(SMesh3D, 1, MEM_TAG_RESOURCES);
 	if (!mesh)
 	{
 		syserr("Failed to allocate Mesh3D");
@@ -483,10 +484,10 @@ void Mesh3D_SetName(Mesh3D pMesh, const char* szName)
 {
 	if (pMesh->szMeshName)
 	{
-		tracked_free(pMesh->szMeshName);
+		engine_delete(pMesh->szMeshName);
 	}
 
-	pMesh->szMeshName = tracked_strdup(szName);
+	pMesh->szMeshName = engine_strdup(szName, MEM_TAG_STRINGS);
 }
 
 /**
@@ -507,7 +508,7 @@ void Mesh3D_Destroy(Mesh3D* ppMesh)
 
 	if (mesh->szMeshName)
 	{
-		tracked_free(mesh->szMeshName);
+		engine_delete(mesh->szMeshName);
 		mesh->szMeshName = NULL;
 	}
 
@@ -522,7 +523,7 @@ void Mesh3D_Destroy(Mesh3D* ppMesh)
 	}
 
 	// 2. Free the struct itself
-	tracked_free(mesh);
+	engine_delete(mesh);
 
 	// 3. Set pointer to NULL (prevent double-free)
 	*ppMesh = NULL;

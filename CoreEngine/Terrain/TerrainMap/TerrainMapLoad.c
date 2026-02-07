@@ -1,7 +1,6 @@
 #include "TerrainMap.h"
-#include "../../Core/CoreUtils.h"
+#include "../../Stdafx.h"
 #include "../../Lib/cJSON.h"
-#include <assert.h>
 
 bool TerrainMap_CreateFolder(TerrainMap pTerrainMap, char* szMapName)
 {
@@ -349,11 +348,11 @@ bool TerrainMap_LoadSettingsFile(TerrainMap pTerrainMap, const char* szFullPath)
 	}
 
 
-	char* settingsFileData = tracked_malloc(len + 1);
+	char* settingsFileData = engine_malloc(len + 1, MEM_TAG_RESOURCES);
 	if (fread(settingsFileData, 1, len, fSettingsFile) != len)
 	{
 		syserr("Failed to Read the settings file");
-		tracked_free(settingsFileData);
+		engine_delete(settingsFileData);
 		fclose(fSettingsFile);
 		return (false);
 	}
@@ -362,7 +361,7 @@ bool TerrainMap_LoadSettingsFile(TerrainMap pTerrainMap, const char* szFullPath)
 	settingsFileData[len] = '\0'; // Add NULL terminator
 
 	cJSON* settingsJson = cJSON_Parse(settingsFileData);
-	tracked_free(settingsFileData); // Free early since cJSON makes its own internal copy
+	engine_delete(settingsFileData); // Free early since cJSON makes its own internal copy
 
 	if (settingsJson == NULL)
 	{

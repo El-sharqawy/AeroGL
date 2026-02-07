@@ -146,6 +146,8 @@
     <ClCompile Include="Engine.c" />
     <ClCompile Include="Lib\cJSON.c" />
     <ClCompile Include="Lib\cJSON_Utils.c" />
+    <ClCompile Include="Lib\Map.c" />
+    <ClCompile Include="Lib\UnorderedMap.c" />
     <ClCompile Include="Lib\Vector.c" />
     <ClCompile Include="Main.c" />
     <ClCompile Include="Math\EngineMath.c" />
@@ -174,6 +176,7 @@
     <ClCompile Include="Renderer\TerrainRenderer.c" />
     <ClCompile Include="Resources\MemoryManager.c" />
     <ClCompile Include="Resources\TexturesManager.c" />
+    <ClCompile Include="Stdafx.c" />
     <ClCompile Include="Terrain\TerrainManager\TerrainManager.c" />
     <ClCompile Include="Terrain\TerrainMap\TerrainMap.c" />
     <ClCompile Include="Terrain\TerrainMap\TerrainMapLoad.c" />
@@ -197,6 +200,8 @@
     <ClInclude Include="Engine.h" />
     <ClInclude Include="Lib\cJSON.h" />
     <ClInclude Include="Lib\cJSON_Utils.h" />
+    <ClInclude Include="Lib\List.h" />
+    <ClInclude Include="Lib\UnorderedMap.h" />
     <ClInclude Include="Lib\Vector.h" />
     <ClInclude Include="Math\EngineMath.h" />
     <ClInclude Include="Math\Grids\FloatGrid.h" />
@@ -220,7 +225,9 @@
     <ClInclude Include="Renderer\DebugRenderer.h" />
     <ClInclude Include="Renderer\TerrainRenderer.h" />
     <ClInclude Include="Resources\MemoryManager.h" />
+    <ClInclude Include="Resources\MemoryTags.h" />
     <ClInclude Include="Resources\TexturesManager.h" />
+    <ClInclude Include="Stdafx.h" />
     <ClInclude Include="Terrain\TerrainData.h" />
     <ClInclude Include="Terrain\TerrainManager\TerrainManager.h" />
     <ClInclude Include="Terrain\TerrainMap\TerrainMap.h" />

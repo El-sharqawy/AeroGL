@@ -2,37 +2,7 @@
 #include "TerrainData.h"
 #include "Terrain/Terrain.h"
 #include "../Math/Matrix/Matrix3.h"
-
-TerrainPatch TerrainPatch_Create(struct STerrain* pParentTerrain, int32_t index, int32_t patchX, int32_t patchZ, Vector3 worldPos, float cellSize)
-{
-    TerrainPatch patch = (TerrainPatch)tracked_malloc(sizeof(STerrainPatch));
-
-    patch->patchWidth = PATCH_XSIZE;
-    patch->patchDepth = PATCH_ZSIZE;
-    patch->patchIndex = index;
-    patch->pParentTerrain = pParentTerrain;
-
-    int32_t vertexCapacity = (patch->patchWidth + 1) * (patch->patchDepth + 1);  // Grid vertices
-    int32_t indexCapacity = patch->patchWidth * patch->patchDepth * 6;            // 6 indices per quad
-    patch->terrainMesh = TerrainMesh_CreateWithCapacity(GL_TRIANGLES, vertexCapacity, indexCapacity);
-
-    // Generate mesh geometry in LOCAL space (starting at 0,0,0)
-    Vector4 color;
-    color.r = (float)(patch->patchIndex % 8) / 8.0f;      // Red: 0,0.125,0.25...
-    color.g = (float)(patch->patchIndex / 8 % 8) / 8.0f;  // Green: cycles every 8
-    color.b = 0.5f + 0.5f * sinf(patch->patchIndex * 0.3f);  // Blue: rainbow
-    color.a = 1.0f;
-
-    patch->terrainMesh->transform = TransformInit();
-
-    // Position the mesh in world space
-    TransformSetPositionV(&patch->terrainMesh->transform, worldPos);
-
-    TerrainPatch_GenerateGeometry(patch, patchX, patchZ, cellSize, color);
-
-    // syslog("Generated terrain %d: %zu vertices, %zu indices", patch->patchIndex, patch->terrainMesh->vertexCount, patch->terrainMesh->indexCount);
-    return patch;
-}
+#include "../Stdafx.h"
 
 void TerrainPatch_GenerateGeometry(TerrainPatch patch, int32_t patchX, int32_t patchZ, float cellSize, Vector4 color)
 {
@@ -137,7 +107,7 @@ void TerrainPatch_Destroy(TerrainPatch* ppTerrainPatch)
 
     TerrainMesh_Destroy(&patch->terrainMesh);
 
-    tracked_free(patch);
+    engine_delete(patch);
 
     *ppTerrainPatch = NULL;
 }
@@ -153,7 +123,7 @@ void TerrainPatch_DestroyPtr(TerrainPatch elem)
 
 bool TerrainPatch_Initialize(TerrainPatch* ppTerrainPatch, struct STerrain* pParentTerrain, int32_t index)
 {
-    *ppTerrainPatch = tracked_calloc(1, sizeof(STerrainPatch));
+    *ppTerrainPatch = engine_new_zero(STerrainPatch, 1, MEM_TAG_TERRAIN);
 
     if (!(*ppTerrainPatch))
     {

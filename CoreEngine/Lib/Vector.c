@@ -1,5 +1,5 @@
 #include "Vector.h"
-#include "../Core/CoreUtils.h"
+#include "../Stdafx.h"
 
 bool Vector_Init(Vector* ppVector, size_t elementSize, bool isSinglePtr)
 {
@@ -9,7 +9,7 @@ bool Vector_Init(Vector* ppVector, size_t elementSize, bool isSinglePtr)
 		return false;
 	}
 
-	*ppVector = tracked_calloc(1, sizeof(SVector));
+	*ppVector = engine_new_zero(SVector, 1, MEM_TAG_ENGINE);
 
 	if (!*ppVector)
 	{
@@ -17,10 +17,7 @@ bool Vector_Init(Vector* ppVector, size_t elementSize, bool isSinglePtr)
 		return (false);
 	}
 
-	(*ppVector)->count = 0;					// Number of elements
-	(*ppVector)->capacity = 0;				// Allocated slots
 	(*ppVector)->elemSize = elementSize;	// Size of one element (e.g., sizeof(SVertex))
-	(*ppVector)->destructor = NULL;			// NULL = raw copy, no free
 	(*ppVector)->isSinglePtr = isSinglePtr;
 	(*ppVector)->isSmartVec = true;
 
@@ -73,10 +70,10 @@ void Vector_Destroy(Vector* ppVector)
 		}
 	}
 
-	tracked_free(vec->pData);
+	engine_delete(vec->pData);
 	vec->pData = NULL;
 
-	tracked_free(vec);
+	engine_delete(vec);
 	*ppVector = NULL;
 }
 
@@ -94,7 +91,7 @@ void Vector_Reserve(Vector pVector, size_t reservedSize)
 	}
 
 	// tracked_realloc handles everything: alloc, copy, free
-	void* newPtr = tracked_realloc(pVector->pData, reservedSize * pVector->elemSize);
+	void* newPtr = engine_realloc(pVector->pData, reservedSize * pVector->elemSize);
 	if (!newPtr)
 	{
 		syserr("Vector Reserve failed to allocate %zu bytes", reservedSize * pVector->elemSize);
@@ -203,7 +200,7 @@ void Vector_PushBack(Vector pVector, const void* element)
 	if (pVector->count == pVector->capacity || pVector->pData == NULL)
 	{
 		size_t newCapacity = (pVector->capacity == 0) ? 4 : pVector->capacity * 2; // 4 elements capacity
-		void* newPtr = tracked_realloc(pVector->pData, newCapacity * pVector->elemSize);
+		void* newPtr = engine_realloc(pVector->pData, newCapacity * pVector->elemSize);
 		if (!newPtr)
 		{
 			syserr("Realloc failed! capacity=%zu", newCapacity);
@@ -353,7 +350,7 @@ void Vector_Swap(Vector pVector, size_t indexA, size_t indexB)
 	{
 		// temp = alloca(pVector->elemSize); // could be risky ?
 
-		temp = tracked_malloc(size);
+		temp = tracked_malloc(size); // just for raw bytes
 		usedHeap = true;
 	}
 

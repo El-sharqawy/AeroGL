@@ -1,12 +1,8 @@
 #include "Camera.h"
-#include "CoreUtils.h"
-#include <memory.h>
+#include "../Stdafx.h"
 #include "../Math/Projection/OrthographicProjection.h"
 #include "../Math/Quaternion/Quaternion.h"
-#include "Input.h"
 #include "../Buffers/UniformBufferObject.h"
-
-static Input pInput;
 
 typedef struct SGLCamera
 {
@@ -108,7 +104,8 @@ bool InitializeCamera(GLCamera *ppCamera, float Width, float Height)
 		return false;
 	}
 
-	*ppCamera = tracked_malloc(sizeof(SGLCamera));
+	// make sure it's all elements set to zero bytes
+	*ppCamera = engine_new_zero(SGLCamera, 1, MEM_TAG_ENGINE);
 
 	GLCamera pCamera = *ppCamera;
 
@@ -155,8 +152,6 @@ bool InitializeCamera(GLCamera *ppCamera, float Width, float Height)
 
 	pCamera->v3Right = Vector3_Normalized(Vector3_Cross(pCamera->v3Front, s_v3WorldUp));
 	pCamera->v3Up = Vector3_Normalized(Vector3_Cross(pCamera->v3Right, pCamera->v3Front));
-
-	pInput = GetInput(); // Using your Singleton!
 
 	if (!InitializeUniformBufferObject(&pCamera->cameraUBO, sizeof(SCameraUBO), UBO_BP_CAMERA, "Camera UBO"))
 	{
@@ -326,8 +321,8 @@ void ProcessCameraMouse(GLCamera pCamera)
 	if (pCamera->bUseQuaternion)
 	{
 		// Quaternion-based rotation accumulation
-		GLfloat fDeltaYaw = -pInput->v2MouseDelta.x * pCamera->Sensitivity;
-		GLfloat fDeltaPitch = pInput->v2MouseDelta.y * pCamera->Sensitivity;
+		GLfloat fDeltaYaw = -GetInput()->v2MouseDelta.x * pCamera->Sensitivity;
+		GLfloat fDeltaPitch = GetInput()->v2MouseDelta.y * pCamera->Sensitivity;
 
 		// Compute right axis from current orientation
 		Vector3 localRight = Quaternion_Rotate(pCamera->OrientationQuaternion, s_v3WorldRight);
@@ -345,8 +340,8 @@ void ProcessCameraMouse(GLCamera pCamera)
 	else
 	{
 		// Use the pre-calculated delta from our Input System
-		pCamera->Yaw -= pInput->v2MouseDelta.x * pCamera->Sensitivity;
-		pCamera->Pitch += pInput->v2MouseDelta.y * pCamera->Sensitivity;
+		pCamera->Yaw -= GetInput()->v2MouseDelta.x * pCamera->Sensitivity;
+		pCamera->Pitch += GetInput()->v2MouseDelta.y * pCamera->Sensitivity;
 
 		// Clamp the pitch angle to [-89.0f, 89.0f] degrees to prevent the camera from 
 		// flipping over (looking directly above 90 or below -90 degrees).
@@ -359,7 +354,7 @@ void ProcessCameraMouse(GLCamera pCamera)
 void ProcessCameraZoom(GLCamera pCamera)
 {
 	// 1. Adjust the zoom level (clamped to keep it sensible)
-	pCamera->CameraZoom -= pInput->mouseScroll;
+	pCamera->CameraZoom -= GetInput()->mouseScroll;
 	pCamera->CameraZoom = clampf(pCamera->CameraZoom, 1.0f, 90.0f);
 
 	// 2. Sync the change to the Projection data

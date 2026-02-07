@@ -1,9 +1,5 @@
 #include "Shader.h"
-#include "../Core/CoreUtils.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
+#include "../Stdafx.h"
 
 typedef struct SGLShader
 {
@@ -24,7 +20,8 @@ bool Shader_Initialize(GLShader* ppShader, const char* szName)
 		return false;
 	}
 
-	*ppShader = tracked_malloc(sizeof(SGLShader));
+	// Set all bytes to 0, ensuring szProgramName and programID is NULL
+	*ppShader = engine_new_zero(SGLShader, 1, MEM_TAG_SHADER);
 
 	GLShader pShader = *ppShader;
 	if (pShader == NULL)
@@ -33,11 +30,10 @@ bool Shader_Initialize(GLShader* ppShader, const char* szName)
 		return (false);
 	}
 
-	// Set all bytes to 0, ensuring m_szWindowTitle is NULL
 	memset(pShader, 0, sizeof(SGLShader));
 
 	pShader->programID = glCreateProgram();
-	pShader->szProgramName = tracked_strdup(szName);
+	pShader->szProgramName = engine_strdup(szName, MEM_TAG_STRINGS);
 
 	return (true);
 }
@@ -62,7 +58,7 @@ void Shader_AttachShader(GLShader pShader, const char* szShaderFile)
 	{
 		syserr("Failde to Load Shader %s", szShaderFile);
 		// free allocated space for shader source code
-		tracked_free(shaderSource);
+		engine_delete(shaderSource);
 		return;
 	}
 
@@ -72,7 +68,7 @@ void Shader_AttachShader(GLShader pShader, const char* szShaderFile)
 	{
 		syserr("Failed to Find Shader %s Type", szShaderFile);
 		// free allocated space for shader source code
-		tracked_free(shaderSource);
+		engine_delete(shaderSource);
 		return;
 	}
 
@@ -104,7 +100,7 @@ void Shader_AttachShader(GLShader pShader, const char* szShaderFile)
 	{
 		glDeleteShader(uiShaderID);
 		// free allocated space for shader source code
-		tracked_free(shaderSource);
+		engine_delete(shaderSource);
 		syserr("Failed Compiling shader %s", szShaderFile);
 		return;
 	}
@@ -120,7 +116,7 @@ void Shader_AttachShader(GLShader pShader, const char* szShaderFile)
 	}
 
 	// free allocated space for shader source code
-	tracked_free(shaderSource);
+	engine_delete(shaderSource);
 
 	// Assign it as Initialized Shader
 	pShader->IsInitialized = true;
@@ -190,14 +186,14 @@ void Shader_Destroy(GLShader* ppShader)
 	// Free the name first
 	if (pShader->szProgramName)
 	{
-		tracked_free(pShader->szProgramName);
+		engine_delete(pShader->szProgramName);
 	}
 
 	// Release GPU resources
 	glDeleteProgram(pShader->programID);
 
 	// Release Shader from Memory
-	tracked_free(pShader);
+	engine_delete(pShader);
 
 	*ppShader = NULL; // Reach back to the caller and set it to NULL
 }

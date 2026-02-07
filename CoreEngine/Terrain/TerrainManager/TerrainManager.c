@@ -1,7 +1,7 @@
 #include "TerrainManager.h"
 #include "../TerrainMap/TerrainMap.h"
 #include "../../Renderer/TerrainRenderer.h"
-#include "../../Engine.h"
+#include "../../Stdafx.h"
 #include "../../PipeLine/Texture.h"
 
 bool TerrainManager_Initialize(TerrainManager* ppTerrainManager)
@@ -12,7 +12,7 @@ bool TerrainManager_Initialize(TerrainManager* ppTerrainManager)
 		return false;
 	}
 
-	*ppTerrainManager = tracked_calloc(1, sizeof(STerrainManager));
+	*ppTerrainManager = engine_new_zero(STerrainManager, 1, MEM_TAG_TERRAIN);
 
 	if (!(*ppTerrainManager))
 	{
@@ -62,7 +62,7 @@ void TerrainManager_Destroy(TerrainManager* ppTerrainManager)
 
 	if (pManager->szMapName)
 	{
-		tracked_free(pManager->szMapName);
+		engine_delete(pManager->szMapName);
 	}
 
 	TerrainRenderer_Destroy(&pManager->terarinRenderer);
@@ -72,7 +72,7 @@ void TerrainManager_Destroy(TerrainManager* ppTerrainManager)
 	Texture_Destroy(&pManager->terrainTex);
 
 	// Destroy Manager
-	tracked_free(pManager);
+	engine_delete(pManager);
 
 	*ppTerrainManager = NULL;
 }
@@ -116,7 +116,7 @@ void TerrainManager_Render(TerrainManager pTerrainManager)
 
 void TerrainManager_SetMapName(TerrainManager pTerrainManager, const char* szMapName)
 {
-	pTerrainManager->szMapName = tracked_strdup(szMapName);
+	pTerrainManager->szMapName = engine_strdup(szMapName, MEM_TAG_STRINGS);
 }
 
 void TerrainManager_SetMapDeminsions(TerrainManager pTerrainManager, int32_t mapWidth, int32_t mapDepth)

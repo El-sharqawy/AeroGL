@@ -1,7 +1,5 @@
 #include "StateManager.h"
-#include "../Core/CoreUtils.h"
-#include "../Engine.h"
-#include <memory.h>
+#include "../Stdafx.h"
 
 bool StateManager_Initialize(StateManager* ppStateManager)
 {
@@ -11,7 +9,7 @@ bool StateManager_Initialize(StateManager* ppStateManager)
 		return false;
 	}
 
-	*ppStateManager = (StateManager)tracked_malloc(sizeof(SStateManager));
+	*ppStateManager = engine_new(SStateManager, MEM_TAG_RENDERING);
 
 	StateManager stateManager = *ppStateManager;
 	if (!stateManager)
@@ -28,13 +26,13 @@ bool StateManager_Initialize(StateManager* ppStateManager)
 
 	stateManager->pCurrentStack->viewport[0] = 0;
 	stateManager->pCurrentStack->viewport[1] = 0;
-	stateManager->pCurrentStack->viewport[2] = GetWindowWidth(GetEngine()->window);
-	stateManager->pCurrentStack->viewport[3] = GetWindowHeight(GetEngine()->window);
+	stateManager->pCurrentStack->viewport[2] = Window_GetWidth(GetEngine()->window);
+	stateManager->pCurrentStack->viewport[3] = Window_GetHeight(GetEngine()->window);
 
 	stateManager->pCurrentStack->scissorBox[0] = 0;
 	stateManager->pCurrentStack->scissorBox[1] = 0;
-	stateManager->pCurrentStack->scissorBox[2] = GetWindowWidth(GetEngine()->window);
-	stateManager->pCurrentStack->scissorBox[3] = GetWindowHeight(GetEngine()->window);
+	stateManager->pCurrentStack->scissorBox[2] = Window_GetWidth(GetEngine()->window);
+	stateManager->pCurrentStack->scissorBox[3] = Window_GetHeight(GetEngine()->window);
 
 	stateManager->pCurrentStack->blendSrc = GL_ONE;
 	stateManager->pCurrentStack->blendDst = GL_ZERO;
@@ -59,7 +57,7 @@ void StateManager_Destroy(StateManager* ppManager)
 	}
 
 	StateManager pManager = *ppManager;
-	tracked_free(pManager);
+	engine_delete(pManager);
 
 	*ppManager = NULL;
 }

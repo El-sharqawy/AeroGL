@@ -33,7 +33,6 @@ void TerrainPatch_DestroyPtr(TerrainPatch elem);
 void TerrainPatch_Clear(TerrainPatch pTerrainPatch);
 bool TerrainPatch_InitializeIndices(TerrainPatch pTerrainPatch);
 
-TerrainPatch TerrainPatch_Create(struct STerrain* pParentTerrain, int32_t index, int32_t patchX, int32_t patchZ, Vector3 worldPos, float cellSize);
 void TerrainPatch_GenerateGeometry(TerrainPatch patch, int32_t patchX, int32_t patchZ, float cellSize, Vector4 color);
 
 

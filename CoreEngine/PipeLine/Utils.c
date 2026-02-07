@@ -1,5 +1,5 @@
 #include "Utils.h"
-#include "../Core/CoreUtils.h"
+#include "../Stdafx.h"
 
 void GL_DeleteBuffer(GLuint* puiBufferID)
 {

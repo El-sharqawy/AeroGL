@@ -1,8 +1,5 @@
 #include "Window.h"
-#include "CoreUtils.h"
-#include <memory.h>
-#include <stdlib.h>
-#include <string.h>
+#include "../Stdafx.h"
 
 typedef struct SGLWindow
 {
@@ -24,11 +21,51 @@ typedef struct SGLWindow
 	GLint m_iFullScreenHeight;
 } SGLWindow;
 
-void error_callback(int error, const char* description) {
+static void error_callback(int error, const char* description)
+{
 	fprintf(stderr, "Error: %s\n", description);
 }
 
-bool InitializeWindow(GLWindow pWindow)
+bool Window_Initialize(GLWindow* ppWindow)
+{
+	// Set all bytes to 0, ensuring m_szWindowTitle is NULL
+	*ppWindow = engine_new_zero(SGLWindow, 1, MEM_TAG_ENGINE);
+
+	GLWindow pWindow = *ppWindow;
+	if (!pWindow)
+	{
+		syserr("Failed to Allocate Memory for window");
+		return (false);
+	}
+
+	return (true);
+}
+
+void Window_Deallocate(GLWindow* ppWindow)
+{
+	if (!ppWindow || !*ppWindow)
+	{
+		return;
+	}
+
+	GLWindow pWindow = *ppWindow;
+
+	if (pWindow->m_pGLWindow)
+	{
+		glfwDestroyWindow(pWindow->m_pGLWindow);
+	}
+
+	if (pWindow->m_szWindowTitle)
+	{
+		engine_delete(pWindow->m_szWindowTitle);
+	}
+
+	engine_delete(pWindow);
+
+	*ppWindow = NULL;
+}
+
+bool Window_InitializeGLWindow(GLWindow pWindow)
 {
 	glfwSetErrorCallback(error_callback);
 
@@ -52,20 +89,20 @@ bool InitializeWindow(GLWindow pWindow)
 
 	glfwWindowHint(GLFW_FOCUS_ON_SHOW, GLFW_TRUE);							// set focus on this window when we show it
 
-	pWindow->m_pMonitor = glfwGetPrimaryMonitor();						// Get Monitor Data
-	pWindow->m_pVidMode = glfwGetVideoMode(pWindow->m_pMonitor);		// Get Video Mode Settings
+	pWindow->m_pMonitor = glfwGetPrimaryMonitor();							// Get Monitor Data
+	pWindow->m_pVidMode = glfwGetVideoMode(pWindow->m_pMonitor);			// Get Video Mode Settings
 
 	// Setup GLFW Rendering Data
 	glfwWindowHint(GLFW_RED_BITS, pWindow->m_pVidMode->redBits);			// Set red bits value for the window based on the monitor
 	glfwWindowHint(GLFW_GREEN_BITS, pWindow->m_pVidMode->greenBits);		// Set Green bits value for the window based on the monitor
-	glfwWindowHint(GLFW_BLUE_BITS, pWindow->m_pVidMode->blueBits);		// Set Blue bits value for the window based on the monitor
+	glfwWindowHint(GLFW_BLUE_BITS, pWindow->m_pVidMode->blueBits);			// Set Blue bits value for the window based on the monitor
 	glfwWindowHint(GLFW_REFRESH_RATE, pWindow->m_pVidMode->refreshRate);	// Set Refresh rate based on the monitor
 
 	pWindow->m_iFullScreenWidth = pWindow->m_pVidMode->width;
 	pWindow->m_iFullScreenHeight = pWindow->m_pVidMode->height;
 
-	pWindow->m_iWindowedWidth = (pWindow->m_iFullScreenWidth * 75) / 100; // 75% of full screen width
-	pWindow->m_iWindowedHeight = (pWindow->m_iFullScreenHeight * 75) / 100; // 75% of full screen height
+	pWindow->m_iWindowedWidth = (pWindow->m_iFullScreenWidth * 75) / 100;	// 75% of full screen width
+	pWindow->m_iWindowedHeight = (pWindow->m_iFullScreenHeight * 75) / 100;	// 75% of full screen height
 
 	if (pWindow->windowMode == WINDOWED)
 	{
@@ -112,59 +149,16 @@ bool InitializeWindow(GLWindow pWindow)
 	return (GLFW_TRUE);
 }
 
-bool AllocateWindow(GLWindow* ppWindow)
-{
-	*ppWindow = (GLWindow)tracked_malloc(sizeof(SGLWindow));
-
-	GLWindow pWindow = *ppWindow;
-	if (!pWindow)
-	{
-		syserr("Failed to Allocate Memory for window");
-		return (false);
-	}
-
-	if (pWindow)
-	{
-		// Set all bytes to 0, ensuring m_szWindowTitle is NULL
-		memset(pWindow, 0, sizeof(SGLWindow));
-	}
-	return (true);
-}
-
-void DeallocateWindow(GLWindow* ppWindow)
-{
-	if (!ppWindow || !*ppWindow)
-	{
-		return;
-	}
-
-	GLWindow pWindow = *ppWindow;
-
-	if (pWindow->m_pGLWindow)
-	{
-		glfwDestroyWindow(pWindow->m_pGLWindow);
-	}
-
-	if (pWindow->m_szWindowTitle)
-	{
-		tracked_free(pWindow->m_szWindowTitle);
-	}
-
-	tracked_free(pWindow);
-
-	*ppWindow = NULL;
-}
-
-void SetWindowTitle(GLWindow pWindow, const char* szTitle)
+void Window_SetTitle(GLWindow pWindow, const char* szTitle)
 {
 	// 1. If we already had a title, we must free it first to avoid a leak
 	if (pWindow->m_szWindowTitle != NULL)
 	{
-		tracked_free((void*)pWindow->m_szWindowTitle);
+		engine_delete((void*)pWindow->m_szWindowTitle);
 	}
 
 	// 2. Create the new copy
-	pWindow->m_szWindowTitle = tracked_strdup(szTitle);
+	pWindow->m_szWindowTitle = engine_strdup(szTitle, MEM_TAG_STRINGS);
 
 	// 3. Update the actual GLFW window if it exists
 	if (pWindow->m_szWindowTitle)
@@ -173,43 +167,43 @@ void SetWindowTitle(GLWindow pWindow, const char* szTitle)
 	}
 }		
 
-void SetWindowMode(GLWindow pWindow, EWinowMode windowMode)
+void Window_SetMode(GLWindow pWindow, EWinowMode windowMode)
 {
 	pWindow->windowMode = windowMode;
 }
 
-bool DestroyGLWindow(GLWindow pWindow)
+bool Window_DestroyGLWindow(GLWindow pWindow)
 {
 	glfwDestroyWindow(pWindow->m_pGLWindow);
 	return (GLFW_TRUE);
 }
 
-GLFWwindow* GetGLWindow(GLWindow pWindow)
+GLFWwindow* Window_GetGLWindow(GLWindow pWindow)
 {
 	return pWindow->m_pGLWindow;
 }
 
-GLint GetWindowWidth(GLWindow pWindow)
+GLint Window_GetWidth(GLWindow pWindow)
 {
 	return (pWindow->m_iWidth);
 }
 
-GLint GetWindowHeight(GLWindow pWindow)
+GLint Window_GetHeight(GLWindow pWindow)
 {
 	return (pWindow->m_iHeight);
 }
 
-GLfloat GetWindowWidthF(GLWindow pWindow)
+GLfloat Window_GetWidthF(GLWindow pWindow)
 {
 	return (float)(pWindow->m_iWidth);
 }
 
-GLfloat GetWindowHeightF(GLWindow pWindow)
+GLfloat Window_GetHeightF(GLWindow pWindow)
 {
 	return (float)(pWindow->m_iHeight);
 }
 
-void UpdateWindowDeminsions(GLWindow pWindow, int width, int height)
+void Window_UpdateDeminsions(GLWindow pWindow, int width, int height)
 {
 	pWindow->m_iWidth = width;
 	pWindow->m_iHeight = height;

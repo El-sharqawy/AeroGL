@@ -1,5 +1,5 @@
 #include "Engine.h"
-#include "Core/CoreUtils.h"
+#include "Stdafx.h"
 #include "Lib/Vector.h"
 #include "UserInterface/Interface_imgui.h"
 #include <time.h>
@@ -24,15 +24,15 @@ bool InitializeEngine(Engine pEngine)
 	s_Instance = pEngine;
 
 	// Validation Check
-	if (!AllocateWindow(&pEngine->window))
+	if (!Window_Initialize(&pEngine->window))
 	{
 		DestroyEngine(pEngine);
 		return (false);
 	}
 
-	SetWindowTitle(pEngine->window, "AeroGL");
-	SetWindowMode(pEngine->window, WINDOWED);
-	if (!InitializeWindow(pEngine->window))
+	Window_SetTitle(pEngine->window, "AeroGL");
+	Window_SetMode(pEngine->window, WINDOWED);
+	if (!Window_InitializeGLWindow(pEngine->window))
 	{
 		DestroyEngine(pEngine);
 		return (false);
@@ -45,7 +45,7 @@ bool InitializeEngine(Engine pEngine)
 	}
 
 	// Validation Check
-	if (!InitializeCamera(&pEngine->camera, GetWindowWidthF(pEngine->window), GetWindowHeightF(pEngine->window)))
+	if (!InitializeCamera(&pEngine->camera, Window_GetWidthF(pEngine->window), Window_GetHeightF(pEngine->window)))
 	{
 		DestroyEngine(pEngine);
 		return (false);
@@ -82,22 +82,22 @@ bool InitializeEngine(Engine pEngine)
 
 
 	// Set the window pointer
-	glfwSetWindowUserPointer(GetGLWindow(pEngine->window), pEngine);
+	glfwSetWindowUserPointer(Window_GetGLWindow(pEngine->window), pEngine);
 
 	// set GLFW callbacks
-	glfwSetFramebufferSizeCallback(GetGLWindow(pEngine->window), framebuffer_size_callback);
-	glfwSetCursorPosCallback(GetGLWindow(pEngine->window), cursorpos_callback);
-	glfwSetScrollCallback(GetGLWindow(pEngine->window), cursorscroll_callback);
+	glfwSetFramebufferSizeCallback(Window_GetGLWindow(pEngine->window), framebuffer_size_callback);
+	glfwSetCursorPosCallback(Window_GetGLWindow(pEngine->window), cursorpos_callback);
+	glfwSetScrollCallback(Window_GetGLWindow(pEngine->window), cursorscroll_callback);
 
-	glfwSetKeyCallback(GetGLWindow(pEngine->window), keyboard_callback);
-	glfwSetMouseButtonCallback(GetGLWindow(pEngine->window), mousebutton_callback);
+	glfwSetKeyCallback(Window_GetGLWindow(pEngine->window), keyboard_callback);
+	glfwSetMouseButtonCallback(Window_GetGLWindow(pEngine->window), mousebutton_callback);
 
 	// Enable it
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS); // Makes sure the error happens on the line that caused it
 	glDebugMessageCallback(MessageCallback, 0);
 
-	ImGui_Init(GetGLWindow(pEngine->window));
+	ImGui_Init(Window_GetGLWindow(pEngine->window));
 
 	return (true);;
 }
@@ -150,7 +150,7 @@ void UpdateEngine(Engine pEngine)
 	ImGui_Render();
 
 	// 4. Swap Window Buffers
-	glfwSwapBuffers(GetGLWindow(pEngine->window));
+	glfwSwapBuffers(Window_GetGLWindow(pEngine->window));
 }
 
 void RenderEngine(Engine pEngine)
@@ -177,7 +177,7 @@ void DestroyEngine(Engine pEngine)
 
 	Input_Destroy(&pEngine->Input);
 
-	DeallocateWindow(&pEngine->window);
+	Window_Deallocate(&pEngine->window);
 
 	glfwTerminate();
 }
@@ -215,7 +215,7 @@ void framebuffer_size_callback(GLFWwindow* window, GLint iWidth, GLint iHeight)
 		return;
 	}
 
-	UpdateWindowDeminsions(pEngine->window, iWidth, iHeight);
+	Window_UpdateDeminsions(pEngine->window, iWidth, iHeight);
 	UpdateCameraDeminsions(pEngine->camera, (float)iWidth, (float)iHeight);
 
 	// syslog("Window Resized: (%d, %d)", GetWindowWidth(pEngine->window), GetWindowHeight(pEngine->window));

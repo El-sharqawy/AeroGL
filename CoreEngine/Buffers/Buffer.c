@@ -1,10 +1,8 @@
 #include "Buffer.h"
-#include "../Core/CoreUtils.h"
-#include <memory.h>
+#include "../Stdafx.h"
 #include <stddef.h> // Required for offsetof
 #include "../PipeLine/StateManager.h"
 #include "../PipeLine/Utils.h"
-
 typedef struct SGLBuffer
 {
 	GLuint uiVAO;			// The Vertex Array Object (The "Boss" handle)
@@ -156,7 +154,7 @@ void GLBuffer_DestroyBuffer(GLBuffer* ppBuffer)
 	GLBuffer pBuffer = *ppBuffer;
 
 	GLBuffer_Delete(pBuffer);
-	tracked_free(pBuffer);
+	engine_delete(pBuffer);
 
 	*ppBuffer = NULL;
 }
@@ -358,7 +356,8 @@ bool GLBuffer_Initialize(GLBuffer* ppBuffer)
 		return false;
 	}
 
-	*ppBuffer = (GLBuffer)tracked_malloc(sizeof(SGLBuffer));
+	// make sure it's all elements set to zero bytes
+	*ppBuffer = engine_new_zero(SGLBuffer, 1, MEM_TAG_GPU_BUFFER);
 
 	GLBuffer pGLBuffer = *ppBuffer;
 	if (!pGLBuffer)
@@ -366,9 +365,6 @@ bool GLBuffer_Initialize(GLBuffer* ppBuffer)
 		syserr("Failed to Allocate Space for GLBuffer");
 		return (false);
 	}
-
-	// make sure it's all elements set to zero bytes
-	memset(pGLBuffer, 0, sizeof(SGLBuffer));
 
 	// 1. Setup the Metadata inside the struct
 	pGLBuffer->vboCapacity = INITIAL_VERTEX_CAPACITY;
@@ -379,7 +375,7 @@ bool GLBuffer_Initialize(GLBuffer* ppBuffer)
 	if (GLBuffer_Create(pGLBuffer) == false)
 	{
 		GLBuffer_Delete(pGLBuffer); // Clean up GPU side
-		tracked_free(pGLBuffer);   // Clean up CPU side
+		engine_delete(pGLBuffer);   // Clean up CPU side
 		return false;
 	}
 
@@ -397,7 +393,7 @@ bool GLBuffer_Initialize(GLBuffer* ppBuffer)
 	if (GLBuffer_AllocateStorage(pGLBuffer) == false)
 	{
 		GLBuffer_Delete(pGLBuffer); // Clean up GPU side
-		tracked_free(pGLBuffer);   // Clean up CPU side
+		engine_delete(pGLBuffer);   // Clean up CPU side
 		return false;
 	}
 
@@ -818,7 +814,8 @@ bool Mesh3DGLBuffer_Initialize(GLBuffer* ppBuffer)
 		return false;
 	}
 
-	*ppBuffer = tracked_malloc(sizeof(SGLBuffer));
+	// make sure it's all elements set to zero bytes
+	*ppBuffer = engine_new_zero(SGLBuffer, 1, MEM_TAG_GPU_BUFFER);
 
 	GLBuffer pGLBuffer = *ppBuffer;
 
@@ -840,7 +837,7 @@ bool Mesh3DGLBuffer_Initialize(GLBuffer* ppBuffer)
 	if (GLBuffer_Create(pGLBuffer) == false)
 	{
 		GLBuffer_Delete(pGLBuffer); // Clean up GPU side
-		tracked_free(pGLBuffer);   // Clean up CPU side
+		engine_delete(pGLBuffer);   // Clean up CPU side
 		return (false);
 	}
 
@@ -858,7 +855,7 @@ bool Mesh3DGLBuffer_Initialize(GLBuffer* ppBuffer)
 	if (Mesh3DGLBuffer_AllocateStorage(pGLBuffer) == false)
 	{
 		GLBuffer_Delete(pGLBuffer); // Clean up GPU side
-		tracked_free(pGLBuffer);   // Clean up CPU side
+		engine_delete(pGLBuffer);   // Clean up CPU side
 		return (false);
 	}
 

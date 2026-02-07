@@ -1,6 +1,6 @@
 #include "Terrain.h"
 #include "../TerrainMap/TerrainMap.h"
-#include "../../Core/CoreUtils.h"
+#include "../../Stdafx.h"
 #include "../../Math/Grids/FloatGrid.h"
 #include "../TerrainPatch.h"
 #include "../../PipeLine/Texture.h"
@@ -69,7 +69,7 @@ bool Terrain_CreateHeightMap(Terrain pTerrain, const char* szTerrainsFolder)
 	}
 
 	FloatGrid pHeightMap = NULL;
-	if (!FloatGrid_Initialize(&pHeightMap, HEIGHTMAP_RAW_XSIZE, HEIGHTMAP_RAW_ZSIZE)) // Init with ZEROs
+	if (!FloatGrid_Initialize(&pHeightMap, HEIGHTMAP_RAW_XSIZE, HEIGHTMAP_RAW_ZSIZE, MEM_TAG_TERRAIN)) // Init with ZEROs
 	{
 		syserr("Failed to Allocate HeightMap");
 		return (false);
@@ -177,7 +177,7 @@ bool Terrain_LoadHeightMap(Terrain pTerrain, const char* szTerrainsFolder)
 	}
 
 	// Create our grid
-	if (!FloatGrid_Initialize(&pTerrain->heightMap, HEIGHTMAP_RAW_XSIZE, HEIGHTMAP_RAW_ZSIZE))
+	if (!FloatGrid_Initialize(&pTerrain->heightMap, HEIGHTMAP_RAW_XSIZE, HEIGHTMAP_RAW_ZSIZE, MEM_TAG_TERRAIN))
 	{
 		syserr("Failed to Initialize Height map");
 		fclose(fHeightMap);

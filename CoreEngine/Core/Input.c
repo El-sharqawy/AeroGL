@@ -1,8 +1,5 @@
 #include "Input.h"
-#include "CoreUtils.h"
-#include <memory.h>
-#include <GLFW/glfw3.h>
-#include "../Engine.h"
+#include "../Stdafx.h"
 
 static Input ms_Input = NULL;
 
@@ -14,7 +11,8 @@ bool Input_Initialize(Input* ppInput)
         return false;
     }
 
-    *ppInput = tracked_malloc(sizeof(SInput));
+    // make sure it's all elements set to zero bytes
+    *ppInput = engine_new_zero(SInput, 1, MEM_TAG_ENGINE);
     
     // Capture the dereferenced pointer for easier use in this function
     Input pInput = *ppInput;
@@ -25,9 +23,6 @@ bool Input_Initialize(Input* ppInput)
         syserr("Failed to Allocate Memory for Input");
         return (false);
     }
-
-    // Initialize everything to zero
-    memset(pInput, 0, sizeof(SInput));
 
     pInput->bFirstMouseMove = true;
 
@@ -43,7 +38,7 @@ void Input_Destroy(Input* ppInput)
     }
 
     Input pInput = *ppInput;
-    tracked_free(pInput);
+    engine_delete(pInput);
 
     *ppInput = NULL;
 }
@@ -239,13 +234,23 @@ void HandleKeys(Input pInput)
 {
     if (IsKeyDown(pInput, GLFW_KEY_ESCAPE))
     {
-        glfwSetWindowShouldClose(GetGLWindow(GetEngine()->window), GLFW_TRUE);
+        glfwSetWindowShouldClose(Window_GetGLWindow(GetEngine()->window), GLFW_TRUE);
         GetEngine()->isRunning = false;
     }
     if (IsKeyDown(pInput, GLFW_KEY_H))
     {
-        syslog("Currently Allocated: %zu Objects with size of %0.2f Kilo Bytes", allocation_count, (double)bytes_allocated / 1024.0);
+        MemoryManager_PrintData();
     }
+
+    if (IsKeyDown(pInput, GLFW_KEY_T))
+    {
+        MemoryManager_Validate();
+    }
+    if (IsKeyDown(pInput, GLFW_KEY_J))
+    {
+        MemoryManager_PrintTagReport();
+    }
+
     if (IsKeyDown(pInput, GLFW_KEY_L))
     {
         if (!GetEngine()->isWireframe)
@@ -266,12 +271,12 @@ void HandleMouseButtons(Input pInput)
     if (IsMouseButtonDown(pInput, GLFW_MOUSE_BUTTON_RIGHT))
     {
         // Disable Cursor for free rotation
-        glfwSetInputMode(GetGLWindow(GetEngine()->window), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        glfwSetInputMode(Window_GetGLWindow(GetEngine()->window), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
     if (IsMouseButtonDown(pInput, GLFW_MOUSE_BUTTON_LEFT))
     {
         // Enable Cursor
-        glfwSetInputMode(GetGLWindow(GetEngine()->window), GLFW_CURSOR, GLFW_CURSOR_CAPTURED);
+        glfwSetInputMode(Window_GetGLWindow(GetEngine()->window), GLFW_CURSOR, GLFW_CURSOR_CAPTURED);
     }
 }
 

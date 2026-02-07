@@ -1,10 +1,8 @@
 #include "DebugRenderer.h"
-#include <memory.h>
-#include <glad/glad.h>
+#include "../Stdafx.h"
 #include "../PipeLine/StateManager.h"
 #include "../Core/Camera.h"
 #include "../Math/Transform.h"
-#include "../Engine.h"
 
 bool CreateDebugRenderer(DebugRenderer* ppDebugRenderer, GLCamera pCamera, const char* szRendererName)
 {
@@ -14,7 +12,8 @@ bool CreateDebugRenderer(DebugRenderer* ppDebugRenderer, GLCamera pCamera, const
 		return false;
 	}
 
-	*ppDebugRenderer = (DebugRenderer)tracked_malloc(sizeof(SDebugRenderer));
+	// Initialize everything into zeros and NULLs
+	*ppDebugRenderer = engine_new_zero(SDebugRenderer, 1, MEM_TAG_RENDERING);
 
 	DebugRenderer pDebugRenderer = *ppDebugRenderer;
 
@@ -23,11 +22,8 @@ bool CreateDebugRenderer(DebugRenderer* ppDebugRenderer, GLCamera pCamera, const
 		syserr("Failed to Allocate Memory for Debug Renderer");
 		return (false);
 	}
-
-	// Initialize everything into zeros and NULLs
-	memset(pDebugRenderer, 0, sizeof(SDebugRenderer));
 	
-	pDebugRenderer->szRendererName = tracked_strdup(szRendererName);
+	pDebugRenderer->szRendererName = engine_strdup(szRendererName, MEM_TAG_STRINGS);
 	pDebugRenderer->pCamera = pCamera;
 
 	if (!Shader_Initialize(&pDebugRenderer->pShader, "DebuggingRendererShader"))
@@ -143,7 +139,7 @@ void DestroyDebugRenderer(DebugRenderer* ppDebugRenderer)
 
 	if (pDebugRenderer->szRendererName)
 	{
-		tracked_free(pDebugRenderer->szRendererName);
+		engine_delete(pDebugRenderer->szRendererName);
 	}
 
 	DebugRenderer_DestroyGroup(pDebugRenderer, DEBUG_LINES);
@@ -152,7 +148,7 @@ void DestroyDebugRenderer(DebugRenderer* ppDebugRenderer)
 	Shader_Destroy(&pDebugRenderer->pShader);
 	GLBuffer_DestroyBuffer(&pDebugRenderer->pDynamicGeometryBuffer);
 
-	tracked_free(pDebugRenderer);
+	engine_delete(pDebugRenderer);
 
 	*ppDebugRenderer = NULL;
 }
