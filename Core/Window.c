@@ -1,0 +1,216 @@
+#include "Window.h"
+#include "Stdafx.h"
+
+typedef struct SGLWindow
+{
+	// OpenGL Data
+	GLFWwindow* m_pGLWindow;
+	const GLFWvidmode* m_pVidMode;
+	GLFWmonitor* m_pMonitor;
+
+	// Window Data
+	char* m_szWindowTitle;
+	EWinowMode windowMode;
+
+	// Window Deminsions Data
+	GLint m_iWidth;
+	GLint m_iHeight;
+	GLint m_iWindowedWidth;
+	GLint m_iWindowedHeight;
+	GLint m_iFullScreenWidth;
+	GLint m_iFullScreenHeight;
+} SGLWindow;
+
+static void error_callback(int error, const char* description)
+{
+	fprintf(stderr, "Error: %s\n", description);
+}
+
+bool Window_Initialize(GLWindow* ppWindow)
+{
+	// Set all bytes to 0, ensuring m_szWindowTitle is NULL
+	*ppWindow = engine_new_zero(SGLWindow, 1, MEM_TAG_ENGINE);
+
+	GLWindow pWindow = *ppWindow;
+	if (!pWindow)
+	{
+		syserr("Failed to Allocate Memory for window");
+		return (false);
+	}
+
+	return (true);
+}
+
+void Window_Deallocate(GLWindow* ppWindow)
+{
+	if (!ppWindow || !*ppWindow)
+	{
+		return;
+	}
+
+	GLWindow pWindow = *ppWindow;
+
+	if (pWindow->m_pGLWindow)
+	{
+		glfwDestroyWindow(pWindow->m_pGLWindow);
+	}
+
+	if (pWindow->m_szWindowTitle)
+	{
+		engine_delete(pWindow->m_szWindowTitle);
+	}
+
+	engine_delete(pWindow);
+
+	*ppWindow = NULL;
+}
+
+bool Window_InitializeGLWindow(GLWindow pWindow)
+{
+	glfwSetErrorCallback(error_callback);
+
+	if (!glfwInit())
+	{
+		syserr("Failed to Initialize GLFW Library");
+		return (GLFW_FALSE);
+	}
+
+	if (pWindow->m_szWindowTitle == NULL)
+	{
+		syserr("Failed to Find Window Title");
+		return (GLFW_FALSE);
+	}
+	// Initialize OpenGL 4.6 Core Profile
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);							// OpenGL 4.x
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);							// OpenGL x.6
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);			// Enable Core Profile Only
+
+	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);					// Enable Debugging
+
+	glfwWindowHint(GLFW_SAMPLES, 0);										// Multi Sampling
+
+	glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);								// Decorated Window
+	glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);								// Invisible Window, must show it at the end
+
+	glfwWindowHint(GLFW_FOCUS_ON_SHOW, GLFW_TRUE);							// set focus on this window when we show it
+
+	pWindow->m_pMonitor = glfwGetPrimaryMonitor();							// Get Monitor Data
+	pWindow->m_pVidMode = glfwGetVideoMode(pWindow->m_pMonitor);			// Get Video Mode Settings
+
+	// Setup GLFW Rendering Data
+	glfwWindowHint(GLFW_RED_BITS, pWindow->m_pVidMode->redBits);			// Set red bits value for the window based on the monitor
+	glfwWindowHint(GLFW_GREEN_BITS, pWindow->m_pVidMode->greenBits);		// Set Green bits value for the window based on the monitor
+	glfwWindowHint(GLFW_BLUE_BITS, pWindow->m_pVidMode->blueBits);			// Set Blue bits value for the window based on the monitor
+	glfwWindowHint(GLFW_REFRESH_RATE, pWindow->m_pVidMode->refreshRate);	// Set Refresh rate based on the monitor
+
+	pWindow->m_iFullScreenWidth = pWindow->m_pVidMode->width;
+	pWindow->m_iFullScreenHeight = pWindow->m_pVidMode->height;
+
+	pWindow->m_iWindowedWidth = (pWindow->m_iFullScreenWidth * 75) / 100;	// 75% of full screen width
+	pWindow->m_iWindowedHeight = (pWindow->m_iFullScreenHeight * 75) / 100;	// 75% of full screen height
+
+	if (pWindow->windowMode == WINDOWED)
+	{
+		pWindow->m_iWidth = pWindow->m_iWindowedWidth;
+		pWindow->m_iHeight = pWindow->m_iWindowedHeight;
+
+		pWindow->m_pGLWindow = glfwCreateWindow(pWindow->m_iWidth, pWindow->m_iHeight, pWindow->m_szWindowTitle, NULL, NULL);
+
+	}
+	else if (pWindow->windowMode == FULLSCREEN)
+	{
+		pWindow->m_iWidth = pWindow->m_iFullScreenWidth;
+		pWindow->m_iHeight = pWindow->m_iFullScreenHeight;
+
+		pWindow->m_pGLWindow = glfwCreateWindow(pWindow->m_iWidth, pWindow->m_iHeight, pWindow->m_szWindowTitle, pWindow->m_pMonitor, NULL);
+	}
+
+	// check if glfwCreateWindow Fail
+	if (pWindow->m_pGLWindow == NULL)
+	{
+		syserr("failed to Initialize GLFW Library");
+		return (GLFW_FALSE);
+	}
+
+	if (pWindow->windowMode == WINDOWED)
+	{
+		// Set Windowed window position
+		glfwSetWindowPos(pWindow->m_pGLWindow, (pWindow->m_iFullScreenWidth - pWindow->m_iWidth) / 2, (pWindow->m_iFullScreenHeight - pWindow->m_iHeight) / 2);
+	}
+
+	// Set Current Context
+	glfwMakeContextCurrent(pWindow->m_pGLWindow);
+
+	// Initialize GLAD library, must be done after making context current
+	if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == GL_FALSE)
+	{
+		syserr("failed to Initialize GLAD Library");
+		return (GLFW_FALSE);
+	}
+
+	// Show Window
+	glfwShowWindow(pWindow->m_pGLWindow);
+
+	return (GLFW_TRUE);
+}
+
+void Window_SetTitle(GLWindow pWindow, const char* szTitle)
+{
+	// 1. If we already had a title, we must free it first to avoid a leak
+	if (pWindow->m_szWindowTitle != NULL)
+	{
+		engine_delete((void*)pWindow->m_szWindowTitle);
+	}
+
+	// 2. Create the new copy
+	pWindow->m_szWindowTitle = engine_strdup(szTitle, MEM_TAG_STRINGS);
+
+	// 3. Update the actual GLFW window if it exists
+	if (pWindow->m_szWindowTitle && pWindow->m_pGLWindow)
+	{
+		glfwSetWindowTitle(pWindow->m_pGLWindow, pWindow->m_szWindowTitle);
+	}
+}		
+
+void Window_SetMode(GLWindow pWindow, EWinowMode windowMode)
+{
+	pWindow->windowMode = windowMode;
+}
+
+bool Window_DestroyGLWindow(GLWindow pWindow)
+{
+	glfwDestroyWindow(pWindow->m_pGLWindow);
+	return (GLFW_TRUE);
+}
+
+GLFWwindow* Window_GetGLWindow(GLWindow pWindow)
+{
+	return pWindow->m_pGLWindow;
+}
+
+GLint Window_GetWidth(GLWindow pWindow)
+{
+	return (pWindow->m_iWidth);
+}
+
+GLint Window_GetHeight(GLWindow pWindow)
+{
+	return (pWindow->m_iHeight);
+}
+
+GLfloat Window_GetWidthF(GLWindow pWindow)
+{
+	return (float)(pWindow->m_iWidth);
+}
+
+GLfloat Window_GetHeightF(GLWindow pWindow)
+{
+	return (float)(pWindow->m_iHeight);
+}
+
+void Window_UpdateDeminsions(GLWindow pWindow, int width, int height)
+{
+	pWindow->m_iWidth = width;
+	pWindow->m_iHeight = height;
+}
+

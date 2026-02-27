@@ -24,7 +24,7 @@
 // SOFTWARE.
 //
 
-#include "Stdafx.h" // precompiled header
+#include "Stdafx.h"
 
 #include "ImSequencer.h"
 #include "../imgui.h"

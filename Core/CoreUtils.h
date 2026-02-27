@@ -1,0 +1,86 @@
+#ifndef __CORE_UTILS_H__
+#define __CORE_UTILS_H__
+
+#include <glad/glad.h>
+#include <stdbool.h>
+#include <string.h>
+#include "../AeroPlatform.h"
+#include "Log.h"
+
+#if !defined(S_ISDIR)
+	#define S_ISDIR(m)	(m & _S_IFDIR)
+#endif
+
+#define MAX_STRING_LEN 256
+
+inline GLenum glCheckError_(const char* file, int line)
+{
+    GLenum errorCode;
+    while ((errorCode = glGetError()) != GL_NO_ERROR)
+    {
+        char error[256] = { 0 };
+        switch (errorCode)
+        {
+        case GL_INVALID_ENUM:
+            break;
+        case GL_INVALID_VALUE:
+            break;
+        case GL_INVALID_OPERATION:
+            break;
+        case GL_STACK_OVERFLOW:
+            break;
+        case GL_STACK_UNDERFLOW:
+            break;
+        case GL_OUT_OF_MEMORY:
+            break;
+        case GL_INVALID_FRAMEBUFFER_OPERATION:
+            break;
+        }
+        syserr("OpenGL Error: %d | File: %s (line: %d)", errorCode, file, line);
+    }
+    return errorCode;
+}
+
+#define glCheckError() glCheckError_(__FILE__, __LINE__) 
+
+// "extern" tells other files: "The real variable exists somewhere else."
+extern GLint glMajorVersion;
+extern GLint glMinorVersion;
+
+void* cjson_tracked_malloc(size_t size);
+void cjson_tracked_free(void* ptr);
+
+const char* get_filename_ext(const char* filename);
+const char* get_filename(const char* filepath);
+
+bool IsGLVersionHigher(GLint MajorVer, GLint MinorVer);
+
+bool MakeDirectory(const char* fullPath);
+bool IsDirectoryExists(const char* path);
+bool File_IsFileExists(const char* filePath);
+bool File_GetInfo(const char* szPath, size_t* pOutSize);
+const char* File_GetExtension(const char* szPath);
+const char* File_GetFileName(const char* szPath);
+void File_GetFileNameNoExtension(const char* szPath, char* pOutBuffer, size_t bufferSize);
+
+#if defined(_WIN32) || defined(_WIN64)
+#include <direct.h>  // For _mkdir on Windows
+#include <io.h>
+#define MKDIR(path) _mkdir(path)
+#undef access
+#define access _access
+
+// F_OK checks for the existence of the file
+#define F_OK 0
+
+#else
+#include <sys/stat.h> // For mkdir on Linux/Unix
+#include <sys/types.h>
+#include <strings.h>
+#define MKDIR(path) mkdir(path, 0755) // rwxr-xr-x permissions
+    #ifndef _stricmp
+        #define _stricmp(__dst, __src) strcasecmp(__dst, __src)
+    #endif
+#endif
+
+#endif // __CORE_UTILS_H__

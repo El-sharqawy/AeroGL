@@ -26,7 +26,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "stdafx.h"
+#include "Stdafx.h"
 
 #include "ImGuiFileDialog.h"
 
@@ -3995,7 +3995,7 @@ void IGFD::FileDialog::m_DisplayPathPopup(ImVec2 vSize) {
 
                         if (ImGui::TableNextColumn())  // file name
                         {
-                            if (ImGui::Selectable(infos_ptr->fileNameExt.c_str(), &selected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_SpanAvailWidth)) {
+                            if (ImGui::Selectable(infos_ptr->fileNameExt.c_str(), &selected, (int)ImGuiSelectableFlags_SpanAllColumns | (int)ImGuiSelectableFlags_SpanAvailWidth)) {
                                 fdi.SetCurrentPath(fdi.ComposeNewPath(fdi.GetCurrentPopupComposedPath()));
                                 fdi.pathClicked = fdi.SelectDirectory(infos_ptr);
                                 ImGui::CloseCurrentPopup();

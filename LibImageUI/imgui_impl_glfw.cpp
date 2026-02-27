@@ -3,7 +3,7 @@
 // (Info: GLFW is a cross-platform general purpose library for handling windows, inputs, OpenGL/Vulkan graphics context creation, etc.)
 // (Requires: GLFW 3.1+. Prefer GLFW 3.3+ or GLFW 3.4+ for full feature support.)
 
-#include "stdafx.h" // precompiled header
+#include "Stdafx.h" // precompiled header
 
 // Implemented features:
 //  [X] Platform: Clipboard support.

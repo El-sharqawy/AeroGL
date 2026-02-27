@@ -1,7 +1,7 @@
 // dear imgui, v1.92.0 WIP
 // (widgets code)
 
-#include "stdafx.h" // precompiled header
+#include "Stdafx.h" // precompiled header
 
 /*
 

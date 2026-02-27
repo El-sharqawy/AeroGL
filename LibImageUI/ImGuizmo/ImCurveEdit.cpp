@@ -24,7 +24,7 @@
 // SOFTWARE.
 //
 
-#include "Stdafx.h" // precompiled header
+#include "Stdafx.h"
 
 #include "ImCurveEdit.h"
 #include "../imgui.h"

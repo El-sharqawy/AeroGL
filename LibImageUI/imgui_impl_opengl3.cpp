@@ -3,7 +3,7 @@
 // - Embedded GL: ES 2.0 (WebGL 1.0), ES 3.0 (WebGL 2.0)
 // This needs to be used along with a Platform Backend (e.g. GLFW, SDL, Win32, custom..)
 
-#include "stdafx.h" // precompiled header
+#include "Stdafx.h" // precompiled header
 
 // Implemented features:
 //  [X] Renderer: User texture binding. Use 'GLuint' OpenGL texture identifier as void*/ImTextureID. Read the FAQ about ImTextureID!
