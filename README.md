@@ -24,7 +24,6 @@ A custom real-time 3D graphics engine written in **C (ISO C23)**, built on top o
 
 ## Project Structure
 
-```
 AeroGL/
 ├── Assets/          # Raw asset files (textures, heightmaps, etc.)
 ├── Buffers/         # GPU buffer wrappers (VBO, EBO, UBO, SSBO)
@@ -134,4 +133,3 @@ DestroyEngine(engine);          // Free all GPU and CPU resources
 ## License
 
 This project is licensed under the [MIT License](LICENSE.txt).
-```
