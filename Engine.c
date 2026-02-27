@@ -1,12 +1,12 @@
-#include "Stdafx.h"
 #include "Engine.h"
-#include "MyLIB/Vector.h"
+#include "Stdafx.h"
+#include "MyLib/Vector.h"
 #include "UserInterface/Interface_imgui.h"
 #include <time.h>
 
 static Engine s_Instance = NULL; // Hidden from other files
 
-void APIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
+static void APIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
 	GLsizei length, const GLchar* message, const void* userParam)
 {
 	if (type == GL_DEBUG_TYPE_ERROR) {
@@ -15,7 +15,7 @@ void APIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum seve
 	}
 }
 
-bool InitializeEngine(Engine pEngine)
+bool Engine_Initialize(Engine pEngine)
 {
 	uint32_t startSeed = (uint32_t)time(NULL);
 	srand(startSeed);
@@ -26,7 +26,7 @@ bool InitializeEngine(Engine pEngine)
 	// Validation Check
 	if (!Window_Initialize(&pEngine->window))
 	{
-		DestroyEngine(pEngine);
+		Engine_Destroy(pEngine);
 		return (false);
 	}
 
@@ -34,39 +34,39 @@ bool InitializeEngine(Engine pEngine)
 	Window_SetMode(pEngine->window, WINDOWED);
 	if (!Window_InitializeGLWindow(pEngine->window))
 	{
-		DestroyEngine(pEngine);
+		Engine_Destroy(pEngine);
 		return (false);
 	}
 
-	if (!Input_Initialize(&pEngine->input))
+	if (!Input_Initialize(&pEngine->Input))
 	{
-		DestroyEngine(pEngine);
+		Engine_Destroy(pEngine);
 		return (false);
 	}
 
 	// Validation Check
 	if (!InitializeCamera(&pEngine->camera, Window_GetWidthF(pEngine->window), Window_GetHeightF(pEngine->window)))
 	{
-		DestroyEngine(pEngine);
+		Engine_Destroy(pEngine);
 		return (false);
 	}
 
 	// CreateRenderer(&pEngine->renderer, pEngine->camera, "MainRenderer");
 	if (!CreateDebugRenderer(&pEngine->debugRenderer, pEngine->camera, "DebugRenderer"))
 	{
-		DestroyEngine(pEngine);
+		Engine_Destroy(pEngine);
 		return (false);
 	}
 
 	if (!StateManager_Initialize(&pEngine->stateManager))
 	{
-		DestroyEngine(pEngine);
+		Engine_Destroy(pEngine);
 		return (false);
 	}
 
 	if (!TerrainManager_Initialize(&pEngine->terrainManager))
 	{
-		DestroyEngine(pEngine);
+		Engine_Destroy(pEngine);
 		return (false);
 	}
 
@@ -102,27 +102,27 @@ bool InitializeEngine(Engine pEngine)
 	return (true);;
 }
 
-void HandleEngineInput(Engine pEngine)
+void Engine_HandleInput(Engine pEngine)
 {
-	if (IsKeyDown(pEngine->input, GLFW_KEY_W))
+	if (IsKeyDown(pEngine->Input, GLFW_KEY_W))
 	{
 		ProcessCameraKeboardInput(pEngine->camera, DIRECTION_FORWARD, pEngine->deltaTime);
 	}
-	if (IsKeyDown(pEngine->input, GLFW_KEY_D))
+	if (IsKeyDown(pEngine->Input, GLFW_KEY_D))
 	{
 		ProcessCameraKeboardInput(pEngine->camera, DIRECTION_RIGHT, pEngine->deltaTime);
 	}
-	if (IsKeyDown(pEngine->input, GLFW_KEY_S))
+	if (IsKeyDown(pEngine->Input, GLFW_KEY_S))
 	{
 		ProcessCameraKeboardInput(pEngine->camera, DIRECTION_BACKWARD, pEngine->deltaTime);
 	}
-	if (IsKeyDown(pEngine->input, GLFW_KEY_A))
+	if (IsKeyDown(pEngine->Input, GLFW_KEY_A))
 	{
 		ProcessCameraKeboardInput(pEngine->camera, DIRECTION_LEFT, pEngine->deltaTime);
 	}
 }
 
-void UpdateEngine(Engine pEngine)
+void Engine_Update(Engine pEngine)
 {
 	// 1. Time Update
 	float currentFrame = (float)glfwGetTime();
@@ -131,8 +131,8 @@ void UpdateEngine(Engine pEngine)
 
 	// 2. Events & Input
 	glfwPollEvents();
-	UpdateInput(pEngine->input);
-	HandleEngineInput(pEngine); // Engine Handle Input
+	UpdateInput(pEngine->Input);
+	Engine_HandleInput(pEngine); // Engine Handle Input
 	UpdateCamera(pEngine->camera);
 
 	// Update ImgUI
@@ -144,7 +144,7 @@ void UpdateEngine(Engine pEngine)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0.2f, 0.2f, 0.2f, 0.5f);
 
-	RenderEngine(pEngine);
+	Engine_Render(pEngine);
 
 	// Render on top of everything
 	ImGui_Render();
@@ -153,14 +153,14 @@ void UpdateEngine(Engine pEngine)
 	glfwSwapBuffers(Window_GetGLWindow(pEngine->window));
 }
 
-void RenderEngine(Engine pEngine)
+void Engine_Render(Engine pEngine)
 {
 	// RenderRenderer(pEngine->renderer);
 	RenderDebugRenderer(pEngine->debugRenderer);
 	TerrainManager_Render(pEngine->terrainManager);
 }
 
-void DestroyEngine(Engine pEngine)
+void Engine_Destroy(Engine pEngine)
 {
 	syslog("Attemp to shutdown the engine...");
 
@@ -175,11 +175,31 @@ void DestroyEngine(Engine pEngine)
 	// DestroyRenderer(&pEngine->renderer);
 	DestroyDebugRenderer(&pEngine->debugRenderer);
 
-	Input_Destroy(&pEngine->input);
+	Input_Destroy(&pEngine->Input);
 
 	Window_Deallocate(&pEngine->window);
 
 	glfwTerminate();
+}
+
+void Engine_OnKeyButton(Engine pEngine, int key, int action)
+{
+	if (key > GLFW_KEY_LAST || key < 0)
+	{
+		return;
+	}
+
+	OnKeyButton(pEngine->Input, key, action);
+}
+
+void Engine_OnMouseButton(Engine pEngine, int key, int action)
+{
+	if (key > GLFW_MOUSE_BUTTON_LAST || key < 0)
+	{
+		return;
+	}
+
+	OnMouseButton(pEngine->Input, key, action);
 }
 
 Engine GetEngine()
@@ -187,24 +207,94 @@ Engine GetEngine()
 	return (s_Instance);
 }
 
-void OnEngineKeyButton(Engine pEngine, int key, int action)
+GLWindow Engine_GetWindow()
 {
-	if (key > GLFW_KEY_LAST || key < 0)
-	{
-		return;
-	}
-
-	OnKeyButton(pEngine->input, key, action);
+	return (GetEngine()->window);
 }
 
-void OnEngineMouseButton(Engine pEngine, int key, int action)
+GLCamera Engine_GetCamera()
 {
-	if (key > GLFW_MOUSE_BUTTON_LAST || key < 0)
-	{
-		return;
-	}
+	return (GetEngine()->camera);
+}
 
-	OnMouseButton(pEngine->input, key, action);
+Input Engine_GetInput()
+{
+	return (GetEngine()->Input);
+}
+
+DebugRenderer Engine_GetDebugRenderer()
+{
+	return (GetEngine()->debugRenderer);
+}
+
+StateManager Engine_GetStateManager()
+{
+	return (GetEngine()->stateManager);
+}
+
+TerrainManager Engine_GetTerrainRenderer()
+{
+	return (GetEngine()->terrainManager);
+}
+
+float Engine_DeltaTime()
+{
+	return (GetEngine()->deltaTime);
+}
+
+void Engine_SetDeltaTime(float deltaTime)
+{
+	GetEngine()->deltaTime = deltaTime;
+}
+
+float Engine_LastFrame()
+{
+	return (GetEngine()->lastFrame);
+}
+
+void Engine_SetLastFrame(float lastFrame)
+{
+	GetEngine()->lastFrame = lastFrame;
+}
+
+bool Engine_IsRunning()
+{
+	return (GetEngine()->isRunning);
+}
+
+void Engine_SetIsRunning(bool bIsRunning)
+{
+	GetEngine()->isRunning = bIsRunning;
+}
+
+bool Engine_IsWireframe()
+{
+	return (GetEngine()->isWireframe);
+}
+
+void Engine_SetIsWireframe(bool bIsWireframe)
+{
+	GetEngine()->isWireframe = bIsWireframe;
+}
+
+float* Engine_DeltaTimePtr()
+{
+	return (&GetEngine()->deltaTime);
+}
+
+float* Engine_LastFramePtr()
+{
+	return (&GetEngine()->lastFrame);
+}
+
+bool* Engine_IsRunningPtr()
+{
+	return (&GetEngine()->isRunning);
+}
+
+bool* Engine_IsWireframePtr()
+{
+	return (&GetEngine()->isWireframe);
 }
 
 void framebuffer_size_callback(GLFWwindow* window, GLint iWidth, GLint iHeight)
@@ -232,7 +322,7 @@ void cursorpos_callback(GLFWwindow* window, double xpos, double ypos)
 		return;
 	}
 
-	OnMousePosition(pEngine->input, (float)xpos, (float)ypos);
+	OnMousePosition(pEngine->Input, (float)xpos, (float)ypos);
 }
 
 void cursorscroll_callback(GLFWwindow* window, double xoffset, double yoffset)
@@ -243,7 +333,7 @@ void cursorscroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 		return;
 	}
 
-	OnMouseScroll(pEngine->input, (float)yoffset);
+	OnMouseScroll(pEngine->Input, (float)yoffset);
 }
 
 void keyboard_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
@@ -254,7 +344,7 @@ void keyboard_callback(GLFWwindow* window, int key, int scancode, int action, in
 		return;
 	}
 
-	OnEngineKeyButton(pEngine, key, action);
+	Engine_OnKeyButton(pEngine, key, action);
 }
 
 void mousebutton_callback(GLFWwindow* window, int button, int action, int mods)
@@ -265,5 +355,5 @@ void mousebutton_callback(GLFWwindow* window, int button, int action, int mods)
 		return;
 	}
 
-	OnEngineMouseButton(pEngine, button, action);
+	Engine_OnMouseButton(pEngine, button, action);
 }

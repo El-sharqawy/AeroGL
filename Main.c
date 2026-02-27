@@ -1,7 +1,4 @@
-#include "Engine.h"
-#include "Resources/MemoryManager.h"
-
-// #pragma comment(lib, "Debug\\assimp-vc143-mtd.lib")
+#include "Stdafx.h"
 
 int main(int argc, char* argv[])
 {
@@ -13,18 +10,18 @@ int main(int argc, char* argv[])
 	}
 
 	Engine engine = engine_new(SEngine, MEM_TAG_ENGINE);
-	
-	if (!InitializeEngine(engine))
+
+	if (!Engine_Initialize(engine))
 	{
 		return EXIT_FAILURE;
 	}
 
 	while (engine->isRunning && glfwWindowShouldClose(Window_GetGLWindow(engine->window)) == false)
 	{
-		UpdateEngine(engine);
+		Engine_Update(engine);
 	}
 
-	DestroyEngine(engine);
+	Engine_Destroy(engine);
 	engine_delete(engine);
 
 	MemoryManager_DumpLeaks();

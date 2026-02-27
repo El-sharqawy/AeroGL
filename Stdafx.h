@@ -19,8 +19,14 @@
 #include "Resources/MemoryManager.h" // new Malloc
 
 #include "Engine.h"
-#include "Core/Log.h"
+#include "Core/Window.h"
+#include "Core/Camera.h"
 #include "Core/Input.h"
+#include "Core/Log.h"
+#include "Buffers/Buffer.h"
+#include "Renderer/DebugRenderer.h"
+#include "PipeLine/StateManager.h"
+#include "Terrain/TerrainManager/TerrainManager.h"
 
 // C External Libs
 #include <stdlib.h>
