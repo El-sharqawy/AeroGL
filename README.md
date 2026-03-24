@@ -1,9 +1,6 @@
-﻿```markdown
 # AeroGL
 
 A custom real-time 3D graphics engine written in **C (ISO C23)**, built on top of **OpenGL 4.5+**. AeroGL is a from-scratch engine focused on low-level GPU control, efficient terrain rendering, and clean engine architecture — without relying on any third-party engine or abstraction framework.
-
----
 
 ## Features
 
@@ -20,10 +17,10 @@ A custom real-time 3D graphics engine written in **C (ISO C23)**, built on top o
 - **UI System** — ImGui-based user interface integration via `UserInterface` and `LibImageUI` modules
 - **Cross-platform** — Builds on both **Windows** (MSVC) and **Linux** (GCC/Clang)
 
----
 
 ## Project Structure
 
+```markdown
 AeroGL/
 ├── Assets/          # Raw asset files (textures, heightmaps, etc.)
 ├── Buffers/         # GPU buffer wrappers (VBO, EBO, UBO, SSBO)
