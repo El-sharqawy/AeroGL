@@ -1,8 +1,16 @@
-#ifndef __AERO_PLATFORM_H__
+﻿#ifndef __AERO_PLATFORM_H__
 #define __AERO_PLATFORM_H__
 
 // --- OS Detection ---
 #if defined(_WIN32) || defined(_WIN64)
+        // Suppress MSVC unicode/charset warnings — we use narrow char (ANSI/UTF-8)
+    #ifndef UNICODE
+        #define UNICODE
+    #endif
+    #ifndef _UNICODE
+        #define _UNICODE
+    #endif
+
     #define AERO_PLATFORM_WINDOWS
     #include <direct.h>   // For _mkdir
     #include <io.h>       // For _access

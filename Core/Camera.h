@@ -47,23 +47,23 @@ typedef enum ECameraType
 } ECameraType;
 
 
-bool InitializeCamera(GLCamera* ppCamera, float Width, float Height);
-void DestroyCamera(GLCamera* pCamera);
+bool Camera_Initialize(GLCamera* ppCamera, float Width, float Height);
+void Camera_Destroy(GLCamera* pCamera);
 
-Matrix4 GetViewMatrix(GLCamera pCamera);
-Matrix4 GetProjectionMatrix(GLCamera pCamera);
-Matrix4 GetViewProjectionMatrix(GLCamera pCamera);
-Matrix4 GetViewBillboardMatrix(GLCamera pCamera);
+Matrix4 Camera_GetViewMatrix(GLCamera pCamera);
+Matrix4 Camera_GetProjectionMatrix(GLCamera pCamera);
+Matrix4 Camera_GetViewProjectionMatrix(GLCamera pCamera);
+Matrix4 Camera_GetViewBillboardMatrix(GLCamera pCamera);
 
-void UpdateProjections(GLCamera pCamera);
+void Camera_UpdateProjections(GLCamera pCamera);
 
-void ProcessCameraKeboardInput(GLCamera pCamera, ECameraDirections cameraDir, float deltaTime);
-void ProcessCameraMouse(GLCamera pCamera);
-void ProcessCameraZoom(GLCamera pCamera);
+void Camera_ProcessCameraKeboardInput(GLCamera pCamera, ECameraDirections cameraDir, float deltaTime);
+void Camera_ProcessCameraMouse(GLCamera pCamera);
+void Camera_ProcessCameraZoom(GLCamera pCamera);
 
-void UpdateCameraVectors(GLCamera pCamera);
-void UpdateCameraDeminsions(GLCamera pCamera, float width, float height);
-void UpdateCamera(GLCamera pCamera);
-void UpdateUniformBufferObject(GLCamera pCamera);
+void Camera_UpdateCameraVectors(GLCamera pCamera);
+void Camera_UpdateCameraDeminsions(GLCamera pCamera, float width, float height);
+void Camera_UpdateCamera(GLCamera pCamera);
+void Camera_UpdateUniformBufferObject(GLCamera pCamera);
 
 #endif // __CAMERA_H__

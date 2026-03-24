@@ -1,4 +1,4 @@
-#ifndef __CORE_UTILS_H__
+﻿#ifndef __CORE_UTILS_H__
 #define __CORE_UTILS_H__
 
 #include <glad/glad.h>
@@ -18,7 +18,7 @@ inline GLenum glCheckError_(const char* file, int line)
     GLenum errorCode;
     while ((errorCode = glGetError()) != GL_NO_ERROR)
     {
-        char error[256] = { 0 };
+        // char error[256] = { 0 };
         switch (errorCode)
         {
         case GL_INVALID_ENUM:

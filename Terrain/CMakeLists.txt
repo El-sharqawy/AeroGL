@@ -42,7 +42,7 @@ target_sources(Terrain
 
 # This ensures that library knows where its own headers are during its own compilation
 target_include_directories(Terrain PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(Terrain PRIVATE MyLIB)
+target_link_libraries(Terrain PRIVATE AeroLib)
 
 # Tells the compiler to optimize for the current CPU architecture (AVX2/FMA)
 if(NOT MSVC)

@@ -45,7 +45,7 @@ void TerrainPatch_GenerateGeometry(TerrainPatch patch, int32_t patchX, int32_t p
             v.v3Position = Matrix4_Mul_Vec3(model, localPos);
             // v.v3Position = localPos;
 
-            v.v2TexCoords = Vector2D((float)iX / patch->patchWidth * PATCH_CELL_SIZE, (float)iZ / patch->patchDepth * PATCH_CELL_SIZE);
+            v.v2TexCoords = Vector2D((float)iX / patch->patchWidth * ENGINE_CELL_SIZE, (float)iZ / patch->patchDepth * ENGINE_CELL_SIZE);
 
             // 3. Central Difference Normal Calculation
             // We sample the 4 neighbors from the heightmap (using the padding)

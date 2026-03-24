@@ -13,6 +13,14 @@
 #define QUATERNION_EPS (1e-6f)	// quaternion math
 #define ANGLE_EPS (1e-6f)		// radians
 
+#if defined(AERO_PLATFORM_WINDOWS)
+#pragma warning(push)
+#pragma warning(disable : 4201) // MSVC: nameless struct/union
+#elif defined(AERO_PLATFORM_LINUX)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic" // GCC/Clang: non-standard extension
+#endif
+
 typedef struct AERO_ALIGN(16) SQuaternion
 {
 	union
@@ -52,6 +60,12 @@ typedef struct AERO_ALIGN(16) SQuaternion
 		float quat[4]; // Array access: Useful for loops or OpenGL (glUniform4fv)
 	};
 } SQuaternion;
+
+#if defined(AERO_PLATFORM_WINDOWS)
+#pragma warning(pop)
+#elif defined(AERO_PLATFORM_LINUX)
+#pragma GCC diagnostic pop
+#endif
 
 // Use _mm_setr_ps (Set Reversed) so the order matches x, y, z, w 
 // _mm_set_ps usually takes arguments in reverse order (w, z, y, x)
@@ -113,29 +127,37 @@ static inline SQuaternion Quaternion_Multiply(const SQuaternion q1, const SQuate
 
 static inline SQuaternion Quaternion_MultiplySIMD(const SQuaternion q1, const SQuaternion q2)
 {
-	// SSE Optimized Hamilton Product
-	__m128 wwww = _mm_set1_ps(q1.w);
-	__m128 xxxx = _mm_set1_ps(q1.x);
-	__m128 yyyy = _mm_set1_ps(q1.y);
-	__m128 zzzz = _mm_set1_ps(q1.z);
+	// q1 register: [x1, y1, z1, w1]
+	// q2 register: [x2, y2, z2, w2]
+	__m128 q1_reg = q1.reg;
+	__m128 q2_reg = q2.reg;
 
-	// q2 components shuffled for the Hamilton formula
-	// result = w1*q2 + x1*shuf(q2) + y1*shuf(q2) + z1*shuf(q2)
-	__m128 q2_xyzw = q2.reg;
-	__m128 q2_wzyx = _mm_shuffle_ps(q2_xyzw, q2_xyzw, _MM_SHUFFLE(0, 1, 2, 3));
-	__m128 q2_zwxy = _mm_shuffle_ps(q2_xyzw, q2_xyzw, _MM_SHUFFLE(1, 0, 3, 2));
-	__m128 q2_yzwx = _mm_shuffle_ps(q2_xyzw, q2_xyzw, _MM_SHUFFLE(2, 3, 0, 1));
+	// Broadcast each component of q1
+	__m128 w1 = _mm_shuffle_ps(q1_reg, q1_reg, _MM_SHUFFLE(3, 3, 3, 3));
+	__m128 x1 = _mm_shuffle_ps(q1_reg, q1_reg, _MM_SHUFFLE(0, 0, 0, 0));
+	__m128 y1 = _mm_shuffle_ps(q1_reg, q1_reg, _MM_SHUFFLE(1, 1, 1, 1));
+	__m128 z1 = _mm_shuffle_ps(q1_reg, q1_reg, _MM_SHUFFLE(2, 2, 2, 2));
 
-	__m128 out = _mm_mul_ps(wwww, q2_xyzw);
-	out = _mm_addsub_ps(out, _mm_mul_ps(xxxx, q2_wzyx)); // Note: addsub requires SSE3
-	// ... further shuffles and adds ...
+	// Shuffles of q2 for each row of the Hamilton product
+	// [x2, y2, z2, w2] -> base
+	__m128 q2_xyzw = q2_reg;
+	__m128 q2_wzyx = _mm_shuffle_ps(q2_reg, q2_reg, _MM_SHUFFLE(0, 1, 2, 3)); // [w2, z2, y2, x2]
+	__m128 q2_zwxy = _mm_shuffle_ps(q2_reg, q2_reg, _MM_SHUFFLE(1, 0, 3, 2)); // [z2, w2, x2, y2]
+	__m128 q2_yxwz = _mm_shuffle_ps(q2_reg, q2_reg, _MM_SHUFFLE(2, 3, 0, 1)); // [y2, x2, w2, z2] fixed name & mask
 
-	// Fallback if you prefer the scalar logic for clarity:
+	// Sign masks for each row (Hamilton product sign pattern)
+	static const __m128 sign_x1 = { +0.f, -0.f, +0.f, -0.f }; // flip z,w lanes
+	static const __m128 sign_y1 = { +0.f, +0.f, -0.f, -0.f }; // flip x,w lanes  
+	static const __m128 sign_z1 = { -0.f, +0.f, +0.f, -0.f }; // flip y,w lanes
+	// Each row needs a different sign mask applied before summing
+
+	__m128 out = _mm_mul_ps(w1, q2_xyzw);
+	out = _mm_add_ps(out, _mm_mul_ps(x1, _mm_xor_ps(q2_wzyx, sign_x1)));
+	out = _mm_add_ps(out, _mm_mul_ps(y1, _mm_xor_ps(q2_zwxy, sign_y1)));
+	out = _mm_add_ps(out, _mm_mul_ps(z1, _mm_xor_ps(q2_yxwz, sign_z1)));
+
 	SQuaternion res = S_Quaternion_Zero;
-	res.w = q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z;
-	res.x = q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y;
-	res.y = q1.w * q2.y - q1.x * q2.z + q1.y * q2.w + q1.z * q2.x;
-	res.z = q1.w * q2.z + q1.x * q2.y - q1.y * q2.x + q1.z * q2.w;
+	res.reg = out;
 	return res;
 }
 
@@ -167,9 +189,9 @@ static inline SQuaternion Quaternion_Conjugate(const SQuaternion quat)
  * preferred over calculating the actual length (using a square root) when only
  * comparisons are needed, as it is computationally faster.
  *
- * The formula calculated is: Length² = (w² + x² + y² + z²).
+ * The formula calculated is: LengthÂ² = (wÂ² + xÂ² + yÂ² + zÂ²).
  * @param quat [in] The SQuaternion object for which the squared length is calculated.
- * @return float The squared length (w² + x² + y² + z²) of the quaternion.
+ * @return float The squared length (wÂ² + xÂ² + yÂ² + zÂ²) of the quaternion.
  */
 inline float Quaternion_LengthSquared(const SQuaternion quat)
 {
@@ -782,7 +804,7 @@ inline static SQuaternion Quaternion_FromEulerXYZ(const Vector3 v3EulerRad, bool
  * - **Yaw (Z-axis):**   atan2(2*(w*z + x*y), 1 - 2*(y^2 + z^2))
  *
  * **Gimbal Lock / Singularity:**
- * Pitch approaches +/- 90° (+/- PI/2 radians) may cause gimbal lock, where Roll and Yaw rotations
+ * Pitch approaches +/- 90Â° (+/- PI/2 radians) may cause gimbal lock, where Roll and Yaw rotations
  * are no longer uniquely defined. This implementation uses atan2 for Roll and Yaw and a
  * robust method for Pitch to mitigate singularities as much as possible.
  *
@@ -807,8 +829,8 @@ static inline void Quaternion_ToEulerZYX(const SQuaternion quat, float eulerRad[
 	// Check for gimbal lock
 	if (fabsf(sinPitch) >= 1.0f) // Near +/- 90 degrees Pitch
 	{
-		// Pitch is +/-90°, Roll + Yaw is ambiguous
-		eulerRad[1] = copysignf((float)(M_PI) / 2.0f, sinPitch); // +/-90°
+		// Pitch is +/-90Â°, Roll + Yaw is ambiguous
+		eulerRad[1] = copysignf((float)(M_PI) / 2.0f, sinPitch); // +/-90Â°
 		eulerRad[2] = 0.0f; // Yaw set to 0, could be any value since Roll+Yaw is ambiguous
 	}
 	else
@@ -849,7 +871,7 @@ static inline Vector3 Quaternion_RotateVec(const SQuaternion quat, const Vector3
 	//   p2.y = 2*x*y*p1.x + y*y*p1.y + 2*z*y*p1.z + 2*w*z*p1.x - z*z*p1.y + w*w*p1.y - 2*x*w*p1.z - x*x*p1.y
 	//   p2.z = 2*x*z*p1.x + 2*y*z*p1.y + z*z*p1.z - 2*w*y*p1.x - y*y*p1.z + 2*w*x*p1.y - x*x*p1.z + w*w*p1.z
 	// The current implementation uses the equivalent cross-product identity for clarity and efficiency:
-	//   t = q_xyz × v, t' = q_xyz × t, v' = v + 2*w*t + 2*t'
+	//   t = q_xyz Ã— v, t' = q_xyz Ã— t, v' = v + 2*w*t + 2*t'
 
 	// q_vec = {x, y, z} part of quaternion
 	Vector3 q_vec = { quat.x, quat.y, quat.z };
@@ -900,7 +922,7 @@ static inline Vector3 Quaternion_Rotate(const SQuaternion quat, const Vector3 ve
 	//   p2.y = 2*x*y*p1.x + y*y*p1.y + 2*z*y*p1.z + 2*w*z*p1.x - z*z*p1.y + w*w*p1.y - 2*x*w*p1.z - x*x*p1.y
 	//   p2.z = 2*x*z*p1.x + 2*y*z*p1.y + z*z*p1.z - 2*w*y*p1.x - y*y*p1.z + 2*w*x*p1.y - x*x*p1.z + w*w*p1.z
 	// The current implementation uses the equivalent cross-product identity for clarity and efficiency:
-	//   t = q_xyz × v, t' = q_xyz × t, v' = v + 2*w*t + 2*t'
+	//   t = q_xyz Ã— v, t' = q_xyz Ã— t, v' = v + 2*w*t + 2*t'
 
 	const float qx = quat.x, qy = quat.y, qz = quat.z, qw = quat.w;
 	const float vx = vec3.x, vy = vec3.y, vz = vec3.z;
@@ -1077,7 +1099,7 @@ static inline SQuaternion Quaternion_FromMatrix4(const Matrix4 mat)
 * -**Yaw(Z - axis) : **atan2(2 * (w * z + x * y), 1 - 2 * (y ^ 2 + z ^ 2))
 *
 ***Gimbal Lock / Singularity : **
-*Pitch approaches + / -90°(+/ -PI / 2 radians) may cause gimbal lock, where Roll and Yaw rotations
+*Pitch approaches + / -90Â°(+/ -PI / 2 radians) may cause gimbal lock, where Roll and Yaw rotations
 * are no longer uniquely defined.This implementation uses atan2 for Roll and Yaw and a
 * robust method for Pitch to mitigate singularities as much as possible.
 *
@@ -1104,7 +1126,7 @@ static inline SEulerAngles Quaternion_ToEulerAnglesDegrees(const SQuaternion qua
 	// Check for singularity (Pitch near +/- 90 degrees)
 	if (fabsf(sinPitch) >= 1.0f)
 	{
-		// Pitch is +/- 90°. This is a Gimbal Lock scenario.
+		// Pitch is +/- 90Â°. This is a Gimbal Lock scenario.
 		// We set Pitch to +/- 90 degrees.
 		angles.fPitch = copysignf((float)(M_PI) / 2.0f, sinPitch);
 

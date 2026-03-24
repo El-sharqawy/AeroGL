@@ -1,4 +1,4 @@
-#include "Input.h"
+﻿#include "Input.h"
 #include "Stdafx.h"
 
 static Input ms_Input = NULL;
@@ -48,7 +48,7 @@ Input GetInput()
     return (ms_Input);
 }
 
-void UpdateInput(Input pInput)
+void Input_Update(Input pInput)
 {
     // Keyboard Buttons States Logic
     for (int i = 0; i < 512; i++)
@@ -84,7 +84,7 @@ void UpdateInput(Input pInput)
     pInput->mouseScroll = 0.0f;
 }
 
-void OnKeyButton(Input pInput, int key, int action)
+void Input_OnKeyButton(Input pInput, int key, int action)
 {
     if (action == GLFW_PRESS)
     {
@@ -95,10 +95,10 @@ void OnKeyButton(Input pInput, int key, int action)
         pInput->keyButtons[key] = KEY_STATE_RELEASED;
     }
 
-    HandleKeys(pInput);
+    Input_HandleKeys(pInput);
 }
 
-bool IsKeyPressed(Input pInput, int key)
+bool Input_IsKeyPressed(Input pInput, int key)
 {
     if (key >= 512 || key < 0)
     {
@@ -109,7 +109,7 @@ bool IsKeyPressed(Input pInput, int key)
     return pInput->keyButtons[key] == KEY_STATE_PRESSED;
 }
 
-bool IsKeyDown(Input pInput, int key)
+bool Input_IsKeyDown(Input pInput, int key)
 {
     if (key >= 512 || key < 0)
     {
@@ -121,7 +121,7 @@ bool IsKeyDown(Input pInput, int key)
     return IsDown;
 }
 
-bool IsKeyReleased(Input pInput, int key)
+bool Input_IsKeyReleased(Input pInput, int key)
 {
     if (key >= 512 || key < 0)
     {
@@ -132,7 +132,7 @@ bool IsKeyReleased(Input pInput, int key)
     return pInput->keyButtons[key] == KEY_STATE_RELEASED;
 }
 
-bool IsKeyUp(Input pInput, int key)
+bool Input_IsKeyUp(Input pInput, int key)
 {
     if (key >= 512 || key < 0)
     {
@@ -144,7 +144,7 @@ bool IsKeyUp(Input pInput, int key)
     return IsUp;
 }
 
-void OnMouseButton(Input pInput, int key, int action)
+void Input_OnMouseButton(Input pInput, int key, int action)
 {
     if (action == GLFW_PRESS)
     {
@@ -155,10 +155,10 @@ void OnMouseButton(Input pInput, int key, int action)
         pInput->mouseButtons[key] = KEY_STATE_RELEASED;
     }
 
-    HandleMouseButtons(pInput);
+    Input_HandleMouseButtons(pInput);
 }
 
-bool IsMouseButtonPressed(Input pInput, int key)
+bool Input_IsMouseButtonPressed(Input pInput, int key)
 {
     if (key >= 8 || key < 0)
     {
@@ -169,7 +169,7 @@ bool IsMouseButtonPressed(Input pInput, int key)
     return pInput->mouseButtons[key] == KEY_STATE_PRESSED;
 }
 
-bool IsMouseButtonDown(Input pInput, int key)
+bool Input_IsMouseButtonDown(Input pInput, int key)
 {
     if (key >= 8 || key < 0)
     {
@@ -181,7 +181,7 @@ bool IsMouseButtonDown(Input pInput, int key)
     return IsDown;
 }
 
-bool IsMouseButtonReleased(Input pInput, int key)
+bool Input_IsMouseButtonReleased(Input pInput, int key)
 {
     if (key >= 8 || key < 0)
     {
@@ -192,7 +192,7 @@ bool IsMouseButtonReleased(Input pInput, int key)
     return pInput->mouseButtons[key] == KEY_STATE_RELEASED;
 }
 
-bool IsMouseButtonUp(Input pInput, int key)
+bool Input_IsMouseButtonUp(Input pInput, int key)
 {
     if (key >= 8 || key < 0)
     {
@@ -204,7 +204,7 @@ bool IsMouseButtonUp(Input pInput, int key)
     return IsUp;
 }
 
-void OnMousePosition(Input pInput, float xpos, float ypos)
+void Input_OnMousePosition(Input pInput, float xpos, float ypos)
 {
     if (pInput->bFirstMouseMove)
     {
@@ -221,37 +221,37 @@ void OnMousePosition(Input pInput, float xpos, float ypos)
     // 2. Store the current position for the next frame's calculation
     pInput->v2MousePosition = Vector2D(xpos, ypos);
 
-    HandleMouseMove(pInput);
+    Input_HandleMouseMove();
 }
 
-void OnMouseScroll(Input pInput, float yoffset)
+void Input_OnMouseScroll(Input pInput, float yoffset)
 {
     pInput->mouseScroll = yoffset;
-    HandleMouseScroll(pInput);
+    Input_HandleMouseScroll();
 }
 
-void HandleKeys(Input pInput)
+void Input_HandleKeys(Input pInput)
 {
-    if (IsKeyDown(pInput, GLFW_KEY_ESCAPE))
+    if (Input_IsKeyDown(pInput, GLFW_KEY_ESCAPE))
     {
         glfwSetWindowShouldClose(Window_GetGLWindow(GetEngine()->window), GLFW_TRUE);
         GetEngine()->isRunning = false;
     }
-    if (IsKeyDown(pInput, GLFW_KEY_H))
+    if (Input_IsKeyDown(pInput, GLFW_KEY_H))
     {
         MemoryManager_PrintData();
     }
 
-    if (IsKeyDown(pInput, GLFW_KEY_T))
+    if (Input_IsKeyDown(pInput, GLFW_KEY_T))
     {
         MemoryManager_Validate();
     }
-    if (IsKeyDown(pInput, GLFW_KEY_J))
+    if (Input_IsKeyDown(pInput, GLFW_KEY_J))
     {
         MemoryManager_PrintTagReport();
     }
 
-    if (IsKeyDown(pInput, GLFW_KEY_L))
+    if (Input_IsKeyDown(pInput, GLFW_KEY_L))
     {
         if (!GetEngine()->isWireframe)
         {
@@ -266,27 +266,27 @@ void HandleKeys(Input pInput)
     }
 }
 
-void HandleMouseButtons(Input pInput)
+void Input_HandleMouseButtons(Input pInput)
 {
-    if (IsMouseButtonDown(pInput, GLFW_MOUSE_BUTTON_RIGHT))
+    if (Input_IsMouseButtonDown(pInput, GLFW_MOUSE_BUTTON_RIGHT))
     {
         // Disable Cursor for free rotation
         glfwSetInputMode(Window_GetGLWindow(GetEngine()->window), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
-    if (IsMouseButtonDown(pInput, GLFW_MOUSE_BUTTON_LEFT))
+    if (Input_IsMouseButtonDown(pInput, GLFW_MOUSE_BUTTON_LEFT))
     {
         // Enable Cursor
         glfwSetInputMode(Window_GetGLWindow(GetEngine()->window), GLFW_CURSOR, GLFW_CURSOR_CAPTURED);
     }
 }
 
-void HandleMouseMove(Input pInput)
+void Input_HandleMouseMove()
 {
-    ProcessCameraMouse(GetEngine()->camera);
+    Camera_ProcessCameraMouse(GetEngine()->camera);
 }
 
-void HandleMouseScroll(Input pInput)
+void Input_HandleMouseScroll()
 {
-    ProcessCameraZoom(GetEngine()->camera);
+    Camera_ProcessCameraZoom(GetEngine()->camera);
 }
 

@@ -5,25 +5,32 @@
 #include <stdint.h>
 
 #include "../TerrainData.h"
-#include "MyLIB/Vector.h"
+#include "AeroLib/Vector.h"
 #include "Math/Matrix/Matrix4.h"
 #include "Math/Transform.h"
 
 typedef struct STerrain
 {
+	STransform transform;	// Terrain Position
 	Vector terrainPatches;	// PATCH_XCOUNT * PATCH_ZCOUNT, as size of TerrainPatch
-	Matrix4 patchesMetrices[TERRAIN_PATCH_COUNT];    // CPU-side storage
 	int32_t terrainIndex;	// Terrain Index in our world
 	int32_t terrainXCoord;	// Terrain Num Among X Axis
 	int32_t terrainZCoord;	// Terrain Num Among Z Axis
-	bool isInitialized;		// Terrain is Initialized?
-	bool bIsReady;			// Terrain is ready to render ?
-	STransform transform;	// Terrain Position
 	int32_t baseGlobalPatchIndex;
 
-	struct STerrainMap* pParentMap;
+	struct STerrainMap* parentMap;
 	struct SFloatGrid* heightMap;
 	struct STexture* pHeightMapTexture;
+
+	// Height map direct access, Triple MAPPING — 3 pointers to SAME texture backing storage
+	void* mapPtrs[3];		// Local -> global offset
+	GLsync fences[3];
+	int32_t currentRing;
+	size_t sliceBytes;		// HEIGHTMAP_RAW_XSIZE * HEIGHTMAP_RAW_ZSIZE * sizeof(float)
+	size_t globalOffset;	// Set by renderer
+
+	bool isInitialized;		// Terrain is Initialized?
+	bool bIsReady;			// Terrain is ready to render ?
 } STerrain;
 
 typedef struct STerrain* Terrain;
@@ -39,6 +46,7 @@ bool Terrain_InitializePatches(Terrain pTerrain);
 
 void Terrain_UpdatePatches(Terrain pTerrain);
 void Terrain_UpdatePatch(Terrain pTerrain, int32_t iPatchNumX, int32_t iPatchNumZ);
+void Terrain_Update(Terrain pTerrain);
 
 void Terrain_SetParentMap(Terrain pTerrain, struct STerrainMap* pParentMap);
 struct STerrainMap* Terrain_GetParentMap(Terrain pTerrain);
@@ -54,5 +62,6 @@ bool Terrain_SaveHeightMap(Terrain pTerrain, const char* szTerrainsFolder);
 
 bool Terrain_Load(Terrain pTerrain);
 bool Terrain_LoadHeightMapTexture(Terrain pTerrain);
+bool Terrain_LoadHeightMapSSBO(Terrain pTerrain);
 
 #endif // __TERRAIN_H__

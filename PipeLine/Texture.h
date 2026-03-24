@@ -1,4 +1,4 @@
-#ifndef __TEXTURE_H__
+﻿#ifndef __TEXTURE_H__
 #define __TEXTURE_H__
 
 #include <stdint.h>
@@ -92,7 +92,7 @@ bool Texture_LoadHeightMap(Texture pTexture, const char* szTexName, void* pImage
 void Texture_SetTextureFormats(Texture pTexture);
 uint32_t Texture_GetSourceDataType(uint16_t precision);
 uint32_t Texture_GetInternalFormat(Texture pTexture);
-uint32_t Texture_GetPixelFormat(uint8_t channels);
+uint32_t Texture_GetPixelFormat(int32_t channels);
 
 // Accessors
 

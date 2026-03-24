@@ -28,7 +28,7 @@ bool TerrainRenderer_Initialize(TerrainRenderer* ppTerrainRenderer, const char* 
 	pRenderer->pCamera = GetEngine()->camera;
 
 	// will Initialize it to render Triangles, with TERRAIN_PATCH_COUNT meshes as base Num
-	if (!TerrainRenderer_InitGLBuffers(pRenderer, GL_TRIANGLES, TERRAIN_PATCH_COUNT * iTerrainX * iTerrainZ))
+	if (!TerrainRenderer_InitGLBuffers(pRenderer, GL_TRIANGLES, iTerrainX, iTerrainZ))
 	{
 		// Clean Up Memory
 		TerrainRenderer_Destroy(&pRenderer);
@@ -61,7 +61,7 @@ void TerrainRenderer_Destroy(TerrainRenderer* ppTerrainRenderer)
 	*ppTerrainRenderer = NULL;
 }
 
-bool TerrainRenderer_InitGLBuffers(TerrainRenderer pTerrainRenderer, GLenum glType, GLsizeiptr capacity)
+bool TerrainRenderer_InitGLBuffers(TerrainRenderer pTerrainRenderer, GLenum glType, GLint iTerrainX, GLint iTerrainZ)
 {
 	// Shader Initialization
 	if (!Shader_Initialize(&pTerrainRenderer->pTerrainShader, "Terrain Shader"))
@@ -79,6 +79,7 @@ bool TerrainRenderer_InitGLBuffers(TerrainRenderer pTerrainRenderer, GLenum glTy
 	Shader_LinkProgram(pTerrainRenderer->pTerrainShader);
 
 	// Initialize GPU Buffers
+	GLsizeiptr capacity = TERRAIN_PATCH_COUNT * iTerrainX * iTerrainZ;
 	if (!TerrainBuffer_Initialize(&pTerrainRenderer->pTerrainBuffer, capacity))
 	{
 		// Clean Up Memory
@@ -96,10 +97,28 @@ bool TerrainRenderer_InitGLBuffers(TerrainRenderer pTerrainRenderer, GLenum glTy
 		return (false);
 	}
 
-	GLsizeiptr SSBOSize = capacity * sizeof(SPatchData);
-	if (!ShaderStorageBufferObject_Initialize(&pTerrainRenderer->pRendererSSBO, SSBOSize, 0, "Terrain SSBO"))
+	int32_t totalTerrains = iTerrainX * iTerrainZ;
+	GLsizeiptr terrainSSBOSize = totalTerrains * sizeof(STerrainGPUData);
+	if (!ShaderStorageBufferObject_Initialize(&pTerrainRenderer->pTerrainRendererSSBO, terrainSSBOSize, SSBO_BP_TERRAIN_DATA, "Terrain SSBO"))
 	{
-		syserr("Failed to Create Shader Storage Buffer");
+		syserr("Failed to Create Shader Storage Buffer For Terrains");
+		TerrainRenderer_Destroy(&pTerrainRenderer);
+		return (false);
+	}
+
+	int32_t totalPatches = totalTerrains * TERRAIN_PATCH_COUNT; // e.g., 4 * 64
+	GLsizeiptr patchSSBOSize = totalPatches * sizeof(STerrainGPUData);
+	if (!ShaderStorageBufferObject_Initialize(&pTerrainRenderer->pPatchRendererSSBO, patchSSBOSize, SSBO_BP_PATCHES_DATA, "Patch SSBO"))
+	{
+		syserr("Failed to Create Shader Storage Buffer For Patches");
+		TerrainRenderer_Destroy(&pTerrainRenderer);
+		return (false);
+	}
+
+	int32_t totalHeightMap = totalTerrains * (HEIGHTMAP_RAW_XSIZE * HEIGHTMAP_RAW_ZSIZE) * sizeof(GLfloat);
+	if (!ShaderStorageBufferObject_Initialize(&pTerrainRenderer->pHeightMapSSBO, totalHeightMap, SSBO_BP_TERRAIN_HEIGHTMAP, "Global HeightMap SSBO"))
+	{
+		syserr("Failed to Create Shader Storage Buffer For Patches");
 		TerrainRenderer_Destroy(&pTerrainRenderer);
 		return (false);
 	}
@@ -112,7 +131,9 @@ bool TerrainRenderer_InitGLBuffers(TerrainRenderer pTerrainRenderer, GLenum glTy
 void TerrainRenderer_DestroyGLBuffers(TerrainRenderer pTerrainRenderer)
 {
 	IndirectBufferObject_Destroy(&pTerrainRenderer->pIndirectBuffer);
-	ShaderStorageBufferObject_Destroy(&pTerrainRenderer->pRendererSSBO);
+	ShaderStorageBufferObject_Destroy(&pTerrainRenderer->pTerrainRendererSSBO);
+	ShaderStorageBufferObject_Destroy(&pTerrainRenderer->pPatchRendererSSBO);
+	ShaderStorageBufferObject_Destroy(&pTerrainRenderer->pHeightMapSSBO);
 	Shader_Destroy(&pTerrainRenderer->pTerrainShader);
 	TerrainBuffer_Destroy(&pTerrainRenderer->pTerrainBuffer);
 }
@@ -130,12 +151,15 @@ void TerrainRenderer_UploadGPUData(TerrainRenderer pTerrainRenderer)
 	// Reset buffer and commands
 	IndirectBufferObject_Clear(pTerrainRenderer->pIndirectBuffer);
 
-	SPatchData* gpuData = (SPatchData*)pTerrainRenderer->pRendererSSBO->pBufferData;
+	STerrainGPUData* terrainGPUData = (STerrainGPUData*)pTerrainRenderer->pTerrainRendererSSBO->pBufferData;
+	SPatchGPUData* patchGPUData = (SPatchGPUData*)pTerrainRenderer->pPatchRendererSSBO->pBufferData;
+	GLfloat* heightMapGPUData = (GLfloat*)pTerrainRenderer->pHeightMapSSBO->pBufferData;
 
 	int32_t terrainsZNum = pTerrainMap->terrainsZCount;
 	int32_t terrainsXNum = pTerrainMap->terrainsXCount;
 
 	uint32_t globalPatchIndex = 0;
+	GLsizeiptr heightMapOffset = 0; // height map offset in the global .. per terrain
 
 	for (int32_t iTerrNumZ = 0; iTerrNumZ < terrainsZNum; iTerrNumZ++)
 	{
@@ -150,6 +174,25 @@ void TerrainRenderer_UploadGPUData(TerrainRenderer pTerrainRenderer)
 			}
 
 			pTerrain->baseGlobalPatchIndex = globalPatchIndex;  // Terrain 0,0: 0
+			pTerrain->globalOffset = heightMapOffset;  // Byte offset
+
+
+			if (pTerrainRenderer->pHeightMapSSBO->isPersistent)
+			{
+				for (int32_t i = 0; i < 3; i++)
+				{
+					pTerrain->mapPtrs[i] = (char*)heightMapGPUData + heightMapOffset;
+				}
+			}
+
+			// Store Model Matrix in the GPU Array
+			if (pTerrainRenderer->pTerrainRendererSSBO->isPersistent)
+			{
+				// This is the magic: Every patch in this terrain points to this heightmap
+				terrainGPUData[iTerrainIndex].heightOffset = (uint32_t)pTerrain->globalOffset / sizeof(GLfloat);
+				terrainGPUData[iTerrainIndex].terrainCoords[0] = pTerrain->terrainXCoord;
+				terrainGPUData[iTerrainIndex].terrainCoords[1] = pTerrain->terrainZCoord;
+			}
 
 			for (int32_t iPatchZ = 0; iPatchZ < PATCH_ZCOUNT; iPatchZ++)
 			{
@@ -167,8 +210,8 @@ void TerrainRenderer_UploadGPUData(TerrainRenderer pTerrainRenderer)
 					TerrainMesh terrainMesh = terrainPatch->terrainMesh;
 
 					// Capture buffer offsets
-					terrainMesh->vertexOffset = GetTerrainBufferVertexOffset(pTerrainRenderer->pTerrainBuffer);
-					terrainMesh->indexOffset = GetTerrainBufferIndexOffset(pTerrainRenderer->pTerrainBuffer);
+					terrainMesh->vertexOffset = TerrainBuffer_GetVertexOffset(pTerrainRenderer->pTerrainBuffer);
+					terrainMesh->indexOffset = TerrainBuffer_GetIndexOffset(pTerrainRenderer->pTerrainBuffer);
 
 					terrainMesh->meshMatrixIndex = pTerrain->baseGlobalPatchIndex + iPatchIndex;
 
@@ -182,15 +225,11 @@ void TerrainRenderer_UploadGPUData(TerrainRenderer pTerrainRenderer)
 					uint32_t ssboIndex = pTerrain->baseGlobalPatchIndex + iPatchIndex;
 
 					// Store Model Matrix in the GPU Array
-					if (pTerrainRenderer->pRendererSSBO->isPersistent)
+					if (pTerrainRenderer->pPatchRendererSSBO->isPersistent)
 					{
-						gpuData[ssboIndex].modelMatrix = S_Matrix4_Identity;
 						// This is the magic: Every patch in this terrain points to this heightmap
-						gpuData[ssboIndex].heightMapHandle = pTerrain->pHeightMapTexture->textureHandle;
-						gpuData[ssboIndex].heightScale = 1.0f; // Or whatever your scale is
-						gpuData[ssboIndex].terrainCoords[0] = pTerrain->terrainXCoord;
-						gpuData[ssboIndex].terrainCoords[1] = pTerrain->terrainZCoord;
-
+						patchGPUData[ssboIndex].terrainIndex = iTerrainIndex;
+						patchGPUData[ssboIndex].localPatchID = iPatchIndex;
 					}
 
 					// Add indirect command with correct offsets
@@ -206,6 +245,7 @@ void TerrainRenderer_UploadGPUData(TerrainRenderer pTerrainRenderer)
 			}
 
 			globalPatchIndex += PATCH_ZCOUNT * PATCH_XCOUNT;
+			heightMapOffset += pTerrain->sliceBytes;
 		}
 	}
 
@@ -224,13 +264,17 @@ void TerrainRenderer_Render(TerrainRenderer pTerrainRenderer)
 		return;
 	}
 
-	TerrainMap pTerrainMap = GetTerrainManager()->pTerrainMap;
+	// TerrainMap pTerrainMap = GetTerrainManager()->pTerrainMap;
 
 	StateManager_PushState(GetStateManager());
 
 	StateManager_BindTerrainBufferVAO(GetStateManager(), pTerrainRenderer->pTerrainBuffer);
 	StateManager_BindShader(GetStateManager(), pTerrainRenderer->pTerrainShader);
-	Shader_SetInt(pTerrainRenderer->pTerrainShader, "heightMapSize", HEIGHTMAP_RAW_XSIZE);
+
+	// Set model matrix as uniform (instead of SSBO)
+	Shader_SetFloat(pTerrainRenderer->pTerrainShader, "ENGINE_CELL_SIZE", (float)ENGINE_CELL_SIZE);
+	Shader_SetVec2(pTerrainRenderer->pTerrainShader, "TERRAIN_SIZE", Vector2Di(TERRAIN_XSIZE, TERRAIN_ZSIZE));
+	Shader_SetInt(pTerrainRenderer->pTerrainShader, "TERRAIN_HEIGHTMAP_RAW_XSIZE", HEIGHTMAP_RAW_XSIZE);
 
 	StateManager_SetCapability(GetStateManager(), CAP_DEPTH_TEST, true);
 	StateManager_SetCapability(GetStateManager(), CAP_CULL_FACE, true);
@@ -254,7 +298,9 @@ void TerrainRenderer_Render(TerrainRenderer pTerrainRenderer)
 
 void TerrainRenderer_RenderIndirect(TerrainRenderer pTerrainRenderer)
 {
-	ShaderStorageBufferObject_Bind(pTerrainRenderer->pRendererSSBO);
+	ShaderStorageBufferObject_Bind(pTerrainRenderer->pTerrainRendererSSBO);
+	ShaderStorageBufferObject_Bind(pTerrainRenderer->pPatchRendererSSBO);
+	ShaderStorageBufferObject_Bind(pTerrainRenderer->pHeightMapSSBO);
 
 	// Execute all commands in one GPU call
 	IndirectBufferObject_Draw(pTerrainRenderer->pIndirectBuffer, pTerrainRenderer->primitiveType);
@@ -310,7 +356,6 @@ void TerrainRenderer_RenderLegacy(TerrainRenderer pTerrainRenderer)
 					TerrainMesh terrainMesh = terrainPatch->terrainMesh;
 
 					// Set model matrix as uniform (instead of SSBO)
-					Matrix4 modelMatrix = pTerrain->patchesMetrices[iPatchIndex];
 					Shader_SetMat4(pTerrainRenderer->pTerrainShader, "u_matModel", S_Matrix4_Identity);
 					Shader_SetInt(pTerrainRenderer->pTerrainShader, "u_vertex_DrawID", terrainMesh->meshMatrixIndex);
 

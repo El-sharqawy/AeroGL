@@ -41,6 +41,7 @@ bool FloatGrid_Initialize(FloatGrid* ppFloatGrid, int32_t width, int32_t height,
 	}
 
 	pFloatGrid->isInitialized = true;
+	pFloatGrid->isDirty = true;
 	return (true);
 }
 
@@ -143,4 +144,9 @@ const float* FloatGrid_GetRow(FloatGrid pFloatGrid, int32_t row)
 size_t FloatGrid_GetBytesSize(FloatGrid pFloatGrid)
 {
 	return (pFloatGrid->size * sizeof(float));
+}
+
+void FloatGrid_SetDirty(FloatGrid pFloatGrid, bool bFlag)
+{
+	pFloatGrid->isDirty = bFlag;
 }

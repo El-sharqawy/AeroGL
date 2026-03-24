@@ -19,6 +19,9 @@ typedef struct SVector
 
 typedef struct SVector* Vector;
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
 bool Vector_Init(Vector* ppVector, size_t elementSize, bool isSinglePtr);
 bool Vector_InitCapacity(Vector* ppVector, size_t elementSize, size_t capacity, bool isSinglePtr);
 
@@ -46,5 +49,9 @@ void* Vector_GetPtr(Vector vec, size_t index);
 } while (0)
 
 #define Vector_GetValue(pVec, index, type) (*(type*)Vector_Get(pVec, index))
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif // __NEW_VECTOR_H__

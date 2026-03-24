@@ -1,4 +1,4 @@
-#ifndef __ENGINE_MATH_H__
+ï»¿#ifndef __ENGINE_MATH_H__
 #define __ENGINE_MATH_H__
 
 #include "Matrix/Matrix4.h"
@@ -91,11 +91,11 @@ static inline Matrix4 PerspectiveRH(const SPersProjInfo persProj)
 	ProjectionMatrix.cols[1].y = 1.0f / HalfTanFOV;
 
 	// Column 2: Z-axis mapping and perspective division trigger
-	ProjectionMatrix.cols[2].z = -(FarZ + NearZ) / (FarZ - NearZ);
+	ProjectionMatrix.cols[2].z = -(FarZ + NearZ) / (ZRange);
 	ProjectionMatrix.cols[2].w = -1.0f;	// Triggers perspective division (w = -z)
 
 	// Column 3: Z translation component
-	ProjectionMatrix.cols[3].z = -(2.0f * FarZ * NearZ) / (FarZ - NearZ);
+	ProjectionMatrix.cols[3].z = -(2.0f * FarZ * NearZ) / (ZRange);
 
 	return (ProjectionMatrix);
 }
@@ -127,10 +127,10 @@ static inline Matrix4 OrthographicRH(const SOrthoProjInfo orthoProj)
 
 	// Construct the orthographic projection matrix P:
 	//
-	// 			[ 2/(r-l)       0             0        -(r+l)/(r-l) ]
-	// 		P = [    0       2/(t-b)          0        -(t+b)/(t-b) ]
-	// 			[    0           0        -2/(f-n)     -(f+n)/(f-n) ]
-	// 			[    0           0             0             1      ]
+	// 			[ 2/(r-l)Â  Â  Â  Â 0Â  Â  Â  Â  Â  Â  Â 0Â  Â  Â  Â  -(r+l)/(r-l) ]
+	// 		P = [Â  Â  0Â  Â  Â  Â 2/(t-b)Â  Â  Â  Â  Â  0Â  Â  Â  Â  -(t+b)/(t-b) ]
+	// 			[Â  Â  0Â  Â  Â  Â  Â  Â 0Â  Â  Â  Â  -2/(f-n)Â  Â  Â -(f+n)/(f-n) ]
+	// 			[Â  Â  0Â  Â  Â  Â  Â  Â 0Â  Â  Â  Â  Â  Â  Â 0Â  Â  Â  Â  Â  Â  Â 1Â  Â  Â  ]
 	//
 	// where l = Left boundary of the view volume
 	// 		 r = Right boundary of the view volume

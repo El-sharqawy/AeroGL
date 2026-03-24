@@ -1,0 +1,4 @@
+﻿#ifndef __TERRAIN_TEXTURESET_H__
+#define __TERRAIN_TEXTURESET_H__
+
+#endif // __TERRAIN_TEXTURESET_H__

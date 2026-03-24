@@ -469,8 +469,8 @@ bool TerrainBuffer_UploadData(TerrainGLBuffer pTerrainBuffer, TerrainMesh pTerra
 	}
 
 	// Update Counts and Offsets
-	pTerrainMesh->indexOffset = GetTerrainBufferIndexOffset(pTerrainBuffer);
-	pTerrainMesh->vertexOffset = GetTerrainBufferVertexOffset(pTerrainBuffer);
+	pTerrainMesh->indexOffset = TerrainBuffer_GetIndexOffset(pTerrainBuffer);
+	pTerrainMesh->vertexOffset = TerrainBuffer_GetVertexOffset(pTerrainBuffer);
 
 	const STerrainVertex* pVertices = (STerrainVertex*)pTerrainMesh->pVertices->pData;
 	const GLuint* pIndices = (GLuint*)pTerrainMesh->pIndices->pData;
@@ -530,12 +530,12 @@ bool TerrainBuffer_UploadData(TerrainGLBuffer pTerrainBuffer, TerrainMesh pTerra
 	return (true);
 }
 
-GLsizeiptr GetTerrainBufferVertexOffset(TerrainGLBuffer pTerrainBuffer)
+GLsizeiptr TerrainBuffer_GetVertexOffset(TerrainGLBuffer pTerrainBuffer)
 {
 	return (pTerrainBuffer->vertexOffset);
 }
 
-GLsizeiptr GetTerrainBufferIndexOffset(TerrainGLBuffer pTerrainBuffer)
+GLsizeiptr TerrainBuffer_GetIndexOffset(TerrainGLBuffer pTerrainBuffer)
 {
 	return (pTerrainBuffer->indexOffset);
 }

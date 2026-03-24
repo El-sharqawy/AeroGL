@@ -5,9 +5,9 @@
 #include "../Buffers/Buffer.h"
 #include "../Buffers/IndirectBufferObject.h"
 #include "../Buffers/ShaderStorageBufferObject.h"
-#include "MyLIB/Vector.h"
-#include "../Core/Camera.h"
-#include "../Meshes/TerrainMesh.h"
+#include "AeroLib/Vector.h"
+#include "Core/Camera.h"
+#include "Meshes/TerrainMesh.h"
 
 #define MAX_DEBUG_LINE_MESHES 10
 #define MAX_DEBUG_MESHES 10
@@ -18,6 +18,11 @@ typedef enum EDebugPrimitiveType
     DEBUG_TRIANGLES,
     DEBUG_MAX_TYPES
 } EDebugPrimitiveType;
+
+typedef enum EDebugRendererSSBO
+{
+    SSBO_BP_DEBUG_RENDERER,		// Binding point 0 reserved for Debug Renderer
+} EDebugRendererSSBO;
 
 typedef struct SDebugRendererPrimitiveGroup
 {

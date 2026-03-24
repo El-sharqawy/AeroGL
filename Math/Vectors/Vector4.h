@@ -6,7 +6,15 @@
 #include <math.h>
 #include <xmmintrin.h> // SSE
 #include <smmintrin.h> // SSE4.1 (for dot product)
-#include "../MathUtils.h"
+#include "Math/MathUtils.h"
+
+#if defined(AERO_PLATFORM_WINDOWS)
+#pragma warning(push)
+#pragma warning(disable : 4201) // MSVC: nameless struct/union
+#elif defined(AERO_PLATFORM_LINUX)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic" // GCC/Clang: non-standard extension
+#endif
 
 /**
  * SVector4Df: A 4D float vector struct.
@@ -61,6 +69,12 @@ typedef struct AERO_ALIGN(16) SVector4f
 		float v4[4]; // Array access: Useful for loops or OpenGL (glUniform4fv)
 	};
 } Vector4;
+
+#if defined(AERO_PLATFORM_WINDOWS)
+#pragma warning(pop)
+#elif defined(AERO_PLATFORM_LINUX)
+#pragma GCC diagnostic pop
+#endif
 
 // Use _mm_setr_ps (Set Reversed) so the order matches x, y, z, w 
 // _mm_set_ps usually takes arguments in reverse order (w, z, y, x)

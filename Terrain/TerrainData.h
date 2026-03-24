@@ -21,16 +21,16 @@ typedef enum ETerrainData
 	ZSIZE = TERRAIN_SIZE,											// Number of cells along Z-axis (matches X for square terrain)
 
 	// Heightmap data (vertex-based)
-	HEIGHTMAP_XSIZE = XSIZE + 1,									// Heightmap width: cells + 1 (vertices per row) and This ensures the heightmap covers all vertex points needed to define the terrain’s surface.
-	HEIGHTMAP_ZSIZE = ZSIZE + 1,									// Heightmap depth: cells + 1 (vertices per row) and This ensures the heightmap covers all vertex points needed to define the terrain’s surface.
+	HEIGHTMAP_XSIZE = XSIZE + 1,									// Heightmap width: cells + 1 (vertices per row) and This ensures the heightmap covers all vertex points needed to define the terrainâ€™s surface.
+	HEIGHTMAP_ZSIZE = ZSIZE + 1,									// Heightmap depth: cells + 1 (vertices per row) and This ensures the heightmap covers all vertex points needed to define the terrainâ€™s surface.
 	HEIGHTMAP_RAW_XSIZE = XSIZE + 3,								// Heightmap raw width: cells + 3 (vertices per row) (with padding for edge sampling)
 	HEIGHTMAP_RAW_ZSIZE = ZSIZE + 3,								// Heightmap raw depth: cells + 3 (vertices per row) (prevents out-of-bounds access).
 
 
 	// World Real Size stuff
-	PATCH_CELL_SIZE = 1,
-	TERRAIN_XSIZE = XSIZE * PATCH_CELL_SIZE,
-	TERRAIN_ZSIZE = ZSIZE * PATCH_CELL_SIZE,
+	ENGINE_CELL_SIZE = 1,
+	TERRAIN_XSIZE = XSIZE * ENGINE_CELL_SIZE,
+	TERRAIN_ZSIZE = ZSIZE * ENGINE_CELL_SIZE,
 
 } ETerrainData;
 

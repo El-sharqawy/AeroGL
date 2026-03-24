@@ -2,7 +2,7 @@
 #define __TERRAIN_MAP_H__
 
 #include "Terrain/Terrain/Terrain.h"
-#include "MyLIB/Vector.h"
+#include "AeroLib/Vector.h"
 
 typedef struct STerrainMap
 {
@@ -27,6 +27,8 @@ void TerrainMap_Clear(TerrainMap pTerrainMap);
 void TerrainMap_SetDeminsions(TerrainMap pTerrainMap, int32_t terrainsX, int32_t terrainsZ);
 void TerrainMap_SetMapName(TerrainMap pTerrainMap, const char* szMapName);
 void TerrainMap_SetMapDir(TerrainMap pTerrainMap, const char* szMapDir);
+
+void TerrainMap_Update(TerrainMap pTerrainMap);
 
 // Terrain Map Create
 bool TerrainMap_CreateFolder(TerrainMap pTerrainMap, char* szMapName);

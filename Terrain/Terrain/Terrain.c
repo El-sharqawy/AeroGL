@@ -104,66 +104,12 @@ bool Terrain_InitializePatches(Terrain pTerrain)
 				syserr("Failed to Initialize Patch %d", iPatchNum);
 				return (false);
 			}
-
-			// ex: 1 * 32 = 32 .. 2 * 32 = 64 .. etc
-			int32_t iPatchStartX = iPatchNumX * PATCH_XSIZE;
-			int32_t iPatchStartZ = iPatchNumZ * PATCH_ZSIZE;
-
-			float fPatchXSizeMeters = PATCH_XSIZE * PATCH_CELL_SIZE;
-			float fPatchZSizeMeters = PATCH_ZSIZE * PATCH_CELL_SIZE;
-
-			float fPatchStartX = (float)(pTerrain->terrainXCoord * XSIZE * PATCH_CELL_SIZE) + (float)(iPatchStartX * PATCH_CELL_SIZE);
-			float fPatchStartZ = (float)(pTerrain->terrainZCoord * ZSIZE * PATCH_CELL_SIZE) + (float)(iPatchStartZ * PATCH_CELL_SIZE);
-
-			float fOriginalPatchStartX = fPatchStartX;
-			float fOriginalPatchStartZ = fPatchStartZ;
-
-			TerrainMesh mesh = pTerrainPatch->terrainMesh;
-			int32_t width = pTerrainPatch->patchWidth;
-			int32_t depth = pTerrainPatch->patchDepth;
-
-			Vector_Reserve(mesh->pVertices, (width + 1) * (depth + 1));
-			Vector_Reserve(mesh->pIndices, (width * depth * 6));
-
-			// Normals Calculations
-			Matrix4 model = TransformGetMatrix(&pTerrainPatch->terrainMesh->transform);
-			Matrix3 mat3Model = Matrix3_InitMatrix4(model);
-			Matrix3 invModel = Matrix3_Inverse(mat3Model);
-			Matrix3 normalMatrix = Matrix3_TransposeN(invModel);
-
-			// loop through each vertices
-			for (GLint iZ = iPatchStartZ; iZ <= iPatchStartZ + PATCH_ZSIZE; iZ++)
-			{
-				fPatchStartX = fOriginalPatchStartX;
-
-				for (GLint iX = iPatchStartX; iX <= iPatchStartX + PATCH_XSIZE; iX++)
-				{
-					STerrainVertex vertex = { 0 };
-
-					vertex.v3Position = Vector3D(fPatchStartX, 0.0f, fPatchStartZ);
-					vertex.v2TexCoords = Vector2D((fPatchStartX - fOriginalPatchStartX) / fPatchXSizeMeters, (fPatchStartZ - fOriginalPatchStartZ) / fPatchZSizeMeters);
-					vertex.v3Normals = Vector3D(0.0f, 1.0f, 0.0f);
-					vertex.v4Color = color;
-
-					TerrainMesh_AddVertex(mesh, vertex);
-
-					fPatchStartX++;
-				}
-
-				fPatchStartZ++;
-			}
-
-			TerrainPatch_InitializeIndices(pTerrainPatch);
 			
-			// Since we are baking the worldPos into the vertices, 
-			// the matrix for the shader must be Identity.
-			pTerrain->patchesMetrices[iPatchNum] = S_Matrix4_Identity;
-
 			Vector_PushBack(pTerrain->terrainPatches, pTerrainPatch);
 		}
 	}
 
-	// Terrain_UpdatePatches(pTerrain);
+	Terrain_UpdatePatches(pTerrain);
 	return (true);
 }
 
@@ -191,15 +137,14 @@ void Terrain_UpdatePatch(Terrain pTerrain, int32_t iPatchNumX, int32_t iPatchNum
 	int32_t iPatchStartX = iPatchNumX * PATCH_XSIZE;
 	int32_t iPatchStartZ = iPatchNumZ * PATCH_ZSIZE;
 
-	float fPatchXSizeMeters = PATCH_XSIZE * PATCH_CELL_SIZE;
-	float fPatchZSizeMeters = PATCH_ZSIZE * PATCH_CELL_SIZE;
+	float fPatchXSizeMeters = PATCH_XSIZE * ENGINE_CELL_SIZE;
+	float fPatchZSizeMeters = PATCH_ZSIZE * ENGINE_CELL_SIZE;
 
-	float fPatchStartX = (float)(pTerrain->terrainXCoord * XSIZE * PATCH_CELL_SIZE) + (float)(iPatchStartX * PATCH_CELL_SIZE);
-	float fPatchStartZ = (float)(pTerrain->terrainZCoord * ZSIZE * PATCH_CELL_SIZE) + (float)(iPatchStartZ * PATCH_CELL_SIZE);
+	float fPatchStartX = (float)(pTerrain->terrainXCoord * XSIZE * ENGINE_CELL_SIZE) + (float)(iPatchStartX * ENGINE_CELL_SIZE);
+	float fPatchStartZ = (float)(pTerrain->terrainZCoord * ZSIZE * ENGINE_CELL_SIZE) + (float)(iPatchStartZ * ENGINE_CELL_SIZE);
 
 	float fOriginalPatchStartX = fPatchStartX;
 	float fOriginalPatchStartZ = fPatchStartZ;
-
 
 	// Terrain Patch
 	TerrainPatch pTerrainPatch = Vector_GetPtr(pTerrain->terrainPatches, iPatchNum);
@@ -210,7 +155,23 @@ void Terrain_UpdatePatch(Terrain pTerrain, int32_t iPatchNumX, int32_t iPatchNum
 	}
 
 	// Clear Elements
-	Vector_Clear(pTerrain->terrainPatches);
+	TerrainMesh mesh = pTerrainPatch->terrainMesh;
+
+	Vector_Clear(mesh->pVertices);
+	Vector_Clear(mesh->pIndices);
+
+	// Normals Calculations
+	Matrix4 model = TransformGetMatrix(&pTerrainPatch->terrainMesh->transform);
+	Matrix3 mat3Model = Matrix3_InitMatrix4(model);
+	Matrix3 invModel = Matrix3_Inverse(mat3Model);
+	Matrix3 normalMatrix = Matrix3_TransposeN(invModel);
+
+	// vertex color
+	Vector4 color;
+	color.r = (float)(iPatchNum % 8) / 8.0f;      // Red: 0,0.125,0.25...
+	color.g = (float)(iPatchNum / 8 % 8) / 8.0f;  // Green: cycles every 8
+	color.b = 0.5f + 0.5f * sinf(iPatchNum * 0.3f);  // Blue: rainbow
+	color.a = 1.0f;
 
 	// loop through each vertices
 	for (GLint iZ = iPatchStartZ; iZ <= iPatchStartZ + PATCH_ZSIZE; iZ++)
@@ -220,23 +181,75 @@ void Terrain_UpdatePatch(Terrain pTerrain, int32_t iPatchNumX, int32_t iPatchNum
 		for (GLint iX = iPatchStartX; iX <= iPatchStartX + PATCH_XSIZE; iX++)
 		{	
 			// syslog("iPatchIndex: %d, fX: %f, fZ: %f", iPatchNum, fPatchStartX, fPatchStartZ);
-			Vector3 worldPos = Vector3D(fPatchStartX, 0.0f, fPatchStartZ);
+			STerrainVertex vertex = { 0 };
 
-			fPatchStartX += (GLfloat)PATCH_CELL_SIZE;
+			vertex.v3Position = Vector3D(fPatchStartX, 0.0f, fPatchStartZ);
+			vertex.v2TexCoords = Vector2D((fPatchStartX - fOriginalPatchStartX) / fPatchXSizeMeters, (fPatchStartZ - fOriginalPatchStartZ) / fPatchZSizeMeters);
+			vertex.v3Normals = Vector3D(0.0f, 1.0f, 0.0f);
+			vertex.v4Color = color;
+
+			TerrainMesh_AddVertex(mesh, vertex);
+
+			fPatchStartX += (GLfloat)ENGINE_CELL_SIZE;
 		}
 
-		fPatchStartZ += (GLfloat)PATCH_CELL_SIZE;
+		fPatchStartZ += (GLfloat)ENGINE_CELL_SIZE;
+	}
+
+	TerrainPatch_InitializeIndices(pTerrainPatch);
+}
+
+void Terrain_Update(Terrain pTerrain)
+{
+	if (!pTerrain)
+	{
+		return;
+	}
+
+	printf("Debug: pTerrain address is %p heightMap Address is %p\n", (void*)pTerrain, (void*)pTerrain->heightMap);
+
+	if (!pTerrain->heightMap)
+	{
+		syserr("Height map is not Initialized Yet!");
+		return;
+	}
+
+	// Update HeightMap Buffer
+	if (pTerrain->heightMap->isDirty)
+	{
+		int32_t writeIdx = (pTerrain->currentRing + 1) % 3;
+
+		// Microsecond wait (triple buffer = almost instant)
+		GLenum waitResult = glClientWaitSync(pTerrain->fences[writeIdx], GL_SYNC_FLUSH_COMMANDS_BIT, 1000000);  // 1ms timeout
+
+		if (waitResult == GL_TIMEOUT_EXPIRED)
+		{
+			syslog("Terrain fence timeout — GPU overloaded?");
+			return;
+		}
+
+		glDeleteSync(pTerrain->fences[writeIdx]);
+
+		GLfloat* slicePtr = (float*)pTerrain->mapPtrs[writeIdx];
+
+		// CPU height calc -> direct write!
+		memcpy(slicePtr, pTerrain->heightMap->pArray, pTerrain->sliceBytes);
+
+		pTerrain->fences[writeIdx] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+		pTerrain->currentRing = writeIdx;
+
+		FloatGrid_SetDirty(pTerrain->heightMap, false);
 	}
 }
 
 void Terrain_SetParentMap(Terrain pTerrain, STerrainMap* pParentMap)
 {
-	pTerrain->pParentMap = pParentMap;
+	pTerrain->parentMap = pParentMap;
 }
 
 TerrainMap Terrain_GetParentMap(Terrain pTerrain)
 {
-	return (pTerrain->pParentMap);
+	return (pTerrain->parentMap);
 }
 
 float GetHeightMapValue(Terrain pTerrain, int32_t x, int32_t z)

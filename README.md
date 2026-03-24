@@ -32,7 +32,7 @@ AeroGL/
 ├── LibImageUI/      # Image-based UI rendering library
 ├── Math/            # Custom math library (vectors, matrices, quaternions)
 ├── Meshes/          # Mesh loading and geometry management
-├── MyLIB/           # Internal shared utility library
+├── AeroLib/         # Internal shared utility library
 ├── OpenGLUtils/     # OpenGL helpers, error checking, and debug utilities
 ├── PipeLine/        # StateManager and render pipeline abstractions
 ├── Renderer/        # Main renderer and DebugRenderer

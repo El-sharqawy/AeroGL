@@ -3,7 +3,7 @@
 
 #define MAX_ENGINE_TEXTURES 256
 
-#include "../PipeLine/Texture.h"
+#include "PipeLine/Texture.h"
 
 typedef struct STexturesManager
 {

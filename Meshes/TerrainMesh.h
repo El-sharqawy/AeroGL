@@ -6,7 +6,7 @@
 #include "../Math/Vectors/Vector2.h"
 #include "../Math/Vectors/Vector3.h"
 #include "../Math/Vectors/Vector4.h"
-#include "MyLIB/Vector.h"
+#include "AeroLib/Vector.h"
 
 typedef struct STerrainVertex
 {

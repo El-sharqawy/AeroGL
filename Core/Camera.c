@@ -96,7 +96,7 @@ typedef struct SGLCamera
 	SCameraUBO cameraSUBO; // struct Data
 } SGLCamera;
 
-bool InitializeCamera(GLCamera *ppCamera, float Width, float Height)
+bool Camera_Initialize(GLCamera *ppCamera, float Width, float Height)
 {
 	if (ppCamera == NULL)
 	{
@@ -115,7 +115,7 @@ bool InitializeCamera(GLCamera *ppCamera, float Width, float Height)
 		return (false);
 	}
 
-	UpdateCameraDeminsions(pCamera, Width, Height);
+	Camera_UpdateCameraDeminsions(pCamera, Width, Height);
 
 	// Initial orientation
 	pCamera->v3Position = Vector3_Create(0.0f, 0.0f, -5.0f); // Start 5 units back
@@ -153,19 +153,19 @@ bool InitializeCamera(GLCamera *ppCamera, float Width, float Height)
 	pCamera->v3Right = Vector3_Normalized(Vector3_Cross(pCamera->v3Front, s_v3WorldUp));
 	pCamera->v3Up = Vector3_Normalized(Vector3_Cross(pCamera->v3Right, pCamera->v3Front));
 
-	if (!InitializeUniformBufferObject(&pCamera->cameraUBO, sizeof(SCameraUBO), UBO_BP_CAMERA, "Camera UBO"))
+	if (!UniformBufferObject_Initialize(&pCamera->cameraUBO, sizeof(SCameraUBO), UBO_BP_CAMERA, "Camera UBO"))
 	{
 		syserr("Failed To Create Camera UBO");
 	}
 
 	pCamera->cameraSUBO = (SCameraUBO){ S_Matrix4_Identity, S_Matrix4_Identity, S_Matrix4_Identity, S_Matrix4_Identity };
 
-	UpdateProjections(pCamera);
+	Camera_UpdateProjections(pCamera);
 
 	return (pCamera != NULL);
 }
 
-void UpdateProjections(GLCamera pCamera)
+void Camera_UpdateProjections(GLCamera pCamera)
 {
 	// Configure perspective projection parameters
 	pCamera->PerspectiveProjection.FOV = pCamera->CameraZoom;							// Field of view in degrees
@@ -189,7 +189,7 @@ void UpdateProjections(GLCamera pCamera)
 	pCamera->bViewProjDirty = true;			// Set to true when either view or projection is dirty
 }
 
-void DestroyCamera(GLCamera* ppCamera)
+void Camera_Destroy(GLCamera* ppCamera)
 {
 	if (!ppCamera || !*ppCamera)
 	{
@@ -198,14 +198,14 @@ void DestroyCamera(GLCamera* ppCamera)
 
 	GLCamera pCamera = *ppCamera;
 
-	DestroyUniformBufferObject(&pCamera->cameraUBO);
+	UniformBufferObject_Destroy(&pCamera->cameraUBO);
 
 	tracked_free(pCamera);
 
 	*ppCamera = NULL;
 }
 
-Matrix4 GetViewMatrix(GLCamera pCamera)
+Matrix4 Camera_GetViewMatrix(GLCamera pCamera)
 {
 	if (pCamera->bViewDirty)
 	{
@@ -216,7 +216,7 @@ Matrix4 GetViewMatrix(GLCamera pCamera)
 	return (pCamera->ViewMatrix);
 }
 
-Matrix4 GetProjectionMatrix(GLCamera pCamera)
+Matrix4 Camera_GetProjectionMatrix(GLCamera pCamera)
 {
 	if (pCamera->bProjectionDirty)
 	{
@@ -234,12 +234,12 @@ Matrix4 GetProjectionMatrix(GLCamera pCamera)
 	return (pCamera->ProjectionMatrix);
 }
 
-Matrix4 GetViewProjectionMatrix(GLCamera pCamera)
+Matrix4 Camera_GetViewProjectionMatrix(GLCamera pCamera)
 {
 	// Ensure the parents are up to date first
 	// Get the latest parents (these handle their own dirty flags internally)
-	Matrix4 Projection = GetProjectionMatrix(pCamera);
-	Matrix4 View = GetViewMatrix(pCamera);
+	Matrix4 Projection = Camera_GetProjectionMatrix(pCamera);
+	Matrix4 View = Camera_GetViewMatrix(pCamera);
 
 	// If we were manually told we are dirty, or if the parents just updated
 	// Note: This requires the parent getters to return if they were dirty.
@@ -254,11 +254,11 @@ Matrix4 GetViewProjectionMatrix(GLCamera pCamera)
 	return (pCamera->ViewProjectionMatrix);
 }
 
-Matrix4 GetViewBillboardMatrix(GLCamera pCamera)
+Matrix4 Camera_GetViewBillboardMatrix(GLCamera pCamera)
 {
 	if (pCamera->bBillboardDirty)
 	{
-		pCamera->ViewMatrixBillboard = GetViewMatrix(pCamera);
+		pCamera->ViewMatrixBillboard = Camera_GetViewMatrix(pCamera);
 
 		// Zero out the translation part (4th column)
 		pCamera->ViewMatrixBillboard.cols[3].x = 0.0f;
@@ -287,7 +287,7 @@ Matrix4 GetViewBillboardMatrix(GLCamera pCamera)
 	return (pCamera->ViewMatrixBillboard);
 }
 
-void ProcessCameraKeboardInput(GLCamera pCamera, ECameraDirections cameraDir, float deltaTime)
+void Camera_ProcessCameraKeboardInput(GLCamera pCamera, ECameraDirections cameraDir, float deltaTime)
 {
 	GLfloat fVelocity = pCamera->CameraSpeed * deltaTime;
 	
@@ -315,7 +315,7 @@ void ProcessCameraKeboardInput(GLCamera pCamera, ECameraDirections cameraDir, fl
 	pCamera->bViewProjDirty = true;
 }
 
-void ProcessCameraMouse(GLCamera pCamera)
+void Camera_ProcessCameraMouse(GLCamera pCamera)
 {
 	// Accumulate the rotation changes
 	if (pCamera->bUseQuaternion)
@@ -348,10 +348,10 @@ void ProcessCameraMouse(GLCamera pCamera)
 		pCamera->Pitch = clampf(pCamera->Pitch, -89.0f, 89.0f); // Prevent gimbal lock
 	}
 
-	UpdateCameraVectors(pCamera);
+	Camera_UpdateCameraVectors(pCamera);
 }
 
-void ProcessCameraZoom(GLCamera pCamera)
+void Camera_ProcessCameraZoom(GLCamera pCamera)
 {
 	// 1. Adjust the zoom level (clamped to keep it sensible)
 	pCamera->CameraZoom -= GetInput()->mouseScroll;
@@ -376,7 +376,7 @@ void ProcessCameraZoom(GLCamera pCamera)
 	pCamera->bViewProjDirty = true;
 }
 
-void UpdateCameraVectors(GLCamera pCamera)
+void Camera_UpdateCameraVectors(GLCamera pCamera)
 {
 	if (pCamera->bUseQuaternion == true)
 	{
@@ -423,25 +423,25 @@ void UpdateCameraVectors(GLCamera pCamera)
 	pCamera->bViewProjDirty = true; // VP needs update because View changed
 }
 
-void UpdateCameraDeminsions(GLCamera pCamera, float width, float height)
+void Camera_UpdateCameraDeminsions(GLCamera pCamera, float width, float height)
 {
 	pCamera->Width = width;
 	pCamera->Height = height;
 
-	UpdateProjections(pCamera);
+	Camera_UpdateProjections(pCamera);
 }
 
-void UpdateCamera(GLCamera pCamera)
+void Camera_UpdateCamera(GLCamera pCamera)
 {
 	if (!pCamera)
 	{
 		return;
 	}
 
-	UpdateUniformBufferObject(pCamera);
+	Camera_UpdateUniformBufferObject(pCamera);
 }
 
-void UpdateUniformBufferObject(GLCamera pCamera)
+void Camera_UpdateUniformBufferObject(GLCamera pCamera)
 {
 	bool needsUpload = false;
 
@@ -461,13 +461,13 @@ void UpdateUniformBufferObject(GLCamera pCamera)
 
 	if (pCamera->bViewProjDirty)
 	{
-		pCamera->cameraSUBO.viewProjectionMat = GetViewProjectionMatrix(pCamera);
+		pCamera->cameraSUBO.viewProjectionMat = Camera_GetViewProjectionMatrix(pCamera);
 		needsUpload = true;
 	}
 
 	if (pCamera->bBillboardDirty)
 	{
-		pCamera->cameraSUBO.viewBillBoard = GetViewBillboardMatrix(pCamera);
+		pCamera->cameraSUBO.viewBillBoard = Camera_GetViewBillboardMatrix(pCamera);
 		needsUpload = true;
 	}
 

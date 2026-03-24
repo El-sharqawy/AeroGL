@@ -98,3 +98,21 @@ void TerrainMap_SetMapDir(TerrainMap pTerrainMap, const char* szMapDir)
 
 	pTerrainMap->szMapDir = engine_strdup(szMapDir, MEM_TAG_STRINGS);
 }
+
+void TerrainMap_Update(TerrainMap pTerrainMap)
+{
+	if (pTerrainMap->isReady == false)
+	{
+		return;
+	}
+
+	for (int32_t iTerrainZ = 0; iTerrainZ < pTerrainMap->terrainsZCount; iTerrainZ++)
+	{
+		for (int32_t iTerrainX = 0; iTerrainX < pTerrainMap->terrainsXCount; iTerrainX++)
+		{
+			int32_t idx = iTerrainZ * pTerrainMap->terrainsXCount + iTerrainX;
+			Terrain pTerrain = Vector_GetPtr(pTerrainMap->terrains, idx);
+			Terrain_Update(pTerrain);
+		}
+	}
+}

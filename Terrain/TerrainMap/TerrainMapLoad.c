@@ -1,6 +1,6 @@
 #include "TerrainMap.h"
 #include "Stdafx.h"
-#include "MyLIB/cJSON.h"
+#include "AeroLib/cJSON.h"
 
 bool TerrainMap_CreateFolder(TerrainMap pTerrainMap, char* szMapName)
 {
@@ -387,7 +387,7 @@ bool TerrainMap_LoadSettingsFile(TerrainMap pTerrainMap, const char* szFullPath)
 		return (false);
 	}
 
-	if (terrainVersion->valueint != TERRAIN_VERSION_NUMBER)
+	if ((uint32_t)terrainVersion->valueint != TERRAIN_VERSION_NUMBER)
 	{
 		syserr("Error Parsing Settings File Error: Invalid Script Version");
 		cJSON_Delete(settingsJson);
@@ -504,10 +504,11 @@ bool TerrainMap_LoadTerrain(TerrainMap pTerrainMap, int32_t iTerrainX, int32_t i
 	}
 	
 	// Initialize Terrain HeightMap Tex
-	if (!Terrain_LoadHeightMapTexture(pTerrain))
+	// if (!Terrain_LoadHeightMapTexture(pTerrain))
+	if (!Terrain_LoadHeightMapSSBO(pTerrain))
 	{
 		Terrain_Destroy(&pTerrain);
-		syserr("Failed to Initialize Terrain HeightMap Texture");
+		syserr("Failed to Initialize Terrain HeightMap Buffer");
 		return (false);
 	}
 

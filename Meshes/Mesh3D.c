@@ -1,4 +1,4 @@
-#include "Mesh3D.h"
+﻿#include "Mesh3D.h"
 #include "Stdafx.h"
 #include "../Math/EngineMath.h"
 #include "../Math/Matrix/Matrix3.h"
@@ -307,7 +307,7 @@ void Mesh3D_MakeWireSphere3D(Mesh3D pMesh, Vector3 center, float radius, int seg
 	pMesh->bDirty = true;				// Needs GPU upload
 }
 
-void Mesh3D_MakeTriangle3D(Mesh3D pMesh, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 center, Vector4 color)
+void Mesh3D_MakeTriangle3D(Mesh3D pMesh, Vector3 p1, Vector3 p2, Vector3 p3, Vector4 color)
 {
 	// 1. Get Transformation Matrices
 	Matrix4 model = TransformGetMatrix(&pMesh->transform);

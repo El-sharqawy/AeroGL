@@ -19,7 +19,6 @@ struct PatchData
 {
     mat4 modelMatrix;
     uvec2 heightMapHandle; // 64-bit handle stored as two 32-bit uints
-    float heightScale;
     uvec2 terrainCoords;
 };
 
@@ -50,6 +49,13 @@ out vec4 v4Color;
 
 out flat int vertex_DrawID;
 
+float GetHeight(float x, float y)
+{
+    int iX = (int)x;
+    int iZ = (int)z;
+    return (0.0f);
+}
+
 void main()
 {
     // 1. Get the matrix for THIS patch
@@ -71,8 +77,6 @@ void main()
     // Sample the heightmap using the calculated global coordinates
     sampler2D hMap = sampler2D(currentPatch.heightMapHandle);
     float h = texture(hMap, heightmapUV).r;
-
-    float scale = currentPatch.heightScale;
 #else
     index = u_vertex_DrawID;
     model = u_matModel;

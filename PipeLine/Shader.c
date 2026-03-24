@@ -330,7 +330,9 @@ bool CheckCompileErrors(GLuint uiID, const char* szShaderFile, bool IsProgram)
 
 void Shader_SetBool(GLShader pShader, const char* szUniformName, bool bValue)
 {
-	if (!pShader)
+	static bool bNotFound = false;
+
+	if (!pShader || bNotFound)
 	{
 		return;
 	}
@@ -339,6 +341,7 @@ void Shader_SetBool(GLShader pShader, const char* szUniformName, bool bValue)
 	if (iIntIndex == -1)
 	{
 		syserr("Failed to Find Uniform %s", szUniformName);
+		bNotFound = true;
 		return;
 	}
 
@@ -354,7 +357,9 @@ void Shader_SetBool(GLShader pShader, const char* szUniformName, bool bValue)
 
 void Shader_SetInt(GLShader pShader, const char* szUniformName, GLint iValue)
 {
-	if (!pShader)
+	static bool bNotFound = false;
+
+	if (!pShader || bNotFound)
 	{
 		return;
 	}
@@ -363,6 +368,7 @@ void Shader_SetInt(GLShader pShader, const char* szUniformName, GLint iValue)
 	if (iIntIndex == -1)
 	{
 		syserr("Failed to Find Uniform %s", szUniformName);
+		bNotFound = true;
 		return;
 	}
 
@@ -378,15 +384,19 @@ void Shader_SetInt(GLShader pShader, const char* szUniformName, GLint iValue)
 
 void Shader_SetFloat(GLShader pShader, const char* szUniformName, float fValue)
 {
-	if (!pShader)
+	static bool bNotFound = false;
+
+	if (!pShader || bNotFound)
 	{
 		return;
 	}
+
 
 	GLint iFloatIndex = glGetUniformLocation(pShader->programID, szUniformName);
 	if (iFloatIndex == -1)
 	{
 		syserr("Failed to Find Uniform %s", szUniformName);
+		bNotFound = true;
 		return;
 	}
 
@@ -402,7 +412,9 @@ void Shader_SetFloat(GLShader pShader, const char* szUniformName, float fValue)
 
 void Shader_SetVec2(GLShader pShader, const char* szUniformName, const Vector2 vec2)
 {
-	if (!pShader)
+	static bool bNotFound = false;
+
+	if (!pShader || bNotFound)
 	{
 		return;
 	}
@@ -411,6 +423,7 @@ void Shader_SetVec2(GLShader pShader, const char* szUniformName, const Vector2 v
 	if (iVecIndex == -1)
 	{
 		syserr("Failed to Find Uniform %s", szUniformName);
+		bNotFound = true;
 		return;
 	}
 	
@@ -426,7 +439,9 @@ void Shader_SetVec2(GLShader pShader, const char* szUniformName, const Vector2 v
 
 void Shader_SetVec3(GLShader pShader, const char* szUniformName, const Vector3 vec3)
 {
-	if (!pShader)
+	static bool bNotFound = false;
+
+	if (!pShader || bNotFound)
 	{
 		return;
 	}
@@ -436,6 +451,7 @@ void Shader_SetVec3(GLShader pShader, const char* szUniformName, const Vector3 v
 	if (iVecIndex == -1)
 	{
 		syserr("Failed to Find Uniform %s", szUniformName);
+		bNotFound = true;
 		return;
 	}
 
@@ -451,7 +467,9 @@ void Shader_SetVec3(GLShader pShader, const char* szUniformName, const Vector3 v
 
 void Shader_SetVec4(GLShader pShader, const char* szUniformName, const Vector4 vec4)
 {
-	if (!pShader)
+	static bool bNotFound = false;
+
+	if (!pShader || bNotFound)
 	{
 		return;
 	}
@@ -461,6 +479,7 @@ void Shader_SetVec4(GLShader pShader, const char* szUniformName, const Vector4 v
 	if (iVecIndex == -1)
 	{
 		syserr("Failed to Find Uniform %s", szUniformName);
+		bNotFound = true;
 		return;
 	}
 
@@ -476,7 +495,9 @@ void Shader_SetVec4(GLShader pShader, const char* szUniformName, const Vector4 v
 
 void Shader_SetMat4(GLShader pShader, const char* szUniformName, const Matrix4 mat)
 {
-	if (!pShader)
+	static bool bNotFound = false;
+
+	if (!pShader || bNotFound)
 	{
 		return;
 	}
@@ -485,6 +506,7 @@ void Shader_SetMat4(GLShader pShader, const char* szUniformName, const Matrix4 m
 	if (iMatIndex == -1)
 	{
 		syserr("Failed to Find Uniform %s", szUniformName);
+		bNotFound = true;
 		return;
 	}
 
@@ -500,9 +522,10 @@ void Shader_SetMat4(GLShader pShader, const char* szUniformName, const Matrix4 m
 
 void Shader_SetBindlessSampler2D(GLShader pShader, const char* szUniformName, GLuint64 value)
 {
-	if (!pShader)
+	static bool bNotFound = false;
+
+	if (!pShader || bNotFound)
 	{
-		syserr("Shader is NULL!");
 		return;
 	}
 
@@ -510,6 +533,7 @@ void Shader_SetBindlessSampler2D(GLShader pShader, const char* szUniformName, GL
 	if (iBindlessTexLoc == -1)
 	{
 		syserr("Failed to Find Uniform %s", szUniformName);
+		bNotFound = true;
 		return;
 	}
 

@@ -1,10 +1,11 @@
 #include "Terrain.h"
-#include "../TerrainMap/TerrainMap.h"
+#include "Terrain/TerrainMap/TerrainMap.h"
 #include "Stdafx.h"
-#include "../../Math/Grids/FloatGrid.h"
-#include "../TerrainPatch.h"
-#include "../../PipeLine/Texture.h"
-#include "MyLIB/cJSON.h"
+#include "Math/Grids/FloatGrid.h"
+#include "Terrain/TerrainPatch.h"
+#include "PipeLine/Texture.h"
+#include "AeroLib/cJSON.h"
+#include "Renderer/TerrainRenderer.h"
 
 bool Terrain_CreateFiles(STerrainMap* pParentMap, int32_t iTerrainX, int32_t iTerrainZ)
 {
@@ -51,6 +52,8 @@ bool Terrain_CreateFiles(STerrainMap* pParentMap, int32_t iTerrainX, int32_t iTe
 
 bool Terrain_CreateHeightMap(Terrain pTerrain, const char* szTerrainsFolder)
 {
+	(void)pTerrain;
+
 	char szHeightMapFile[MAX_STRING_LEN] = { 0 };
 	int32_t written = snprintf(szHeightMapFile, sizeof(szHeightMapFile), "%s/HeightMap.raw", szTerrainsFolder);
 
@@ -346,16 +349,11 @@ bool Terrain_Load(Terrain pTerrain)
 
 	pTerrain->terrainPatches->destructor = (VectorDestructorFn)TerrainPatch_Destroy;
 
-	for (int32_t i = 0; i < 64; i++)
-	{
-    		pTerrain->patchesMetrices[i] = S_Matrix4_Identity;
-	}
-
 	// Initialize transform to identity
 	pTerrain->transform = TransformInit();  // Position (0,0,0), Scale (1,1,1), No rotation
 
 	// Position the mesh in world space
-	Vector3 terrainStartPos = Vector3D(TERRAIN_XSIZE * pTerrain->terrainXCoord, 0.0f, pTerrain->terrainZCoord * TERRAIN_ZSIZE);
+	Vector3 terrainStartPos = Vector3Di(TERRAIN_XSIZE * pTerrain->terrainXCoord, 0, pTerrain->terrainZCoord * TERRAIN_ZSIZE);
 	TransformSetPositionV(&pTerrain->transform, terrainStartPos);
 
 	pTerrain->isInitialized = true;
@@ -370,11 +368,28 @@ bool Terrain_LoadHeightMapTexture(Terrain pTerrain)
 		return (false);
 	}
 
-	if (!Texture_LoadHeightMap(pTerrain->pHeightMapTexture, "TerrainHeightMapTex", pTerrain->heightMap->pArray, pTerrain->heightMap->cols, pTerrain->heightMap->rows, GL_FLOAT, false))
+	if (!Texture_LoadHeightMap(pTerrain->pHeightMapTexture, "TerrainHeightMapTex", pTerrain->heightMap->pArray, pTerrain->heightMap->cols, pTerrain->heightMap->rows, GL_FLOAT, true))
 	{
 		syserr("Failed to Load HeightMap Texture");
 		return (false);
 	}
 
+	return (true);
+}
+
+bool Terrain_LoadHeightMapSSBO(Terrain pTerrain)
+{
+	GLsizeiptr ssboSize = FloatGrid_GetBytesSize(pTerrain->heightMap);
+
+    pTerrain->sliceBytes = ssboSize;
+
+	// Map 3 pointers to SAME global SSBO (offset set later by renderer)
+	for (int i = 0; i < 3; i++)
+	{
+		pTerrain->mapPtrs[i] = NULL; // Renderer fills
+		pTerrain->fences[i] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+	}
+
+	pTerrain->currentRing = 0;
 	return (true);
 }

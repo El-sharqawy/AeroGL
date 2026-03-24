@@ -46,8 +46,8 @@ bool TerrainBuffer_LinkBuffers(TerrainGLBuffer pTerrainBuffer);
 bool TerrainBuffer_Reallocate(TerrainGLBuffer pTerrainBuffer, GLsizeiptr newVboCapacity, GLsizeiptr newEboCapacity, bool copyOldData);
 bool TerrainBuffer_UploadData(TerrainGLBuffer pTerrainBuffer, TerrainMesh pTerrainMesh);
 
-GLsizeiptr GetTerrainBufferVertexOffset(TerrainGLBuffer pTerrainBuffer);
-GLsizeiptr GetTerrainBufferIndexOffset(TerrainGLBuffer pTerrainBuffer);
+GLsizeiptr TerrainBuffer_GetVertexOffset(TerrainGLBuffer pTerrainBuffer);
+GLsizeiptr TerrainBuffer_GetIndexOffset(TerrainGLBuffer pTerrainBuffer);
 GLuint TerrainBuffer_GetVertexArray(TerrainGLBuffer pTerrainBuffer);
 
 #endif // __TERRAIN_BUFFER__

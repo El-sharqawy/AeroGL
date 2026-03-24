@@ -1,7 +1,6 @@
 #ifndef __TERRAIN_PATCH__
 #define __TERRAIN_PATCH__
 
-#include "MyLIB/Vector.h"
 #include "Meshes/TerrainMesh.h"
 
 typedef struct STerrainPatch

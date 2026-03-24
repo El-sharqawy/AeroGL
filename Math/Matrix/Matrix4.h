@@ -3,12 +3,20 @@
 
 #include <xmmintrin.h> // SSE
 
-#include "../Vectors/Vector3.h"
-#include "../Vectors/Vector4.h"
-#include "../MathUtils.h"
+#include "Math/Vectors/Vector3.h"
+#include "Math/Vectors/Vector4.h"
+#include "Math/MathUtils.h"
 
 typedef Vector4 col_type; // Column vector type
 typedef Vector4 row_type; // Column vector type
+
+#if defined(AERO_PLATFORM_WINDOWS)
+#pragma warning(push)
+#pragma warning(disable : 4201) // MSVC: nameless struct/union
+#elif defined(AERO_PLATFORM_LINUX)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic" // GCC/Clang: non-standard extension
+#endif
 
 /**
  * SMatrix4: A 4x4 float matrix struct.
@@ -39,6 +47,12 @@ typedef struct AERO_ALIGN(16) SMatrix4
 
 	};
 } Matrix4;
+
+#if defined(AERO_PLATFORM_WINDOWS)
+#pragma warning(pop)
+#elif defined(AERO_PLATFORM_LINUX)
+#pragma GCC diagnostic pop
+#endif
 
 // Full Initialization
 #define Matrix4_Init(m00, m01, m02, m03, \
@@ -368,8 +382,6 @@ static inline Matrix4 Matrix4_RotateZ(const Matrix4 mat, float angleRadians)
  */
 static inline Matrix4 Matrix4_RotateAll(const Matrix4 mat, float angleRadians)
 {
-	const float angle = ToRadians(angleRadians);
-
 	Matrix4_RotateZ(mat, angleRadians);
 	Matrix4_RotateY(mat, angleRadians);
 	Matrix4_RotateX(mat, angleRadians);
@@ -623,7 +635,7 @@ static inline Matrix4 Matrix4_Scale(const Matrix4 mat, Vector3 v3Scale)
 
 static inline Matrix4 Matrix4_Transpose(const Matrix4 mat)
 {
-	return S_Matrix4_Identity;
+	return mat;
 }
 
 #endif // __MATRIX4_H__

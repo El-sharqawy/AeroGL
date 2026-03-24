@@ -5,14 +5,17 @@ add_executable(AeroGL)
 
 # Set the C standard to C23 or latest
 if (MSVC)
-# This ensures C flags ONLY go to .c files
+	set(CMAKE_C_STANDARD_DEFAULT "")
+    # This ensures C flags ONLY go to .c files
     add_compile_options($<$<COMPILE_LANGUAGE:C>:/std:clatest>)
     # This ensures CXX flags ONLY go to .cpp files
     add_compile_options($<$<COMPILE_LANGUAGE:CXX>:/std:c++20>)
+    add_compile_options(/utf-8)        # Treat source as UTF-8
 else()
 	set(CMAKE_C_STANDARD 23)
 	set(CMAKE_C_STANDARD_REQUIRED ON)
 	set(CMAKE_C_EXTENSIONS OFF) # Set to ON if you want 'gnu23' features
+    add_compile_options(/utf-8)        # Treat source as UTF-8
 endif()
 
 set(CMAKE_BUILD_TYPE Debug)
@@ -37,7 +40,7 @@ link_directories("${CMAKE_SOURCE_DIR}/Extern/lib")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 
 # 1. Add the Libraries first so other things can link to it
-add_subdirectory(MyLIB)
+add_subdirectory(AeroLib)
 add_subdirectory(Math)
 add_subdirectory(Buffers)
 add_subdirectory(Core)
@@ -68,11 +71,14 @@ target_include_directories(AeroGL PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(AeroGL PRIVATE "Extern/include")
 
 # Tells the compiler to optimize for the current CPU architecture (AVX2/FMA)
-target_compile_options(AeroGL PRIVATE 
+# Tells the compiler to optimize for the current CPU architecture (AVX2/FMA)
+if(NOT MSVC)
+    add_compile_options(
     -march=native
     $<$<CONFIG:Debug>:-O0 -g>
     $<$<CONFIG:Release>:-O3>
 )
+endif()
 
 # using shared:
 target_link_libraries(AeroGL PRIVATE 
@@ -87,7 +93,7 @@ target_link_libraries(AeroGL PRIVATE
     Math
     Core
     Buffers
-    MyLIB
+    AeroLib
 )
 
 if (WIN32)

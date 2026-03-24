@@ -1,8 +1,8 @@
-#include "TerrainManager.h"
-#include "../TerrainMap/TerrainMap.h"
-#include "../../Renderer/TerrainRenderer.h"
 #include "Stdafx.h"
-#include "../../PipeLine/Texture.h"
+#include "TerrainManager.h"
+#include "Terrain/TerrainMap/TerrainMap.h"
+#include "Renderer/TerrainRenderer.h"
+#include "PipeLine/Texture.h"
 
 bool TerrainManager_Initialize(TerrainManager* ppTerrainManager)
 {
@@ -60,9 +60,9 @@ void TerrainManager_Destroy(TerrainManager* ppTerrainManager)
 
 	TerrainManager pManager = *ppTerrainManager;
 
-	if (pManager->szMapName)
+	if (pManager->editor.szMapName)
 	{
-		engine_delete(pManager->szMapName);
+		engine_delete(pManager->editor.szMapName);
 	}
 
 	TerrainRenderer_Destroy(&pManager->terarinRenderer);
@@ -101,6 +101,7 @@ void TerrainManager_Update(TerrainManager pTerrainManager)
 		{
 			// Upload GPU Data
 			TerrainRenderer_UploadGPUData(psTerrainManager->terarinRenderer);
+			TerrainMap_Update(psTerrainManager->pTerrainMap);
 			pTerrainManager->bNeedsUpdate = false;
 		}
 	}
@@ -112,42 +113,6 @@ void TerrainManager_Render(TerrainManager pTerrainManager)
 	{
 		TerrainRenderer_Render(pTerrainManager->terarinRenderer);
 	}
-}
-
-void TerrainManager_SetMapName(TerrainManager pTerrainManager, const char* szMapName)
-{
-	pTerrainManager->szMapName = engine_strdup(szMapName, MEM_TAG_STRINGS);
-}
-
-void TerrainManager_SetMapDeminsions(TerrainManager pTerrainManager, int32_t mapWidth, int32_t mapDepth)
-{
-	// Number of Terrains Among X-Z Axis
-	pTerrainManager->mapWidth = mapWidth;
-	pTerrainManager->mapDepth = mapDepth;
-}
-
-bool TerrainManager_CreateMap(TerrainManager pTerrainManager)
-{
-	if (pTerrainManager->szMapName == NULL)
-	{
-		syserr("You need to enter Map Name");
-		return (false);
-	}
-
-	if (pTerrainManager->mapWidth == 0 || pTerrainManager->mapDepth == 0)
-	{
-		syserr("You need to enter Map Deminsions (x, z)");
-		return (false);
-	}
-
-	// Create an empty map
-	if (!TerrainMap_CreateMap(pTerrainManager->szMapName, pTerrainManager->mapWidth, pTerrainManager->mapDepth))
-	{
-		syserr("Failed to Initialize Terrain Map");
-		return (false);  // Cleanup everything above ?
-	}
-
-	return (true);
 }
 
 bool TerrainManager_LoadMap(TerrainManager pTerrainManager, char* szMapName)

@@ -21,6 +21,7 @@ typedef struct SFloatGrid
 	};
 	int32_t size;
 	bool isInitialized;
+	bool isDirty;
 } SFloatGrid;
 
 typedef struct SFloatGrid* FloatGrid;
@@ -35,5 +36,6 @@ void FloatGrid_SetAt(FloatGrid pFloatGrid, int32_t y, int32_t x, float fValue);
 const float* FloatGrid_GetRow(FloatGrid pFloatGrid, int32_t row);
 
 size_t FloatGrid_GetBytesSize(FloatGrid pFloatGrid);
+void FloatGrid_SetDirty(FloatGrid pFloatGrid, bool bFlag);
 
 #endif // __FLOAT_GRID_H__

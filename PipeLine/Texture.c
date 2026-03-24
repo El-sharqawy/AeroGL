@@ -455,6 +455,7 @@ bool Texture_LoadHeightMapImage(Texture pTexture, const char* szTexName, void* p
 	pTexture->imageData.pData = pImageData;
 	pTexture->imageData.dataSize = (size_t)pTexture->imageData.width * (size_t)pTexture->imageData.height * (size_t)pTexture->imageData.channels;
 	pTexture->imageData.isLoaded = true;
+	pTexture->sourceType = sourceType; // Check that
 
 	return (true);
 }
@@ -473,8 +474,8 @@ bool Texture_LoadHeightMap(Texture pTexture, const char* szTexName, void* pImage
 	pTexture->pixelFormat = GL_RED;
 	pTexture->sourceType = GL_FLOAT;
 
-	pTexture->minFilter = GL_LINEAR;
-	pTexture->magFilter = GL_LINEAR;
+	pTexture->minFilter = GL_NEAREST;
+	pTexture->magFilter = GL_NEAREST;
 	pTexture->wrapS = GL_CLAMP_TO_EDGE;
 	pTexture->wrapT = GL_CLAMP_TO_EDGE;
 	pTexture->isMipMap = false;
@@ -610,7 +611,7 @@ uint32_t Texture_GetInternalFormat(Texture pTexture)
  * @param channels Number of color channels in the source data.
  * @return The OpenGL pixel format (e.g., GL_RED, GL_RGB, GL_RGBA).
  */
-uint32_t Texture_GetPixelFormat(uint8_t channels)
+uint32_t Texture_GetPixelFormat(int32_t channels)
 {
 	switch (channels)
 	{

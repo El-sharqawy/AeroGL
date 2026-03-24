@@ -1,7 +1,11 @@
 #include "Interface_imgui.h"
 
-#include "../../LibImageUI/Stdafx.h"
-#include "../PipeLine/Texture.h"
+#include "LibImageUI/Stdafx.h"
+#include "PipeLine/Texture.h"
+#include "Terrain/TerrainMap/TerrainMap.h"
+#include "Terrain/Terrain/Terrain.h"
+#include "AeroLib/Vector.h"
+#include "Engine.h"
 
 void ImGui_Init(GLFWwindow* window)
 {
@@ -116,6 +120,9 @@ void ImGui_RenderEngineDataUI()
 	ImGui::Text("Build Time: %s", __TIME__);
 	ImGui::Separator();
 
+	ImGui::Checkbox("Wireframe", &GetEngine()->isWireframe);
+	ImGui::Separator();
+
 	ImGui::BeginGroup(); // Group 2: Preview & Info
 	{
 		Texture pTex = GetTerrainManager()->terrainTex;
@@ -144,13 +151,81 @@ void ImGui_RenderEngineDataUI()
 
 			ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Res: %dx%d", pTex->imageData.width, pTex->imageData.height);
 		}
-		else {
+		else
+		{
 			ImGui::Dummy(ImVec2(128, 128));
 			ImGui::Text("Invalid Texture");
 		}
 	}
 	ImGui::EndGroup();
 
+	if (GetTerrainManager()->isMapReady)
+	{
+		ImGui::Begin("Heightmap Debug");
+
+		// Show the size
+		ImGui::Text("Size: 131 x 131");
+
+		// Zoomed in view
+		static float zoom = 1.0f;
+		ImGui::SliderFloat("Zoom", &zoom, 1.0f, 10.0f);
+
+		float fTexSize = (float)HEIGHTMAP_RAW_XSIZE;
+		ImVec2 region_sz = ImVec2(fTexSize * zoom, fTexSize * zoom);
+		Terrain pTerrain = (Terrain)Vector_GetPtr(GetTerrainManager()->pTerrainMap->terrains, 0);
+		bool showGrid = true;
+
+		if (pTerrain)
+		{
+			ImVec2 pos = ImGui::GetCursorScreenPos(); // Top-left of the image
+			// 2. Access the member directly from the struct address
+			Texture pTex = pTerrain->pHeightMapTexture;
+			if (pTex && glIsTexture(pTex->textureID))
+			{
+				ImGui::Image((ImTextureID)(intptr_t)pTex->textureID, region_sz, ImVec2(0, 1), ImVec2(1, 0));
+
+				if (showGrid) {
+					ImDrawList* drawList = ImGui::GetWindowDrawList();
+
+					// 2. Calculate exact step size so lines land on pixel boundaries
+					// 131 is your heightmap resolution
+
+					float stepX = region_sz.x / fTexSize;
+					float stepY = region_sz.y / fTexSize;
+
+					// Draw vertical lines
+					for (int i = 0; i <= HEIGHTMAP_RAW_XSIZE; i++) {
+						float x = i * stepX;
+						drawList->AddLine(
+							ImVec2(pos.x + x, pos.y),
+							ImVec2(pos.x + x, pos.y + region_sz.y),
+							IM_COL32(255, 255, 255, 40) // Lower alpha so it doesn't blind you
+						);
+					}
+					// Draw horizontal lines
+					for (int i = 0; i <= HEIGHTMAP_RAW_ZSIZE; i++) {
+						float y = i * stepY;
+						drawList->AddLine(
+							ImVec2(pos.x, pos.y + y),
+							ImVec2(pos.x + region_sz.x, pos.y + y),
+							IM_COL32(255, 255, 255, 40)
+						);
+					}
+				}
+			}
+			else
+			{
+				ImGui::Dummy(ImVec2(128, 128));
+				ImGui::Text("Invalid Texture");
+			}
+		}
+		else
+		{
+			ImGui::Dummy(ImVec2(128, 128));
+			ImGui::Text("Invalid Terrain Index");
+		}
+		ImGui::End();
+	}
 	ImGui::Separator();
 }
 

@@ -4,17 +4,10 @@
 #include <glad/glad.h>
 #include <stdbool.h>
 
-#define SSBO_MAX_OBJECTS_COUNT 4096
-
-enum
-{
-	SSBO_BP_DEBUG_RENDERER,		// Binding point 0 reserved for Debug Renderer
-	SSBO_BP_MAX_NUM,
-};
-
 typedef struct SShaderStorageBufferObject
 {
 	GLuint bufferID;
+	GLuint64EXT bufferHandle; // bindless support
 	GLuint bindingPoint; // EUBOBindingPoint
 	GLsizeiptr bufferSize;
 	GLsizeiptr writeOffset; // offset of last written byte

@@ -20,7 +20,7 @@
  * - Conversion to and from GLM vectors for interoperability
  * - Clear and concise implementation adhering to Betty coding standards
  */
-typedef struct AERO_ALIGN(16) SVector2f
+typedef struct AERO_ALIGN(4) SVector2f
 {
 	union
 	{
@@ -47,8 +47,22 @@ typedef struct AERO_ALIGN(16) SVector2f
 	};
 } Vector2;
 
-#define Vector2F(val) ((Vector2){ (val), (val) })
-#define Vector2D(x, y) ((Vector2){ (x), (y) })
+static inline Vector2 Vector2F(float val) {
+	Vector2 result = { val, val };
+	return result;
+}
+
+static inline Vector2 Vector2D(float x, float y) {
+	Vector2 result = { x, y };
+	return result;
+}
+
+static inline Vector2 Vector2Di(int x, int y) {
+	float _x = (float)x;
+	float _y = (float)y;
+	Vector2 result = { _x, _y };
+	return result;
+}
 
 // Initialization (The "In-place" pattern)
 static inline Vector2 Vector2_Fill(float fVal)

@@ -1,4 +1,4 @@
-#include "MemoryManager.h"
+﻿#include "MemoryManager.h"
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #endif
@@ -388,7 +388,6 @@ void* tracked_realloc_internal(void* ptr, size_t new_size, const char* file, int
 	}
 
 	// Update header and stats for the new size
-	SMemoryBlockHeader* header = (SMemoryBlockHeader*)new_ptr;
 	size_t copy_size = (old_header->size < new_size) ? old_header->size : new_size;
 	memcpy(new_ptr, ptr, copy_size);
 

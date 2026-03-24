@@ -29,8 +29,8 @@ typedef struct SUniformBufferObject
 
 typedef struct SUniformBufferObject* UniformBufferObject;
 
-bool InitializeUniformBufferObject(UniformBufferObject* ppUniBufObj, GLsizeiptr bufferSize, GLuint bindingPt, const char* szBufferName);
-void DestroyUniformBufferObject(UniformBufferObject* ppUniBufObj);
+bool UniformBufferObject_Initialize(UniformBufferObject* ppUniBufObj, GLsizeiptr bufferSize, GLuint bindingPt, const char* szBufferName);
+void UniformBufferObject_Destroy(UniformBufferObject* ppUniBufObj);
 
 void UniformBufferObject_Update(UniformBufferObject pUniBufObj, const void* pData, GLsizeiptr size, GLuint offset, bool bReallocation);
 void UniformBufferObject_Bind(UniformBufferObject pUniBufObj);

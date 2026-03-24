@@ -1,6 +1,6 @@
 #include "Engine.h"
 #include "Stdafx.h"
-#include "MyLib/Vector.h"
+#include "AeroLib/Vector.h"
 #include "UserInterface/Interface_imgui.h"
 #include <time.h>
 
@@ -45,7 +45,7 @@ bool Engine_Initialize(Engine pEngine)
 	}
 
 	// Validation Check
-	if (!InitializeCamera(&pEngine->camera, Window_GetWidthF(pEngine->window), Window_GetHeightF(pEngine->window)))
+	if (!Camera_Initialize(&pEngine->camera, Window_GetWidthF(pEngine->window), Window_GetHeightF(pEngine->window)))
 	{
 		Engine_Destroy(pEngine);
 		return (false);
@@ -70,10 +70,11 @@ bool Engine_Initialize(Engine pEngine)
 		return (false);
 	}
 
-	pEngine->deltaTime = 0.0f;;
-	pEngine->lastFrame = 0.0f;;
+	pEngine->deltaTime = 0.0f;
+	pEngine->lastFrame = 0.0f;
 
 	pEngine->isRunning = true;
+	pEngine->isWireframe = true;
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
@@ -104,21 +105,21 @@ bool Engine_Initialize(Engine pEngine)
 
 void Engine_HandleInput(Engine pEngine)
 {
-	if (IsKeyDown(pEngine->Input, GLFW_KEY_W))
+	if (Input_IsKeyDown(pEngine->Input, GLFW_KEY_W))
 	{
-		ProcessCameraKeboardInput(pEngine->camera, DIRECTION_FORWARD, pEngine->deltaTime);
+		Camera_ProcessCameraKeboardInput(pEngine->camera, DIRECTION_FORWARD, pEngine->deltaTime);
 	}
-	if (IsKeyDown(pEngine->Input, GLFW_KEY_D))
+	if (Input_IsKeyDown(pEngine->Input, GLFW_KEY_D))
 	{
-		ProcessCameraKeboardInput(pEngine->camera, DIRECTION_RIGHT, pEngine->deltaTime);
+		Camera_ProcessCameraKeboardInput(pEngine->camera, DIRECTION_RIGHT, pEngine->deltaTime);
 	}
-	if (IsKeyDown(pEngine->Input, GLFW_KEY_S))
+	if (Input_IsKeyDown(pEngine->Input, GLFW_KEY_S))
 	{
-		ProcessCameraKeboardInput(pEngine->camera, DIRECTION_BACKWARD, pEngine->deltaTime);
+		Camera_ProcessCameraKeboardInput(pEngine->camera, DIRECTION_BACKWARD, pEngine->deltaTime);
 	}
-	if (IsKeyDown(pEngine->Input, GLFW_KEY_A))
+	if (Input_IsKeyDown(pEngine->Input, GLFW_KEY_A))
 	{
-		ProcessCameraKeboardInput(pEngine->camera, DIRECTION_LEFT, pEngine->deltaTime);
+		Camera_ProcessCameraKeboardInput(pEngine->camera, DIRECTION_LEFT, pEngine->deltaTime);
 	}
 }
 
@@ -131,9 +132,9 @@ void Engine_Update(Engine pEngine)
 
 	// 2. Events & Input
 	glfwPollEvents();
-	UpdateInput(pEngine->Input);
+	Input_Update(pEngine->Input);
 	Engine_HandleInput(pEngine); // Engine Handle Input
-	UpdateCamera(pEngine->camera);
+	Camera_UpdateCamera(pEngine->camera);
 
 	// Update ImgUI
 	ImGui_NewFrame();
@@ -141,8 +142,8 @@ void Engine_Update(Engine pEngine)
 	TerrainManager_Update(pEngine->terrainManager);
 
 	// 3. Render
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0.2f, 0.2f, 0.2f, 0.5f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	Engine_Render(pEngine);
 
@@ -155,7 +156,14 @@ void Engine_Update(Engine pEngine)
 
 void Engine_Render(Engine pEngine)
 {
-	// RenderRenderer(pEngine->renderer);
+ 	if (pEngine->isWireframe)
+	{
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
+	else
+	{
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
 	RenderDebugRenderer(pEngine->debugRenderer);
 	TerrainManager_Render(pEngine->terrainManager);
 }
@@ -170,7 +178,7 @@ void Engine_Destroy(Engine pEngine)
 
 	StateManager_Destroy(&pEngine->stateManager);
 
-	DestroyCamera(&pEngine->camera);
+	Camera_Destroy(&pEngine->camera);
 
 	// DestroyRenderer(&pEngine->renderer);
 	DestroyDebugRenderer(&pEngine->debugRenderer);
@@ -189,7 +197,7 @@ void Engine_OnKeyButton(Engine pEngine, int key, int action)
 		return;
 	}
 
-	OnKeyButton(pEngine->Input, key, action);
+	Input_OnKeyButton(pEngine->Input, key, action);
 }
 
 void Engine_OnMouseButton(Engine pEngine, int key, int action)
@@ -199,7 +207,7 @@ void Engine_OnMouseButton(Engine pEngine, int key, int action)
 		return;
 	}
 
-	OnMouseButton(pEngine->Input, key, action);
+	Input_OnMouseButton(pEngine->Input, key, action);
 }
 
 Engine GetEngine()
@@ -306,7 +314,7 @@ void framebuffer_size_callback(GLFWwindow* window, GLint iWidth, GLint iHeight)
 	}
 
 	Window_UpdateDeminsions(pEngine->window, iWidth, iHeight);
-	UpdateCameraDeminsions(pEngine->camera, (float)iWidth, (float)iHeight);
+	Camera_UpdateCameraDeminsions(pEngine->camera, (float)iWidth, (float)iHeight);
 
 	// syslog("Window Resized: (%d, %d)", GetWindowWidth(pEngine->window), GetWindowHeight(pEngine->window));
 
@@ -322,7 +330,7 @@ void cursorpos_callback(GLFWwindow* window, double xpos, double ypos)
 		return;
 	}
 
-	OnMousePosition(pEngine->Input, (float)xpos, (float)ypos);
+	Input_OnMousePosition(pEngine->Input, (float)xpos, (float)ypos);
 }
 
 void cursorscroll_callback(GLFWwindow* window, double xoffset, double yoffset)
@@ -333,7 +341,7 @@ void cursorscroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 		return;
 	}
 
-	OnMouseScroll(pEngine->Input, (float)yoffset);
+	Input_OnMouseScroll(pEngine->Input, (float)yoffset);
 }
 
 void keyboard_callback(GLFWwindow* window, int key, int scancode, int action, int mode)

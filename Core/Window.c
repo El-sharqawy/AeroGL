@@ -1,4 +1,4 @@
-#include "Window.h"
+﻿#include "Window.h"
 #include "Stdafx.h"
 
 typedef struct SGLWindow
@@ -23,7 +23,7 @@ typedef struct SGLWindow
 
 static void error_callback(int error, const char* description)
 {
-	fprintf(stderr, "Error: %s\n", description);
+	fprintf(stderr, "GLFW Error: %d - %s\n", error, description);
 }
 
 bool Window_Initialize(GLWindow* ppWindow)

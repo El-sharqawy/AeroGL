@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.23)
+﻿cmake_minimum_required(VERSION 3.23)
 project(PipeLine)
 
 # Set the C standard to C23 or latest
@@ -52,4 +52,6 @@ if(NOT MSVC)
     $<$<CONFIG:Debug>:-O0 -g>
     $<$<CONFIG:Release>:-O3>
 )
+elseif(MSVC)
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 endif()

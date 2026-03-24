@@ -5,7 +5,7 @@
 
 static GLint siMaxUBOSize = 0;
 
-bool InitializeUniformBufferObject(UniformBufferObject* ppUniBufObj, GLsizeiptr bufferSize, GLuint bindingPt, const char* szBufferName)
+bool UniformBufferObject_Initialize(UniformBufferObject* ppUniBufObj, GLsizeiptr bufferSize, GLuint bindingPt, const char* szBufferName)
 {
 	if (ppUniBufObj == NULL)
 	{
@@ -33,7 +33,7 @@ bool InitializeUniformBufferObject(UniformBufferObject* ppUniBufObj, GLsizeiptr 
 
 	if (!GL_CreateBuffer(&buffer->bufferID))
 	{
-		DestroyUniformBufferObject(&buffer);
+		UniformBufferObject_Destroy(&buffer);
 		syserr("Failed to Create GPU Uniform Buffers!");
 		return (false);
 	}
@@ -89,7 +89,7 @@ bool InitializeUniformBufferObject(UniformBufferObject* ppUniBufObj, GLsizeiptr 
 	return (true);
 }
 
-void DestroyUniformBufferObject(UniformBufferObject* ppUniBufObj)
+void UniformBufferObject_Destroy(UniformBufferObject* ppUniBufObj)
 {
 	if (!ppUniBufObj || !*ppUniBufObj)
 	{

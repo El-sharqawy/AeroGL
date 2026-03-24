@@ -24,9 +24,12 @@ bool ShaderStorageBufferObject_Initialize(ShaderStorageBufferObject* ppSSBO, GLs
         return (false);
     }
 
-    if (bindingPt > SSBO_BP_MAX_NUM)
+    GLint maxBindings = 0;
+    glGetIntegerv(GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS, &maxBindings);
+
+    if (bindingPt > (GLuint)maxBindings)
     {
-        syserr("SSBO : Binding Point %d exceeds limit of %d", bindingPt, SSBO_BP_MAX_NUM);
+        syserr("SSBO : Binding Point %d exceeds limit per shader of %d", bindingPt, maxBindings);
         return (false);
     }
 

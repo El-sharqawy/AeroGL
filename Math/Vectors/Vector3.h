@@ -6,7 +6,8 @@
 #include <math.h>
 #include <xmmintrin.h> // SSE
 #include <smmintrin.h> // SSE4.1 (for dot product)
-#include "../MathUtils.h"
+#include "Math/MathUtils.h"
+#include "AeroPlatform.h"
 
 /**
  * SVector3Df: A 3D float vector struct.
@@ -22,6 +23,14 @@
  * - Conversion to and from GLM vectors for interoperability
  * - Clear and concise implementation adhering to Betty coding standards
  */
+
+#if defined(AERO_PLATFORM_WINDOWS)
+	#pragma warning(push)
+	#pragma warning(disable : 4201) // MSVC: nameless struct/union
+#elif defined(AERO_PLATFORM_LINUX)
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wpedantic" // GCC/Clang: non-standard extension
+#endif
 
 typedef struct AERO_ALIGN(16) SVector3f
 {
@@ -60,6 +69,12 @@ typedef struct AERO_ALIGN(16) SVector3f
 	};
 } Vector3;
 
+#if defined(AERO_PLATFORM_WINDOWS)
+	#pragma warning(pop)
+#elif defined(AERO_PLATFORM_LINUX)
+	#pragma GCC diagnostic pop
+#endif
+
 static inline Vector3 Vector3F(float val) {
 	Vector3 v;
 	v.reg = _mm_setr_ps(val, val, val, 0.0f);
@@ -69,6 +84,15 @@ static inline Vector3 Vector3F(float val) {
 static inline Vector3 Vector3D(float x, float y, float z) {
 	Vector3 v;
 	v.reg = _mm_setr_ps(x, y, z, 0.0f);
+	return v;
+}
+
+static inline Vector3 Vector3Di(int x, int y, int z) {
+	float _x = (float)x;
+	float _y = (float)y;
+	float _z = (float)z;
+	Vector3 v;
+	v.reg = _mm_setr_ps(_x, _y, _z, 0.0f);
 	return v;
 }
 
@@ -497,7 +521,6 @@ static inline Vector3 Vector3_RandomInsideUnitSphere()
 	while (true)
 	{
 		Vector3 vec = Vector3_RandomRange(-1.0f, 1.0f);
-		float lenSq = Vector3_LengthSQ(vec);
 
 		if (Vector3_LengthSQ(vec) >= 1.0f)
 			continue;
@@ -527,7 +550,6 @@ static inline Vector3 Vector3_RandomOnHemisphere(const Vector3 normal)
 static inline bool Vector3_NearZero(const Vector3 vec)
 {
 	// Return true if the vector is close to zero in all dimensions.
-	float s = 1e-8f;
 	return (fabs(vec.v3[0]) < VECTOR3_EPS) && (fabs(vec.v3[1]) < VECTOR3_EPS) && (fabs(vec.v3[2]) < VECTOR3_EPS);
 }
 
