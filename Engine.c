@@ -139,7 +139,7 @@ void Engine_Update(Engine pEngine)
 	// Update ImgUI
 	ImGui_NewFrame();
 
-	TerrainManager_Update(pEngine->terrainManager);
+	TerrainManager_Update();
 
 	// 3. Render
 	glClearColor(0.2f, 0.2f, 0.2f, 0.5f);
@@ -165,7 +165,7 @@ void Engine_Render(Engine pEngine)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 	RenderDebugRenderer(pEngine->debugRenderer);
-	TerrainManager_Render(pEngine->terrainManager);
+	TerrainManager_Render();
 }
 
 void Engine_Destroy(Engine pEngine)

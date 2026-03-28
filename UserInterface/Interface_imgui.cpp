@@ -259,7 +259,7 @@ void ImGui_RenderMapsUI()
 	// "Save Map" button to save map with popup
 	if (ImGui::Button("Save Map", buttonSize))
 	{
-		TerrainManager_SaveMap(pTerrainManager);
+		TerrainManager_SaveMap();
 	}
 }
 
@@ -302,10 +302,10 @@ void ImGui_RenderCreateNewMapPopUP(bool* showPopup)
 		// Create button - no need for && isValid here
 		if (ImGui::Button("Create", ImVec2(120, 0)))
 		{
-			TerrainManager_SetMapName(pTerrainManager, szMapName);
-			TerrainManager_SetMapDeminsions(pTerrainManager, iMapSizeX, iMapSizeZ);
+			TerrainManager_SetMapName(szMapName);
+			TerrainManager_SetMapDeminsions(iMapSizeX, iMapSizeZ);
 
-			if (TerrainManager_CreateMap(pTerrainManager))
+			if (TerrainManager_CreateMap())
 			{
 				*showPopup = false;
 				ImGui::CloseCurrentPopup();
@@ -322,10 +322,10 @@ void ImGui_RenderCreateNewMapPopUP(bool* showPopup)
 		// Handle Enter key - only when valid
 		if (ImGui::IsKeyPressed(ImGuiKey_Enter))
 		{
-			TerrainManager_SetMapName(pTerrainManager, szMapName);
-			TerrainManager_SetMapDeminsions(pTerrainManager, iMapSizeX, iMapSizeZ);
+			TerrainManager_SetMapName(szMapName);
+			TerrainManager_SetMapDeminsions(iMapSizeX, iMapSizeZ);
 
-			if (TerrainManager_CreateMap(pTerrainManager))
+			if (TerrainManager_CreateMap())
 			{
 				*showPopup = false;
 				ImGui::CloseCurrentPopup();
@@ -383,7 +383,7 @@ void ImGui_RenderLoadMapPopUP(bool* showPopup)
 		// load and Cancel buttons
 		if (ImGui::Button("Load", ImVec2(120, 0)))
 		{
-			if (TerrainManager_LoadMap(pTerrainManager, szMapName))
+			if (TerrainManager_LoadMap(szMapName))
 			{
 				*showPopup = false;
 				ImGui::CloseCurrentPopup();
@@ -398,7 +398,7 @@ void ImGui_RenderLoadMapPopUP(bool* showPopup)
 		// Handle Enter key - only when valid
 		if (ImGui::IsKeyPressed(ImGuiKey_Enter) && !isInvalid)
 		{
-			if (TerrainManager_LoadMap(pTerrainManager, szMapName))
+			if (TerrainManager_LoadMap(szMapName))
 			{
 				*showPopup = false;
 				ImGui::CloseCurrentPopup();

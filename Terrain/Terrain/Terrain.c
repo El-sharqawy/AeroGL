@@ -206,8 +206,6 @@ void Terrain_Update(Terrain pTerrain)
 		return;
 	}
 
-	printf("Debug: pTerrain address is %p heightMap Address is %p\n", (void*)pTerrain, (void*)pTerrain->heightMap);
-
 	if (!pTerrain->heightMap)
 	{
 		syserr("Height map is not Initialized Yet!");

@@ -59,20 +59,42 @@ extern "C" {
 #endif
 bool TerrainManager_Initialize(TerrainManager* ppTerrainManager);
 void TerrainManager_Destroy(TerrainManager* ppTerrainManager);
-void TerrainManager_Clear(TerrainManager pTerrainManager);
+void TerrainManager_Clear();
 
-void TerrainManager_Update(TerrainManager pTerrainManager);
-void TerrainManager_Render(TerrainManager pTerrainManager);
+void TerrainManager_Update();
+void TerrainManager_Render();
 
-// Map Load
-bool TerrainManager_LoadMap(TerrainManager pTerrainManager, char* szMapName);
-bool TerrainManager_SaveMap(TerrainManager pTerrainManager);
+// Manager Editor
+bool TerrainManager_CreateMap();
+bool TerrainManager_LoadMap(char* szMapName);
+bool TerrainManager_SaveMap();
 
-// Map Editor Part
-// Map Creation
-void TerrainManager_SetMapName(TerrainManager pTerrainManager, const char* szMapName);
-void TerrainManager_SetMapDeminsions(TerrainManager pTerrainManager, int32_t mapWidth, int32_t mapDepth);
-bool TerrainManager_CreateMap(TerrainManager pTerrainManager);
+// Manager Editor Map Accessors
+void TerrainManager_SetMapName(const char* szMapName);
+void TerrainManager_SetMapDeminsions(int32_t mapWidth, int32_t mapDepth);
+
+// Manager Editor Brush Accessors
+void TerrainManager_SetBrushType(GLint brushType);
+void TerrainManager_SetBrushShape(GLint brushShape);
+void TerrainManager_SetBrushStrength(GLint brushStrength);
+void TerrainManager_SetBrushMaxStrength(GLint brushMaxStrength);
+void TerrainManager_SetBrushSize(GLint brushSize);
+void TerrainManager_SetBrushMaxSize(GLint brushMaxSize);
+
+// Manager Editor Edit Accessors
+void TerrainManager_SetEditX(GLint editX);
+void TerrainManager_SetEditZ(GLint editZ);
+void TerrainManager_SetEditXZ(GLint editX, GLint editZ);
+void TerrainManager_SetSubCellX(GLint subCellX);
+void TerrainManager_SetSubCellZ(GLint subCellZ);
+void TerrainManager_SetSubCellXZ(GLint subCellX, GLint subCellZ);
+void TerrainManager_SetEditTerrainNumX(GLint editTerrainNumX);
+void TerrainManager_SetEditTerrainNumZ(GLint editTerrainNumZ);
+void TerrainManager_SetEditTerrainNumXZ(GLint editTerrainNumX, GLint editTerrainNumZ);
+void TerrainManager_SetPickingPoint(Vector3 v3PickingPoint);
+
+void TerrainManager_SetIsEditingTerrain(bool isEditingTerrain);
+void TerrainManager_SetIsEditingHeight(bool isEditingHeight);
 
 // Singleton ~
 const TerrainManager GetTerrainManager();

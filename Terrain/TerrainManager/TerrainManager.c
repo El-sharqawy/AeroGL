@@ -74,94 +74,64 @@ void TerrainManager_Destroy(TerrainManager* ppTerrainManager)
 	// Destroy Manager
 	engine_delete(pManager);
 
+	psTerrainManager = NULL;
 	*ppTerrainManager = NULL;
 }
 
-void TerrainManager_Clear(TerrainManager pTerrainManager)
+void TerrainManager_Clear()
 {
-	if (pTerrainManager->pTerrainMap)
-	{
-		TerrainMap_Clear(pTerrainManager->pTerrainMap);
-		TerrainRenderer_Reset(pTerrainManager->terarinRenderer);
-
-		pTerrainManager->isMapReady = false;
-	}
-}
-
-void TerrainManager_Update(TerrainManager pTerrainManager)
-{
-	if (!psTerrainManager->isMapReady)
+	TerrainManager terrMgr = GetTerrainManager();
+	if (!terrMgr)
 	{
 		return;
 	}
 
-	if (pTerrainManager->bNeedsUpdate)
+	if (terrMgr->pTerrainMap)
 	{
-		if (psTerrainManager->pTerrainMap && psTerrainManager->pTerrainMap->isReady)
+		TerrainMap_Clear(terrMgr->pTerrainMap);
+		TerrainRenderer_Reset(terrMgr->terarinRenderer);
+
+		terrMgr->isMapReady = false;
+	}
+}
+
+void TerrainManager_Update()
+{
+	TerrainManager terrMgr = GetTerrainManager();
+	if (!terrMgr)
+	{
+		return;
+	}
+
+	if (!terrMgr->isMapReady)
+	{
+		return;
+	}
+
+	if (terrMgr->bNeedsUpdate)
+	{
+		if (terrMgr->pTerrainMap && terrMgr->pTerrainMap->isReady)
 		{
 			// Upload GPU Data
-			TerrainRenderer_UploadGPUData(psTerrainManager->terarinRenderer);
-			TerrainMap_Update(psTerrainManager->pTerrainMap);
-			pTerrainManager->bNeedsUpdate = false;
+			TerrainRenderer_UploadGPUData(terrMgr->terarinRenderer);
+			TerrainMap_Update(terrMgr->pTerrainMap);
+			terrMgr->bNeedsUpdate = false;
 		}
 	}
 }
 
-void TerrainManager_Render(TerrainManager pTerrainManager)
+void TerrainManager_Render()
 {
-	if (pTerrainManager->isMapReady)
+	TerrainManager terrMgr = GetTerrainManager();
+	if (!terrMgr)
 	{
-		TerrainRenderer_Render(pTerrainManager->terarinRenderer);
-	}
-}
-
-bool TerrainManager_LoadMap(TerrainManager pTerrainManager, char* szMapName)
-{
-	if (pTerrainManager->pTerrainMap)
-	{
-		TerrainMap_Clear(pTerrainManager->pTerrainMap);
+		return;
 	}
 
-	if (!TerrainMap_LoadMap(pTerrainManager->pTerrainMap, szMapName))
+	if (terrMgr->isMapReady)
 	{
-		syserr("Failed to Load Map %s", szMapName);
-		return (false);
+		TerrainRenderer_Render(terrMgr->terarinRenderer);
 	}
-
-	if (pTerrainManager->pTerrainMap == NULL)
-	{
-		syserr("Failed to Load Map");
-		return (false);
-	}
-
-	// Initialize Renderer
-	if (!TerrainRenderer_Initialize(&psTerrainManager->terarinRenderer, "Terrain Renderer", pTerrainManager->pTerrainMap->terrainsXCount, pTerrainManager->pTerrainMap->terrainsZCount))
-	{
-		syserr("Failed to Create Terrain Renderer");
-		return (false);
-	}
-
-	psTerrainManager->isMapReady = true;
-	psTerrainManager->bNeedsUpdate = true;
-
-	return (true);
-}
-
-bool TerrainManager_SaveMap(TerrainManager pTerrainManager)
-{
-	if (!pTerrainManager)
-	{
-		/// ????? not sure if this condition is useful .. maybe if the code is part of the game (still need terrain manager to load maps)
-		return (false);
-	}
-
-	if (pTerrainManager->isMapReady == false)
-	{
-		syserr("Map is not Ready, you Need Map Ready to Save");
-		return (false);
-	}
-
-	return (TerrainMap_SaveMap(pTerrainManager->pTerrainMap));
 }
 
 const TerrainManager GetTerrainManager()

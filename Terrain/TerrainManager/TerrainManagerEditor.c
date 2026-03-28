@@ -1,35 +1,31 @@
 #include "Stdafx.h"
 #include "TerrainManager.h"
 #include "Terrain/TerrainMap/TerrainMap.h"
+#include "Renderer/TerrainRenderer.h"
 
-void TerrainManager_SetMapName(TerrainManager pTerrainManager, const char* szMapName)
+// Creating Map Part
+bool TerrainManager_CreateMap()
 {
-	pTerrainManager->editor.szMapName = engine_strdup(szMapName, MEM_TAG_STRINGS);
-}
+	TerrainManager terrMgr = GetTerrainManager();
+	if (!terrMgr)
+	{
+		return (false);
+	}
 
-void TerrainManager_SetMapDeminsions(TerrainManager pTerrainManager, int32_t mapWidth, int32_t mapDepth)
-{
-	// Number of Terrains Among X-Z Axis
-	pTerrainManager->editor.mapWidth = mapWidth;
-	pTerrainManager->editor.mapDepth = mapDepth;
-}
-
-bool TerrainManager_CreateMap(TerrainManager pTerrainManager)
-{
-	if (pTerrainManager->editor.szMapName == NULL)
+	if (terrMgr->editor.szMapName == NULL)
 	{
 		syserr("You need to enter Map Name");
 		return (false);
 	}
 
-	if (pTerrainManager->editor.mapWidth == 0 || pTerrainManager->editor.mapDepth == 0)
+	if (terrMgr->editor.mapWidth == 0 || terrMgr->editor.mapDepth == 0)
 	{
 		syserr("You need to enter Map Deminsions (x, z)");
 		return (false);
 	}
 
 	// Create an empty map
-	if (!TerrainMap_CreateMap(pTerrainManager->editor.szMapName, pTerrainManager->editor.mapWidth, pTerrainManager->editor.mapDepth))
+	if (!TerrainMap_CreateMap(terrMgr->editor.szMapName, terrMgr->editor.mapWidth, terrMgr->editor.mapDepth))
 	{
 		syserr("Failed to Initialize Terrain Map");
 		return (false);  // Cleanup everything above ?
@@ -37,3 +33,66 @@ bool TerrainManager_CreateMap(TerrainManager pTerrainManager)
 
 	return (true);
 }
+
+bool TerrainManager_LoadMap(char* szMapName)
+{
+	TerrainManager terrMgr = GetTerrainManager();
+	if (!terrMgr)
+	{
+		return (false);
+	}
+
+	if (terrMgr->pTerrainMap)
+	{
+		TerrainMap_Clear(terrMgr->pTerrainMap);
+	}
+
+	if (!TerrainMap_LoadMap(terrMgr->pTerrainMap, szMapName))
+	{
+		syserr("Failed to Load Map %s", szMapName);
+		return (false);
+	}
+
+	if (terrMgr->pTerrainMap == NULL)
+	{
+		syserr("Failed to Load Map");
+		return (false);
+	}
+
+	// Initialize Renderer
+	if (!TerrainRenderer_Initialize(&terrMgr->terarinRenderer, "Terrain Renderer", terrMgr->pTerrainMap->terrainsXCount, terrMgr->pTerrainMap->terrainsZCount))
+	{
+		syserr("Failed to Create Terrain Renderer");
+		return (false);
+	}
+
+	terrMgr->isMapReady = true;
+	terrMgr->bNeedsUpdate = true;
+
+	return (true);
+}
+
+bool TerrainManager_SaveMap()
+{
+	TerrainManager terrMgr = GetTerrainManager();
+	if (!terrMgr)
+	{
+		return (false);
+	}
+
+	if (!terrMgr)
+	{
+		/// ????? not sure if this condition is useful .. maybe if the code is part of the game (still need terrain manager to load maps)
+		return (false);
+	}
+
+	if (terrMgr->isMapReady == false)
+	{
+		syserr("Map is not Ready, you Need Map Ready to Save");
+		return (false);
+	}
+
+	return (TerrainMap_SaveMap(terrMgr->pTerrainMap));
+}
+
+// Editing Map Part
